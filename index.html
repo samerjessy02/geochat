@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Geo Chatbot</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,300;0,400;0,500;1,300;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --paper: #faf8f3;
+  --paper2: #f3f0e8;
+  --paper3: #ece8de;
+  --ink: #1a1714;
+  --ink2: #3d3830;
+  --ink3: #7a7265;
+  --ink4: #a89e92;
+  --rule: #ddd8cc;
+  --rule2: #ccc7bb;
+  --accent: #b85c2a;
+  --accent-light: #f5ede6;
+  --accent-mid: #d4784a;
+  --green: #3a6b4a;
+  --green-light: #eaf2ec;
+  --ff-display: 'IBM Plex Serif', Georgia, serif;
+  --ff-body: 'IBM Plex Serif', Georgia, serif;
+  --r: 6px;
+  --r-lg: 12px;
+}
+
+html, body { height: 100%; overflow: hidden; background: var(--paper); color: var(--ink); font-family: var(--ff-body); }
+
+#app { display: flex; height: 100vh; }
+
+/* ── SIDEBAR ── */
+#sidebar {
+  width: 340px; min-width: 340px;
+  display: flex; flex-direction: column;
+  background: var(--paper);
+  border-right: 1.5px solid var(--rule2);
+}
+
+#topbar {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--rule);
+  display: flex; flex-direction: column; gap: 2px;
+}
+#topbar h1 {
+  font-family: var(--ff-display);
+  font-size: 22px; font-weight: 600;
+  color: var(--ink); letter-spacing: -.01em;
+  line-height: 1.2;
+}
+.topbar-sub {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.topbar-tagline {
+  font-size: 12px; color: var(--ink3);
+  font-style: italic; font-family: var(--ff-body); font-weight: 400;
+}
+.status {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--ink4);
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: .04em;
+}
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+/* ── DATASETS PANEL ── */
+#datasets-panel {
+  border-bottom: 1px solid var(--rule);
+  padding: 12px 18px;
+  background: var(--paper2);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.dp-header { display: flex; align-items: center; justify-content: space-between; }
+.dp-title {
+  font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink4); font-family: 'IBM Plex Mono', monospace;
+}
+.dp-upload-btn {
+  font-size: 11px; font-family: 'IBM Plex Mono', monospace;
+  color: var(--accent); background: white; border: 1px solid #e8d0c4;
+  padding: 4px 10px; border-radius: 20px; cursor: pointer;
+  letter-spacing: .03em; transition: all .15s;
+}
+.dp-upload-btn:hover { background: var(--accent-light); }
+.dp-upload-btn:disabled { opacity: .5; cursor: default; }
+
+#dataset-list { display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto; }
+.dataset-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px; border-radius: var(--r);
+  background: white; border: 1px solid var(--rule);
+}
+.dataset-row input[type=checkbox] {
+  appearance: none; width: 13px; height: 13px;
+  border-radius: 3px; border: 1.5px solid var(--rule2);
+  cursor: pointer; background: white; transition: all .15s; flex-shrink: 0;
+}
+.dataset-row input[type=checkbox]:checked { background: var(--green); border-color: var(--green); }
+.dataset-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.dataset-name {
+  font-size: 12px; color: var(--ink2); font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dataset-meta {
+  font-size: 10px; color: var(--ink4); font-family: 'IBM Plex Mono', monospace;
+}
+.dataset-del {
+  background: none; border: none; cursor: pointer; color: var(--ink4);
+  font-size: 13px; padding: 2px 4px; flex-shrink: 0; transition: color .15s;
+}
+.dataset-del:hover { color: var(--accent); }
+.dp-empty { font-size: 11.5px; color: var(--ink4); font-style: italic; padding: 4px 2px; }
+
+/* ── UPLOAD MODAL ── */
+#upload-modal-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 2000;
+  background: rgba(26,23,20,0.35);
+  align-items: center; justify-content: center;
+}
+#upload-modal {
+  width: 380px; max-width: 90vw; max-height: 80vh; overflow-y: auto;
+  background: var(--paper); border: 1px solid var(--rule2);
+  border-radius: var(--r-lg); box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  padding: 18px 20px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+#upload-modal h2 {
+  font-family: var(--ff-display); font-size: 16px; font-weight: 600; color: var(--ink);
+}
+.um-label {
+  font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--ink4); font-family: 'IBM Plex Mono', monospace; margin-bottom: 4px; display: block;
+}
+.um-input {
+  width: 100%; background: white; border: 1px solid var(--rule2);
+  border-radius: var(--r); padding: 8px 10px; font-size: 13px;
+  color: var(--ink); font-family: var(--ff-body); outline: none;
+}
+.um-input:focus { border-color: var(--accent-mid); }
+.um-file-drop {
+  border: 1.5px dashed var(--rule2); border-radius: var(--r);
+  padding: 16px; text-align: center; font-size: 12px; color: var(--ink3);
+  cursor: pointer; background: white; transition: all .15s;
+}
+.um-file-drop:hover { border-color: var(--accent-mid); color: var(--ink); }
+.um-file-drop.has-file { border-color: var(--green); color: var(--green); background: var(--green-light); }
+.um-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+.um-btn {
+  font-size: 12px; font-family: 'IBM Plex Mono', monospace;
+  padding: 7px 14px; border-radius: var(--r); cursor: pointer;
+  border: 1px solid var(--rule2); background: white; color: var(--ink3);
+}
+.um-btn.primary { background: var(--accent); border-color: var(--accent); color: white; }
+.um-btn.primary:disabled { opacity: .5; cursor: default; }
+.um-btn:hover:not(:disabled) { filter: brightness(0.97); }
+.um-status { font-size: 11.5px; color: var(--ink4); font-style: italic; }
+.um-status.error { color: #a34f22; }
+
+.col-desc-row {
+  display: flex; flex-direction: column; gap: 3px;
+  border: 1px solid var(--rule); border-radius: var(--r);
+  padding: 8px 10px; background: white;
+}
+.col-desc-head {
+  display: flex; align-items: baseline; gap: 6px;
+}
+.col-desc-name { font-size: 12.5px; font-weight: 500; color: var(--ink); }
+.col-desc-type {
+  font-size: 10px; color: var(--ink4); font-family: 'IBM Plex Mono', monospace;
+}
+.col-desc-input {
+  width: 100%; border: 1px solid var(--rule); border-radius: 4px;
+  padding: 5px 7px; font-size: 12px; font-family: var(--ff-body);
+  outline: none; color: var(--ink2);
+}
+.col-desc-input:focus { border-color: var(--accent-mid); }
+#col-desc-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
+
+/* messages */
+#messages {
+  flex: 1; overflow-y: auto; padding: 16px 18px;
+  display: flex; flex-direction: column; gap: 14px;
+  scroll-behavior: smooth;
+}
+#messages::-webkit-scrollbar { width: 3px; }
+#messages::-webkit-scrollbar-thumb { background: var(--rule2); }
+
+.msg-wrap { display: flex; flex-direction: column; gap: 3px; animation: fadeIn .2s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+
+.msg-label {
+  font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink4); font-family: 'IBM Plex Mono', monospace;
+}
+.msg-wrap.user .msg-label { color: var(--accent); }
+
+.bubble {
+  font-size: 13.5px; line-height: 1.65; padding: 10px 14px;
+  border-radius: var(--r); font-weight: 400;
+}
+.msg-wrap.ai .bubble {
+  background: white;
+  border: 1px solid var(--rule);
+  color: var(--ink2);
+  border-radius: 2px var(--r) var(--r) var(--r);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.msg-wrap.user .bubble {
+  background: var(--accent-light);
+  border: 1px solid #e8d0c4;
+  color: var(--ink);
+  align-self: flex-end;
+  border-radius: var(--r) 2px var(--r) var(--r);
+}
+
+.count-tag {
+  display: inline-block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; font-style: normal;
+  background: var(--green-light);
+  color: var(--green);
+  padding: 1px 7px; border-radius: 20px;
+  border: 1px solid #c0d9c8;
+  margin-left: 4px;
+}
+
+/* sql */
+.sql-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-family: 'IBM Plex Mono', monospace;
+  color: var(--ink4); background: none; border: none; cursor: pointer;
+  padding: 3px 0; margin-top: 5px; letter-spacing: .02em;
+  transition: color .15s;
+}
+.sql-btn:hover { color: var(--accent); }
+.sql-box {
+  display: none; margin-top: 6px;
+  background: var(--paper2); border: 1px solid var(--rule);
+  border-radius: var(--r); padding: 10px 12px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+  color: var(--ink3); line-height: 1.6;
+  white-space: pre-wrap; word-break: break-all;
+  max-height: 150px; overflow-y: auto;
+}
+.sql-box.open { display: block; }
+
+/* thinking */
+.thinking {
+  display: flex; align-items: center; gap: 4px;
+  padding: 10px 14px;
+  background: white; border: 1px solid var(--rule);
+  border-radius: 2px var(--r) var(--r) var(--r);
+  width: fit-content;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.t-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--ink4);
+  animation: blink 1.3s infinite;
+}
+.t-dot:nth-child(2){animation-delay:.2s} .t-dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.15}40%{opacity:1}}
+
+/* divider rule */
+.rule-divider {
+  border: none; border-top: 1px solid var(--rule);
+  margin: 2px 0;
+}
+
+/* suggestions */
+#suggestions { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+.sug-btn {
+  text-align: left; font-size: 12.5px;
+  font-family: var(--ff-body); font-weight: 400; font-style: italic;
+  padding: 7px 10px; border-radius: var(--r);
+  border: 1px solid var(--rule);
+  background: var(--paper2); color: var(--ink3);
+  cursor: pointer; line-height: 1.4;
+  transition: all .15s;
+}
+.sug-btn::before { content: '→ '; font-style: normal; color: var(--ink4); }
+.sug-btn:hover { background: white; border-color: var(--rule2); color: var(--ink); }
+
+/* layers */
+#layers-panel {
+  border-top: 1px solid var(--rule);
+  padding: 10px 18px; display: none;
+  background: var(--paper2);
+}
+.lp-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.lp-title {
+  font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink4); font-family: 'IBM Plex Mono', monospace;
+}
+.clear-btn {
+  font-size: 10px; font-family: 'IBM Plex Mono', monospace;
+  color: var(--ink4); background: none; border: none; cursor: pointer;
+  letter-spacing: .04em; transition: color .15s;
+}
+.clear-btn:hover { color: var(--accent); }
+#layer-list { display: flex; flex-direction: column; gap: 5px; max-height: 100px; overflow-y: auto; }
+.layer-row { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.layer-row input[type=checkbox] {
+  appearance: none; width: 13px; height: 13px;
+  border-radius: 3px; border: 1.5px solid var(--rule2);
+  cursor: pointer; background: white; transition: all .15s; flex-shrink: 0;
+}
+.layer-row input[type=checkbox]:checked { background: var(--accent); border-color: var(--accent); }
+.layer-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.layer-label { font-size: 12px; color: var(--ink3); font-family: var(--ff-body); font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* input */
+#input-area {
+  padding: 12px 14px;
+  border-top: 1.5px solid var(--rule2);
+  display: flex; gap: 8px; align-items: flex-end;
+  background: var(--paper);
+}
+#chat-input {
+  flex: 1;
+  background: white;
+  border: 1px solid var(--rule2);
+  border-radius: var(--r); padding: 9px 12px;
+  font-size: 13.5px; color: var(--ink);
+  font-family: var(--ff-body); font-weight: 400;
+  outline: none; resize: none; line-height: 1.5;
+  transition: border-color .2s;
+}
+#chat-input::placeholder { color: var(--ink4); font-style: italic; }
+#chat-input:focus { border-color: var(--accent-mid); }
+#chat-input:disabled { background: var(--paper2); color: var(--ink4); }
+#send-btn {
+  width: 36px; height: 36px; border-radius: var(--r);
+  background: var(--accent); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background .15s, transform .1s;
+}
+#send-btn:hover { background: #a34f22; }
+#send-btn:active { transform: scale(.95); }
+#send-btn:disabled { background: var(--ink4); cursor: default; }
+#send-btn svg { width: 14px; height: 14px; stroke: white; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* map */
+#map-wrap { flex: 1; position: relative; }
+#map { height: 100%; width: 100%; }
+
+/* result badge */
+#result-badge {
+  position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+  z-index: 999;
+  background: white;
+  border: 1px solid var(--rule2);
+  border-radius: 20px; padding: 7px 18px;
+  font-size: 12px; font-family: 'IBM Plex Mono', monospace;
+  color: var(--green); letter-spacing: .03em;
+  display: none; white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  animation: slideUp .25s ease;
+}
+@keyframes slideUp { from{opacity:0;transform:translateX(-50%) translateY(6px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+
+/* leaflet popup override */
+.serif-popup .leaflet-popup-content-wrapper {
+  background: white;
+  border: 1px solid var(--rule2);
+  border-radius: var(--r-lg);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  font-family: 'IBM Plex Serif', Georgia, serif;
+  color: var(--ink2);
+}
+.serif-popup .leaflet-popup-tip { background: white; }
+.serif-popup .leaflet-popup-content { margin: 10px 14px; }
+
+/* ── RAG KNOWLEDGE PANEL ── */
+#rag-panel {
+  position: absolute;
+  top: 16px; right: 16px;
+  width: 300px;
+  z-index: 1000;
+  background: white;
+  border: 1px solid var(--rule2);
+  border-radius: var(--r-lg);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+  font-family: var(--ff-body);
+  overflow: hidden;
+  display: none;
+  animation: panelIn .2s ease;
+}
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(-8px) scale(.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+#rag-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper2);
+}
+#rag-place-name {
+  font-size: 13.5px; font-weight: 500; color: var(--ink);
+  line-height: 1.3; flex: 1; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#rag-category-badge {
+  font-size: 10px; font-family: 'IBM Plex Mono', monospace;
+  background: var(--accent-light); color: var(--accent);
+  border: 1px solid #e8d0c4;
+  padding: 2px 8px; border-radius: 20px;
+  letter-spacing: .04em; margin-left: 8px; white-space: nowrap; flex-shrink: 0;
+}
+#rag-close {
+  background: none; border: none; cursor: pointer;
+  color: var(--ink4); font-size: 16px; line-height: 1;
+  margin-left: 8px; padding: 0 2px; transition: color .15s;
+}
+#rag-close:hover { color: var(--ink); }
+
+#rag-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+
+#rag-summary {
+  font-size: 12.5px; line-height: 1.65; color: var(--ink2);
+}
+
+#rag-highlights { display: flex; flex-direction: column; gap: 5px; }
+.rag-highlight {
+  display: flex; gap: 7px; align-items: flex-start;
+  font-size: 12px; line-height: 1.5; color: var(--ink3);
+}
+.rag-bullet {
+  color: var(--accent); font-weight: 600; flex-shrink: 0;
+  margin-top: 1px;
+}
+
+#rag-source {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10.5px; font-family: 'IBM Plex Mono', monospace;
+  color: var(--ink4); border-top: 1px solid var(--rule);
+  padding-top: 8px; letter-spacing: .03em;
+}
+#rag-source-icon { width: 12px; height: 12px; }
+
+/* loading skeleton */
+.rag-skeleton {
+  background: linear-gradient(90deg, var(--paper2) 25%, var(--paper3) 50%, var(--paper2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 4px; height: 12px;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+.rag-skeleton.short { width: 60%; }
+.rag-skeleton.medium { width: 85%; }
+.rag-skeleton.tall { height: 40px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="sidebar">
+    <div id="topbar">
+      <h1>GeoChat&thinsp;—&thinsp;Spatial</h1>
+      <div class="topbar-sub">
+        <span class="topbar-tagline">Ask in plain language, see on the map</span>
+      </div>
+    </div>
+
+    <!-- ── DATASETS PANEL ── -->
+    <div id="datasets-panel">
+      <div class="dp-header">
+        <span class="dp-title">Your datasets</span>
+        <button class="dp-upload-btn" id="upload-open-btn" onclick="openUploadModal()">+ upload</button>
+      </div>
+      <div id="dataset-list">
+        <div class="dp-empty">No datasets yet — upload a GeoJSON or CSV to get started.</div>
+      </div>
+    </div>
+
+    <div id="messages">
+      <div class="msg-wrap ai">
+        <span class="msg-label">Assistant</span>
+        <div class="bubble" id="welcome-bubble">Upload a dataset to get started — a GeoJSON file or a CSV with latitude/longitude columns. Once it's selected below, ask me anything about it and I'll query it and render the results on the map.</div>
+      </div>
+      <div class="msg-wrap ai">
+        <span class="msg-label">Suggestions</span>
+        <div id="suggestions"></div>
+      </div>
+    </div>
+
+    <div id="layers-panel">
+      <div class="lp-header">
+        <span class="lp-title">Active layers</span>
+        <button class="clear-btn" onclick="clearLayers()">clear all</button>
+      </div>
+      <div id="layer-list"></div>
+    </div>
+
+    <div id="input-area">
+      <textarea id="chat-input" rows="1" placeholder="Select a dataset above first…" disabled></textarea>
+      <button id="send-btn" onclick="sendQuery()" aria-label="Send" disabled>
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="map-wrap">
+    <div id="map"></div>
+    <div id="result-badge"></div>
+
+    <!-- RAG Knowledge Panel -->
+    <div id="rag-panel">
+      <div id="rag-panel-header">
+        <span id="rag-place-name">Loading…</span>
+        <span id="rag-category-badge">—</span>
+        <button id="rag-close" onclick="closeRagPanel()" title="Close">✕</button>
+      </div>
+      <div id="rag-body">
+        <div id="rag-summary"></div>
+        <div id="rag-highlights"></div>
+        <div id="rag-source"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── UPLOAD MODAL ── -->
+<div id="upload-modal-backdrop">
+  <div id="upload-modal">
+    <h2 id="um-title">Upload a dataset</h2>
+
+    <!-- STEP 1: file + name -->
+    <div id="um-step-file">
+      <label class="um-label" for="um-name">Dataset name</label>
+      <input class="um-input" id="um-name" type="text" placeholder="e.g. Cairo Coffee Shops"/>
+
+      <div style="height:10px"></div>
+
+      <label class="um-label">File (.geojson or .csv)</label>
+      <div class="um-file-drop" id="um-file-drop" onclick="document.getElementById('um-file-input').click()">
+        Click to choose a file, or drag one here
+      </div>
+      <input type="file" id="um-file-input" accept=".geojson,.json,.csv" style="display:none" onchange="onFileChosen(this.files[0])"/>
+
+      <div class="um-status" id="um-status"></div>
+
+      <div class="um-row">
+        <button class="um-btn" onclick="closeUploadModal()">Cancel</button>
+        <button class="um-btn primary" id="um-upload-btn" onclick="doUpload()" disabled>Upload</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: describe columns -->
+    <div id="um-step-describe" style="display:none">
+      <p style="font-size:12.5px;color:var(--ink3);line-height:1.5;margin-bottom:4px">
+        Add a short description for each column — this helps the assistant understand what your data means.
+      </p>
+      <div id="col-desc-list"></div>
+      <div class="um-status" id="um-describe-status"></div>
+      <div class="um-row">
+        <button class="um-btn" onclick="skipDescriptions()">Skip</button>
+        <button class="um-btn primary" onclick="saveDescriptions()">Save & finish</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const API = 'http://localhost:8000';
+
+const GENERIC_SUGGESTIONS = [
+  'Show me everything in this dataset',
+  'Find the 10 nearest items to a given point',
+  'Which items have the highest rating?'
+];
+
+const COLORS = ['#b85c2a','#3a6b4a','#2a6bb8','#7a3a8a','#8a6a2a','#2a8a6a','#8a2a4a'];
+let colorIndex = 0, layerGroups = {}, layers = [], map;
+
+// ── DATASET STATE ──────────────────────────────────────────────────────────
+let datasets = [];                 // full list from GET /datasets
+let selectedDatasetIds = new Set();// which ones are checked -> sent with /chat
+let pendingUpload = null;          // { file, displayName } while modal open
+let pendingIngestResult = null;    // response from /datasets/upload, before describe step
+
+// Track current RAG request to avoid stale results
+let ragRequestId = 0;
+
+window.addEventListener('load', () => {
+  map = L.map('map', { zoomControl: false }).setView([30.044, 31.235], 12);
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap © CARTO', maxZoom: 19
+  }).addTo(map);
+  buildSuggestions();
+  autoResize();
+  refreshDatasets();
+});
+
+function buildSuggestions() {
+  const wrap = document.getElementById('suggestions');
+  wrap.innerHTML = '';
+  GENERIC_SUGGESTIONS.forEach(s => {
+    const b = document.createElement('button');
+    b.className = 'sug-btn'; b.textContent = s;
+    b.onclick = () => { document.getElementById('chat-input').value = s; sendQuery(); };
+    wrap.appendChild(b);
+  });
+}
+
+function autoResize() {
+  const ta = document.getElementById('chat-input');
+  ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 100) + 'px'; });
+  ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendQuery(); } });
+}
+
+// ── DATASET LIST / SELECTION ─────────────────────────────────────────────────
+
+async function refreshDatasets() {
+  try {
+    const res = await fetch(`${API}/datasets`);
+    if (!res.ok) return;
+    datasets = await res.json();
+    renderDatasetList();
+  } catch (e) {
+    console.warn('Could not load datasets:', e);
+  }
+}
+
+function renderDatasetList() {
+  const list = document.getElementById('dataset-list');
+  list.innerHTML = '';
+
+  if (!datasets.length) {
+    list.innerHTML = '<div class="dp-empty">No datasets yet — upload a GeoJSON or CSV to get started.</div>';
+    updateInputEnabled();
+    return;
+  }
+
+  datasets.forEach(ds => {
+    const row = document.createElement('div');
+    row.className = 'dataset-row';
+    const checked = selectedDatasetIds.has(ds.id) ? 'checked' : '';
+    const colCount = (ds.columns || []).length;
+    row.innerHTML = `
+      <input type="checkbox" ${checked} onchange="toggleDataset('${ds.id}', this.checked)"/>
+      <div class="dataset-info">
+        <span class="dataset-name" title="${esc(ds.display_name)}">${esc(ds.display_name)}</span>
+        <span class="dataset-meta">${ds.geometry_type.toLowerCase()} · ${colCount} column${colCount!==1?'s':''}</span>
+      </div>
+      <button class="dataset-del" title="Delete dataset" onclick="deleteDataset('${ds.id}')">✕</button>`;
+    list.appendChild(row);
+  });
+
+  updateInputEnabled();
+}
+
+function toggleDataset(id, checked) {
+  if (checked) selectedDatasetIds.add(id); else selectedDatasetIds.delete(id);
+  updateInputEnabled();
+}
+
+function updateInputEnabled() {
+  const ta = document.getElementById('chat-input');
+  const btn = document.getElementById('send-btn');
+  const enabled = selectedDatasetIds.size > 0;
+  ta.disabled = !enabled;
+  btn.disabled = !enabled;
+  ta.placeholder = enabled ? 'Ask a question about your selected dataset(s)…' : 'Select a dataset above first…';
+}
+
+async function deleteDataset(id) {
+  if (!confirm('Delete this dataset? This cannot be undone.')) return;
+  try {
+    const res = await fetch(`${API}/datasets/${id}`, { method: 'DELETE' });
+    if (!res.ok) { alert('Could not delete dataset.'); return; }
+    selectedDatasetIds.delete(id);
+    await refreshDatasets();
+  } catch {
+    alert('Could not reach the server.');
+  }
+}
+
+// ── UPLOAD MODAL ─────────────────────────────────────────────────────────────
+
+function openUploadModal() {
+  pendingUpload = null;
+  pendingIngestResult = null;
+  document.getElementById('um-name').value = '';
+  document.getElementById('um-file-input').value = '';
+  document.getElementById('um-file-drop').textContent = 'Click to choose a file, or drag one here';
+  document.getElementById('um-file-drop').classList.remove('has-file');
+  document.getElementById('um-status').textContent = '';
+  document.getElementById('um-status').classList.remove('error');
+  document.getElementById('um-upload-btn').disabled = true;
+  document.getElementById('um-title').textContent = 'Upload a dataset';
+  document.getElementById('um-step-file').style.display = 'block';
+  document.getElementById('um-step-describe').style.display = 'none';
+  document.getElementById('upload-modal-backdrop').style.display = 'flex';
+}
+
+function closeUploadModal() {
+  document.getElementById('upload-modal-backdrop').style.display = 'none';
+}
+
+function onFileChosen(file) {
+  if (!file) return;
+  pendingUpload = { file };
+  const drop = document.getElementById('um-file-drop');
+  drop.textContent = `✓ ${file.name}`;
+  drop.classList.add('has-file');
+  checkUploadReady();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const nameInput = document.getElementById('um-name');
+  if (nameInput) nameInput.addEventListener('input', checkUploadReady);
+});
+
+function checkUploadReady() {
+  const name = document.getElementById('um-name').value.trim();
+  document.getElementById('um-upload-btn').disabled = !(name && pendingUpload && pendingUpload.file);
+}
+
+async function doUpload() {
+  const name = document.getElementById('um-name').value.trim();
+  if (!name || !pendingUpload || !pendingUpload.file) return;
+
+  const statusEl = document.getElementById('um-status');
+  statusEl.classList.remove('error');
+  statusEl.textContent = 'Uploading and parsing…';
+  document.getElementById('um-upload-btn').disabled = true;
+
+  const form = new FormData();
+  form.append('file', pendingUpload.file);
+  form.append('display_name', name);
+
+  try {
+    const res = await fetch(`${API}/datasets/upload`, { method: 'POST', body: form });
+    const data = await res.json();
+    if (!res.ok) {
+      statusEl.textContent = data.detail || 'Upload failed.';
+      statusEl.classList.add('error');
+      document.getElementById('um-upload-btn').disabled = false;
+      return;
+    }
+    pendingIngestResult = data;
+    statusEl.textContent = '';
+    showDescribeStep(data);
+  } catch (e) {
+    statusEl.textContent = 'Could not reach the server.';
+    statusEl.classList.add('error');
+    document.getElementById('um-upload-btn').disabled = false;
+  }
+}
+
+function showDescribeStep(result) {
+  document.getElementById('um-title').textContent = `${result.row_count} rows loaded`;
+  document.getElementById('um-step-file').style.display = 'none';
+  document.getElementById('um-step-describe').style.display = 'block';
+
+  const listEl = document.getElementById('col-desc-list');
+  listEl.innerHTML = '';
+  (result.columns || []).forEach(col => {
+    const row = document.createElement('div');
+    row.className = 'col-desc-row';
+    row.innerHTML = `
+      <div class="col-desc-head">
+        <span class="col-desc-name">${esc(col.column_name)}</span>
+        <span class="col-desc-type">${esc(col.data_type)}</span>
+      </div>
+      <input class="col-desc-input" data-col="${esc(col.column_name)}" data-type="${esc(col.data_type)}"
+             placeholder="What does this column mean?"/>`;
+    listEl.appendChild(row);
+  });
+}
+
+async function saveDescriptions() {
+  if (!pendingIngestResult) return;
+  const inputs = document.querySelectorAll('#col-desc-list .col-desc-input');
+  const columns = Array.from(inputs).map(inp => ({
+    column_name: inp.dataset.col,
+    data_type: inp.dataset.type,
+    description: inp.value.trim()
+  }));
+
+  const statusEl = document.getElementById('um-describe-status');
+  statusEl.textContent = 'Saving…';
+  statusEl.classList.remove('error');
+
+  try {
+    const res = await fetch(`${API}/datasets/describe`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dataset_id: pendingIngestResult.dataset_id, columns })
+    });
+    if (!res.ok) {
+      statusEl.textContent = 'Could not save descriptions.';
+      statusEl.classList.add('error');
+      return;
+    }
+    await finishUpload();
+  } catch {
+    statusEl.textContent = 'Could not reach the server.';
+    statusEl.classList.add('error');
+  }
+}
+
+async function skipDescriptions() {
+  await finishUpload();
+}
+
+async function finishUpload() {
+  closeUploadModal();
+  await refreshDatasets();
+  if (pendingIngestResult) {
+    selectedDatasetIds.add(pendingIngestResult.dataset_id);
+    renderDatasetList();
+    document.getElementById('welcome-bubble').textContent =
+      `Dataset ready. Ask me anything about it and I'll query it and render the results on the map.`;
+  }
+  pendingUpload = null;
+  pendingIngestResult = null;
+}
+
+// ── CHAT ──────────────────────────────────────────────────────────────────────
+
+async function sendQuery() {
+  const ta = document.getElementById('chat-input');
+  const q = ta.value.trim(); if (!q) return;
+  if (!selectedDatasetIds.size) return;
+  ta.value = ''; ta.style.height = 'auto';
+  appendMsg('user', q);
+  const thinkEl = appendThinking();
+  try {
+    const res = await fetch(`${API}/chat`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: q, dataset_ids: Array.from(selectedDatasetIds) })
+    });
+    const data = await res.json(); thinkEl.remove();
+    if (!res.ok) { appendMsg('ai', data.detail || 'Something went wrong.'); return; }
+    const color = COLORS[colorIndex++ % COLORS.length];
+    plotResults(data.results, q, color);
+    appendAiResult(data.results.length, data.sql);
+
+    // If the SQL has a ST_DWithin, draw radius circles around the reference points
+    const radiusInfo = parseRadiusFromSQL(data.sql);
+    if (radiusInfo) {
+      await drawRadiusCircles(radiusInfo.table, radiusInfo.meters, color);
+    }
+  } catch {
+    thinkEl.remove();
+    appendMsg('ai', 'Could not reach the server. Make sure FastAPI is running on port 8000.');
+  }
+}
+
+/**
+ * Parse ST_DWithin(..., ref::geography, meters) from the generated SQL, and
+ * figure out which table it refers to by matching against the real table
+ * names of the currently selected datasets (instead of a hardcoded list).
+ * Returns { table, meters } or null.
+ */
+function parseRadiusFromSQL(sql) {
+  if (!sql) return null;
+
+  const dwithinMatch = sql.match(/ST_DWithin\s*\([^,]+,[^,]+,\s*(\d+(?:\.\d+)?)\s*\)/i);
+  if (!dwithinMatch) return null;
+  const meters = parseFloat(dwithinMatch[1]);
+
+  const selectedTables = datasets
+    .filter(d => selectedDatasetIds.has(d.id))
+    .map(d => d.table_name);
+
+  if (!selectedTables.length) return null;
+
+  // The "reference" table is usually the one in a JOIN clause
+  const joinMatch = sql.match(/JOIN\s+"?(\w+)"?\s+/i);
+  if (joinMatch) {
+    const joinTable = joinMatch[1];
+    if (selectedTables.includes(joinTable)) return { table: joinTable, meters };
+  }
+
+  // Fallback: any selected table name that appears in the SQL, prefer the last match
+  const found = selectedTables.filter(t => new RegExp(`\\b${t}\\b`, 'i').test(sql));
+  if (found.length) return { table: found[found.length - 1], meters };
+
+  return null;
+}
+
+/**
+ * Fetch all rows from `table` (by asking the same selected datasets to
+ * "show all rows in <table>"), draw a translucent circle of `meters` radius
+ * around each point to visualise the search buffer.
+ */
+async function drawRadiusCircles(table, meters, color) {
+  try {
+    const res = await fetch(`${API}/chat`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: `show all rows from the "${table}" table`,
+        dataset_ids: Array.from(selectedDatasetIds)
+      })
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.results || !data.results.length) return;
+
+    const group = L.featureGroup();
+
+    data.results.forEach(r => {
+      let geom;
+      try { geom = typeof r.geometry === 'string' ? JSON.parse(r.geometry) : r.geometry; } catch { return; }
+      if (geom.type !== 'Point') return;
+
+      const [lng, lat] = geom.coordinates;
+
+      L.circle([lat, lng], {
+        radius: meters,
+        color: color,
+        fillColor: color,
+        fillOpacity: 0.07,
+        weight: 1.5,
+        dashArray: "5 4",
+        opacity: 0.5,
+        interactive: false,
+      }).addTo(group);
+    });
+
+    const layerId = 'radius-' + Date.now();
+    group.addTo(map);
+    layerGroups[layerId] = group;
+    layers.push({
+      id: layerId,
+      label: `${meters}m radius — ${labelForTable(table)}`,
+      color,
+      visible: true
+    });
+    updateLayersPanel();
+
+  } catch (e) {
+    console.warn('drawRadiusCircles failed:', e);
+  }
+}
+
+function labelForTable(tableName) {
+  const ds = datasets.find(d => d.table_name === tableName);
+  return ds ? ds.display_name : tableName;
+}
+
+function appendMsg(role, text) {
+  const msgs = document.getElementById('messages');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-wrap ' + role;
+  wrap.innerHTML = `<span class="msg-label">${role === 'user' ? 'You' : 'Assistant'}</span><div class="bubble">${esc(text)}</div>`;
+  msgs.appendChild(wrap); msgs.scrollTop = msgs.scrollHeight;
+}
+
+function appendAiResult(count, sql) {
+  const msgs = document.getElementById('messages');
+  const id = 'sql-' + Date.now();
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-wrap ai';
+  wrap.innerHTML = `<span class="msg-label">Assistant</span>
+    <div class="bubble">
+      Returned <span class="count-tag">${count} result${count !== 1 ? 's' : ''}</span> — plotted on the map.
+      <br/><small style="color:var(--ink4);font-size:11px;font-style:italic">Hover a marker to see detailed info.</small>
+      <br/><button class="sql-btn" onclick="toggleSql('${id}')">▸ view generated SQL</button>
+      <pre class="sql-box" id="${id}">${esc(sql)}</pre>
+    </div>`;
+  msgs.appendChild(wrap); msgs.scrollTop = msgs.scrollHeight;
+}
+
+function appendThinking() {
+  const msgs = document.getElementById('messages');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-wrap ai';
+  wrap.innerHTML = `<span class="msg-label">Assistant</span>
+    <div class="thinking"><span class="t-dot"></span><span class="t-dot"></span><span class="t-dot"></span></div>`;
+  msgs.appendChild(wrap); msgs.scrollTop = msgs.scrollHeight;
+  return wrap;
+}
+
+function toggleSql(id) { document.getElementById(id).classList.toggle('open'); }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── PLOT RESULTS ──────────────────────────────────────────────────────────────
+
+function plotResults(results, label, color) {
+  if (!results.length) { showBadge('No results found'); return; }
+  const group = L.featureGroup();
+
+  results.forEach(r => {
+    let geom;
+    try { geom = typeof r.geometry === 'string' ? JSON.parse(r.geometry) : r.geometry; } catch { return; }
+
+    // Extract all non-geometry fields as metadata
+    const meta = {};
+    Object.entries(r).forEach(([k, v]) => { if (v != null && k !== 'geometry') meta[k] = v; });
+
+    // Infer a display "type" from result fields, generically
+    const placeType = inferPlaceType(meta);
+
+    if (geom.type === 'Point') {
+      const [lng, lat] = geom.coordinates;
+      const marker = L.circleMarker([lat, lng], {
+        radius: 7, fillColor: color, color: 'white', weight: 2, fillOpacity: .9
+      }).addTo(group);
+
+      // Hover: show RAG panel
+      marker.on('mouseover', () => triggerRag(meta, placeType));
+      // Click: keep panel open (don't close on mouseout if clicked)
+      marker.on('click', () => triggerRag(meta, placeType));
+
+    } else if (geom.type.includes('Line')) {
+      L.geoJSON({type:'Feature',geometry:geom}, { style:{color,weight:3,opacity:.8} }).addTo(group);
+    } else if (geom.type.includes('Polygon')) {
+      const layer = L.geoJSON({type:'Feature',geometry:geom}, {
+        style:{color,fillColor:color,fillOpacity:.15,weight:2}
+      }).addTo(group);
+      layer.on('mouseover', () => triggerRag(meta, placeType));
+      layer.on('click',     () => triggerRag(meta, placeType));
+    }
+  });
+
+  const layerId = 'layer-' + Date.now();
+  group.addTo(map); layerGroups[layerId] = group;
+  layers.push({ id:layerId, label: label.length>36?label.slice(0,36)+'…':label, color, visible:true });
+  try { map.fitBounds(group.getBounds(), { padding:[40,40], maxZoom:15 }); } catch {}
+  showBadge(`${results.length} result${results.length!==1?'s':''} rendered`);
+  updateLayersPanel();
+}
+
+// Guess a display "type" for a result row purely from its own fields —
+// no more hardcoded Egypt/OSM category list, since datasets are arbitrary now.
+function inferPlaceType(meta) {
+  if (meta.amenity) return meta.amenity;
+  if (meta.category) return meta.category;
+  if (meta.type) return meta.type;
+  return 'place';
+}
+
+// ── RAG PANEL ─────────────────────────────────────────────────────────────────
+
+async function triggerRag(meta, placeType) {
+  // tags column is JSONB — unpack it so we get name:en, wikipedia, wikidata etc.
+  // (only present for datasets that have a tags column, e.g. OSM-style data)
+  let tags = {};
+  if (meta.tags) {
+    try { tags = typeof meta.tags === 'string' ? JSON.parse(meta.tags) : meta.tags; } catch {}
+  }
+  const all = { ...tags, ...meta };
+
+  const name      = all['name:ar'] || all.name || all['name:en'] || all.title || 'Unknown';
+  const name_en   = all['name:en'] || null;
+  const wikipedia = all.wikipedia  || null;
+  const wikidata  = all.wikidata   || null;
+
+  // Show panel immediately with loading skeleton
+  showRagLoading(name_en || name);
+
+  const myId = ++ragRequestId;
+
+  try {
+    const res = await fetch(`${API}/enrich`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, name_en, place_type: placeType, wikipedia, wikidata })
+    });
+
+    if (myId !== ragRequestId) return; // Stale response — user hovered elsewhere
+
+    if (!res.ok) {
+      showRagError(name_en || name);
+      return;
+    }
+
+    const card = await res.json();
+    if (myId !== ragRequestId) return;
+    renderRagCard(name_en || name, card);
+
+  } catch (e) {
+    if (myId !== ragRequestId) return;
+    showRagError(name_en || name);
+  }
+}
+
+function showRagLoading(name) {
+  const panel = document.getElementById('rag-panel');
+  document.getElementById('rag-place-name').textContent = name;
+  document.getElementById('rag-category-badge').textContent = '…';
+  document.getElementById('rag-summary').innerHTML = `
+    <div class="rag-skeleton tall" style="margin-bottom:6px"></div>
+    <div class="rag-skeleton medium" style="margin-bottom:4px"></div>
+    <div class="rag-skeleton short"></div>`;
+  document.getElementById('rag-highlights').innerHTML = '';
+  document.getElementById('rag-source').innerHTML = '';
+  panel.style.display = 'block';
+}
+
+function showRagError(name) {
+  document.getElementById('rag-summary').innerHTML =
+    `<span style="color:var(--ink4);font-style:italic;font-size:12px">Could not fetch information for this place.</span>`;
+  document.getElementById('rag-highlights').innerHTML = '';
+  document.getElementById('rag-source').innerHTML = '';
+  document.getElementById('rag-category-badge').textContent = '?';
+}
+
+function renderRagCard(name, card) {
+  document.getElementById('rag-place-name').textContent = name;
+  document.getElementById('rag-category-badge').textContent = card.category || 'Place';
+
+  document.getElementById('rag-summary').textContent = card.summary || '';
+
+  const hlEl = document.getElementById('rag-highlights');
+  hlEl.innerHTML = '';
+  if (card.highlights && card.highlights.length) {
+    card.highlights.forEach(h => {
+      const div = document.createElement('div');
+      div.className = 'rag-highlight';
+      div.innerHTML = `<span class="rag-bullet">·</span><span>${esc(h)}</span>`;
+      hlEl.appendChild(div);
+    });
+  }
+
+  const srcEl = document.getElementById('rag-source');
+  if (card.found && card.source) {
+    srcEl.innerHTML = `
+      <svg id="rag-source-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+      </svg>
+      Source: ${esc(card.source)}`;
+  } else {
+    srcEl.innerHTML = `<span style="font-style:italic">No external document found</span>`;
+  }
+
+  document.getElementById('rag-panel').style.display = 'block';
+}
+
+function closeRagPanel() {
+  ragRequestId++; // Cancel any in-flight request
+  document.getElementById('rag-panel').style.display = 'none';
+}
+
+// ── LAYER MANAGEMENT ──────────────────────────────────────────────────────────
+
+function updateLayersPanel() {
+  const panel = document.getElementById('layers-panel');
+  const list = document.getElementById('layer-list');
+  panel.style.display = 'block'; list.innerHTML = '';
+  layers.forEach(l => {
+    const row = document.createElement('label');
+    row.className = 'layer-row';
+    row.innerHTML = `<input type="checkbox" ${l.visible?'checked':''} onchange="toggleLayer('${l.id}',this.checked)"/>
+      <span class="layer-dot" style="background:${l.color}"></span>
+      <span class="layer-label" title="${l.label}">${l.label}</span>`;
+    list.appendChild(row);
+  });
+}
+
+function toggleLayer(id, vis) {
+  const g = layerGroups[id]; if (!g) return;
+  const l = layers.find(x=>x.id===id); if(l) l.visible=vis;
+  vis ? g.addTo(map) : map.removeLayer(g);
+}
+
+function clearLayers() {
+  Object.values(layerGroups).forEach(g=>map.removeLayer(g));
+  layerGroups={}; layers=[]; colorIndex=0;
+  document.getElementById('layers-panel').style.display='none';
+  document.getElementById('layer-list').innerHTML='';
+  closeRagPanel();
+}
+
+function showBadge(text) {
+  const b = document.getElementById('result-badge');
+  b.textContent = text; b.style.display = 'block';
+  clearTimeout(b._t); b._t = setTimeout(()=>b.style.display='none', 3000);
+}
+</script>
+</body>
+</html>
