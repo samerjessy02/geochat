@@ -851,9 +851,13 @@ async function sendQuery() {
     if (radiusInfo) {
       await drawRadiusCircles(radiusInfo.table, radiusInfo.meters, color);
     }
-  } catch {
+  } catch (err) {
+    console.error(err);
     thinkEl.remove();
-    appendMsg('ai', 'Could not reach the server. Make sure FastAPI is running on port 8000.');
+    appendMsg(
+        'ai',
+        'Could not reach the server. Make sure FastAPI is running on port 8000.'
+    );
   }
 }
 
