@@ -37,12 +37,24 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 #app { display: flex; height: 100vh; }
 
 /* ── SIDEBAR ── */
+#app { background: var(--paper2); }
 #sidebar {
-  width: 340px; min-width: 340px;
+  position: relative;
+  width: 360px; min-width: 240px;
+  margin: 8px;
   display: flex; flex-direction: column;
   background: var(--paper);
-  border-right: 1.5px solid var(--rule2);
+  border: 1px solid #ECE9E1;
+  border-radius: var(--r-lg);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  overflow: hidden;
 }
+/* drag-to-resize handle on the right edge */
+.resize-handle {
+  position: absolute; top: 0; right: 0; width: 6px; height: 100%;
+  cursor: ew-resize; z-index: 1200;
+}
+.resize-handle:hover, .resize-handle.dragging { background: rgba(47,111,168,0.15); }
 
 #topbar {
   padding: 18px 20px 14px;
@@ -51,7 +63,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 }
 #topbar h1 {
   font-family: var(--ff-display);
-  font-size: 22px; font-weight: 600;
+  font-size: 23px; font-weight: 600;
   color: var(--ink); letter-spacing: -.01em;
   line-height: 1.2;
 }
@@ -59,12 +71,12 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
   display: flex; align-items: center; justify-content: space-between;
 }
 .topbar-tagline {
-  font-size: 12px; color: var(--ink3);
+  font-size: 13px; color: var(--ink3);
   font-style: italic; font-family: var(--ff-body); font-weight: 400;
 }
 .status {
   display: flex; align-items: center; gap: 5px;
-  font-size: 11px; color: var(--ink4);
+  font-size: 12px; color: var(--ink4);
   font-family: 'Poppins', sans-serif;
   letter-spacing: .04em;
 }
@@ -74,21 +86,20 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 #datasets-panel {
   border-bottom: 1px solid var(--rule);
   padding: 12px 18px;
-  background: var(--paper2);
+  background: var(--paper);
   display: flex; flex-direction: column; gap: 8px;
 }
 .dp-header { display: flex; align-items: center; justify-content: space-between; }
 .dp-title {
-  font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
   color: var(--ink4); font-family: 'Poppins', sans-serif;
 }
 .dp-upload-btn {
-  font-size: 11px; font-family: 'Poppins', sans-serif;
-  color: var(--accent); background: white; border: 1px solid #e8d0c4;
-  padding: 4px 10px; border-radius: 20px; cursor: pointer;
-  letter-spacing: .03em; transition: all .15s;
+  font-size: 13px; font-family: 'Poppins', sans-serif;
+  color: var(--accent); background: none; border: none;
+  padding: 2px 2px; cursor: pointer; letter-spacing: .01em; transition: opacity .15s;
 }
-.dp-upload-btn:hover { background: var(--accent-light); }
+.dp-upload-btn:hover { text-decoration: underline; }
 .dp-upload-btn:disabled { opacity: .5; cursor: default; }
 
 #dataset-list { display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto; }
@@ -106,18 +117,18 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 .dataset-row input[type=checkbox]:checked { background: var(--green); border-color: var(--green); }
 .dataset-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .dataset-name {
-  font-size: 12px; color: var(--ink2); font-weight: 500;
+  font-size: 13px; color: var(--ink2); font-weight: 500;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .dataset-meta {
-  font-size: 10px; color: var(--ink4); font-family: 'Poppins', sans-serif;
+  font-size: 11px; color: var(--ink4); font-family: 'Poppins', sans-serif;
 }
 .dataset-del {
   background: none; border: none; cursor: pointer; color: var(--ink4);
-  font-size: 13px; padding: 2px 4px; flex-shrink: 0; transition: color .15s;
+  font-size: 14px; padding: 2px 4px; flex-shrink: 0; transition: color .15s;
 }
 .dataset-del:hover { color: var(--accent); }
-.dp-empty { font-size: 11.5px; color: var(--ink4); font-style: italic; padding: 4px 2px; }
+.dp-empty { font-size: 12.5px; color: var(--ink4); font-style: italic; padding: 4px 2px; }
 
 /* ── UPLOAD MODAL ── */
 #upload-modal-backdrop {
@@ -133,35 +144,35 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
   display: flex; flex-direction: column; gap: 12px;
 }
 #upload-modal h2 {
-  font-family: var(--ff-display); font-size: 16px; font-weight: 600; color: var(--ink);
+  font-family: var(--ff-display); font-size: 17px; font-weight: 600; color: var(--ink);
 }
 .um-label {
-  font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase;
+  font-size: 11.5px; letter-spacing: .07em; text-transform: uppercase;
   color: var(--ink4); font-family: 'Poppins', sans-serif; margin-bottom: 4px; display: block;
 }
 .um-input {
   width: 100%; background: white; border: 1px solid var(--rule2);
-  border-radius: var(--r); padding: 8px 10px; font-size: 13px;
+  border-radius: var(--r); padding: 8px 10px; font-size: 14px;
   color: var(--ink); font-family: var(--ff-body); outline: none;
 }
 .um-input:focus { border-color: var(--accent-mid); }
 .um-file-drop {
   border: 1.5px dashed var(--rule2); border-radius: var(--r);
-  padding: 16px; text-align: center; font-size: 12px; color: var(--ink3);
+  padding: 16px; text-align: center; font-size: 13px; color: var(--ink3);
   cursor: pointer; background: white; transition: all .15s;
 }
 .um-file-drop:hover { border-color: var(--accent-mid); color: var(--ink); }
 .um-file-drop.has-file { border-color: var(--green); color: var(--green); background: var(--green-light); }
 .um-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
 .um-btn {
-  font-size: 12px; font-family: 'Poppins', sans-serif;
+  font-size: 13px; font-family: 'Poppins', sans-serif;
   padding: 7px 14px; border-radius: var(--r); cursor: pointer;
   border: 1px solid var(--rule2); background: white; color: var(--ink3);
 }
 .um-btn.primary { background: var(--accent); border-color: var(--accent); color: white; }
 .um-btn.primary:disabled { opacity: .5; cursor: default; }
 .um-btn:hover:not(:disabled) { filter: brightness(0.97); }
-.um-status { font-size: 11.5px; color: var(--ink4); font-style: italic; }
+.um-status { font-size: 12.5px; color: var(--ink4); font-style: italic; }
 .um-status.error { color: #a34f22; }
 
 .col-desc-row {
@@ -172,13 +183,13 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 .col-desc-head {
   display: flex; align-items: baseline; gap: 6px;
 }
-.col-desc-name { font-size: 12.5px; font-weight: 500; color: var(--ink); }
+.col-desc-name { font-size: 13.5px; font-weight: 500; color: var(--ink); }
 .col-desc-type {
-  font-size: 10px; color: var(--ink4); font-family: 'Poppins', sans-serif;
+  font-size: 11px; color: var(--ink4); font-family: 'Poppins', sans-serif;
 }
 .col-desc-input {
   width: 100%; border: 1px solid var(--rule); border-radius: 4px;
-  padding: 5px 7px; font-size: 12px; font-family: var(--ff-body);
+  padding: 5px 7px; font-size: 13px; font-family: var(--ff-body);
   outline: none; color: var(--ink2);
 }
 .col-desc-input:focus { border-color: var(--accent-mid); }
@@ -197,13 +208,13 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
 
 .msg-label {
-  font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
   color: var(--ink4); font-family: 'Poppins', sans-serif;
 }
 .msg-wrap.user .msg-label { color: var(--accent); }
 
 .bubble {
-  font-size: 13.5px; line-height: 1.65; padding: 10px 14px;
+  font-size: 14.5px; line-height: 1.65; padding: 10px 14px;
   border-radius: var(--r); font-weight: 400;
 }
 .msg-wrap.ai .bubble {
@@ -224,7 +235,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 .count-tag {
   display: inline-block;
   font-family: 'Poppins', sans-serif;
-  font-size: 11px; font-style: normal;
+  font-size: 12px; font-style: normal;
   background: var(--green-light);
   color: var(--green);
   padding: 1px 7px; border-radius: 20px;
@@ -235,7 +246,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 /* sql */
 .sql-btn {
   display: inline-flex; align-items: center; gap: 4px;
-  font-size: 11px; font-family: 'Poppins', sans-serif;
+  font-size: 12px; font-family: 'Poppins', sans-serif;
   color: var(--ink4); background: none; border: none; cursor: pointer;
   padding: 3px 0; margin-top: 5px; letter-spacing: .02em;
   transition: color .15s;
@@ -245,7 +256,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
   display: none; margin-top: 6px;
   background: var(--paper2); border: 1px solid var(--rule);
   border-radius: var(--r); padding: 10px 12px;
-  font-family: 'Poppins', sans-serif; font-size: 11px;
+  font-family: 'Poppins', sans-serif; font-size: 12px;
   color: var(--ink3); line-height: 1.6;
   white-space: pre-wrap; word-break: break-all;
   max-height: 150px; overflow-y: auto;
@@ -278,7 +289,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 /* suggestions */
 #suggestions { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
 .sug-btn {
-  text-align: left; font-size: 12.5px;
+  text-align: left; font-size: 13.5px;
   font-family: var(--ff-body); font-weight: 400; font-style: italic;
   padding: 7px 10px; border-radius: var(--r);
   border: 1px solid var(--rule);
@@ -297,11 +308,11 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 }
 .lp-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .lp-title {
-  font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
   color: var(--ink4); font-family: 'Poppins', sans-serif;
 }
 .clear-btn {
-  font-size: 10px; font-family: 'Poppins', sans-serif;
+  font-size: 11px; font-family: 'Poppins', sans-serif;
   color: var(--ink4); background: none; border: none; cursor: pointer;
   letter-spacing: .04em; transition: color .15s;
 }
@@ -315,8 +326,8 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 /* hidden checkbox keeps the existing toggle logic; row (a <label>) toggles it */
 .layer-row input[type=checkbox] { display: none; }
 .layer-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--ink4); transition: background .15s; }
-.layer-label { flex: 1; font-size: 12px; color: var(--ink3); font-family: var(--ff-body); font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.layer-count { flex-shrink: 0; font-size: 10px; color: var(--ink4); font-family: 'Poppins', sans-serif; }
+.layer-label { flex: 1; font-size: 13px; color: var(--ink3); font-family: var(--ff-body); font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.layer-count { flex-shrink: 0; font-size: 11px; color: var(--ink4); font-family: 'Poppins', sans-serif; }
 /* active (visible) layer: light-blue tint + accent dot */
 .layer-row:has(input:checked) { background: #EAF1F7; }
 .layer-row:has(input:checked) .layer-dot { background: var(--accent); }
@@ -335,7 +346,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
   background: white;
   border: 1px solid var(--rule2);
   border-radius: 10px; padding: 10px 14px;
-  font-size: 13.5px; color: var(--ink);
+  font-size: 14.5px; color: var(--ink);
   font-family: var(--ff-body); font-weight: 400;
   outline: none; resize: none; line-height: 1.5;
   transition: border-color .2s;
@@ -366,7 +377,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
   background: white;
   border: 1px solid var(--rule2);
   border-radius: 20px; padding: 7px 18px;
-  font-size: 12px; font-family: 'Poppins', sans-serif;
+  font-size: 13px; font-family: 'Poppins', sans-serif;
   color: var(--green); letter-spacing: .03em;
   display: none; white-space: nowrap;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -413,12 +424,12 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
   background: var(--paper2);
 }
 #rag-place-name {
-  font-size: 13.5px; font-weight: 500; color: var(--ink);
+  font-size: 14.5px; font-weight: 500; color: var(--ink);
   line-height: 1.3; flex: 1; min-width: 0;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 #rag-category-badge {
-  font-size: 10px; font-family: 'Poppins', sans-serif;
+  font-size: 11px; font-family: 'Poppins', sans-serif;
   background: var(--accent-light); color: var(--accent);
   border: 1px solid #e8d0c4;
   padding: 2px 8px; border-radius: 20px;
@@ -426,7 +437,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 }
 #rag-close {
   background: none; border: none; cursor: pointer;
-  color: var(--ink4); font-size: 16px; line-height: 1;
+  color: var(--ink4); font-size: 17px; line-height: 1;
   margin-left: 8px; padding: 0 2px; transition: color .15s;
 }
 #rag-close:hover { color: var(--ink); }
@@ -434,13 +445,13 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 #rag-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
 
 #rag-summary {
-  font-size: 12.5px; line-height: 1.65; color: var(--ink2);
+  font-size: 13.5px; line-height: 1.65; color: var(--ink2);
 }
 
 #rag-highlights { display: flex; flex-direction: column; gap: 5px; }
 .rag-highlight {
   display: flex; gap: 7px; align-items: flex-start;
-  font-size: 12px; line-height: 1.5; color: var(--ink3);
+  font-size: 13px; line-height: 1.5; color: var(--ink3);
 }
 .rag-bullet {
   color: var(--accent); font-weight: 600; flex-shrink: 0;
@@ -449,7 +460,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 
 #rag-source {
   display: flex; align-items: center; gap: 5px;
-  font-size: 10.5px; font-family: 'Poppins', sans-serif;
+  font-size: 11.5px; font-family: 'Poppins', sans-serif;
   color: var(--ink4); border-top: 1px solid var(--rule);
   padding-top: 8px; letter-spacing: .03em;
 }
@@ -471,7 +482,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 #documents-panel {
   border-bottom: 1px solid var(--rule);
   padding: 12px 18px;
-  background: var(--paper2);
+  background: var(--paper);
   display: flex; flex-direction: column; gap: 8px;
 }
 #document-list { display: flex; flex-direction: column; gap: 6px; max-height: 130px; overflow-y: auto; }
@@ -481,17 +492,17 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
   background: transparent; transition: background .15s;
 }
 .doc-row:hover { background: var(--paper); }
-.doc-icon { font-size: 12px; color: var(--accent); flex-shrink: 0; font-family: 'Poppins', sans-serif; }
+.doc-icon { font-size: 13px; color: var(--accent); flex-shrink: 0; font-family: 'Poppins', sans-serif; }
 .doc-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.doc-name { font-size: 12px; color: var(--ink2); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.doc-meta { font-size: 10px; color: var(--ink4); font-family: 'Poppins', sans-serif; }
-.doc-del { background: none; border: none; cursor: pointer; color: var(--ink4); font-size: 13px; padding: 2px 4px; flex-shrink: 0; transition: color .15s; }
+.doc-name { font-size: 13px; color: var(--ink2); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doc-meta { font-size: 11px; color: var(--ink4); font-family: 'Poppins', sans-serif; }
+.doc-del { background: none; border: none; cursor: pointer; color: var(--ink4); font-size: 14px; padding: 2px 4px; flex-shrink: 0; transition: color .15s; }
 .doc-del:hover { color: var(--accent); }
 
 /* ── INTENT TAG + KNOWLEDGE ANSWER ── */
 .intent-tag {
   display: inline-block; font-family: 'Poppins', sans-serif;
-  font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase;
+  font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase;
   padding: 1px 7px; border-radius: 20px; margin-bottom: 4px;
   border: 1px solid var(--rule2); color: var(--ink3); background: var(--paper2);
 }
@@ -499,29 +510,29 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 .intent-tag.knowledge { color: var(--green); border-color: #C4D4E8; background: var(--green-light); }
 .intent-tag.hybrid { color: #2a6bb8; border-color: #c4d4e8; background: #eaf0f7; }
 
-.answer-body { font-size: 13.5px; line-height: 1.65; color: var(--ink2); }
+.answer-body { font-size: 14.5px; line-height: 1.65; color: var(--ink2); }
 .answer-sources {
   margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--rule);
   display: flex; flex-direction: column; gap: 4px;
 }
 .answer-sources-title {
-  font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase;
+  font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
   color: var(--ink4); font-family: 'Poppins', sans-serif;
 }
 .cite-chip {
-  font-size: 11px; color: var(--ink3); line-height: 1.4;
+  font-size: 12px; color: var(--ink3); line-height: 1.4;
   display: flex; gap: 5px; align-items: baseline;
 }
 .cite-chip::before { content: '§'; color: var(--accent); flex-shrink: 0; }
 .cite-chip a { color: var(--accent); text-decoration: none; word-break: break-all; }
 .cite-chip a:hover { text-decoration: underline; }
 .src-tier {
-  font-size: 9.5px; font-family: 'Poppins', sans-serif; color: var(--ink4);
+  font-size: 10.5px; font-family: 'Poppins', sans-serif; color: var(--ink4);
   letter-spacing: .03em;
 }
 .metrics-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
 .metric-chip {
-  font-family: 'Poppins', sans-serif; font-size: 10px;
+  font-family: 'Poppins', sans-serif; font-size: 11px;
   padding: 2px 7px; border-radius: 20px; border: 1px solid var(--rule2);
   color: var(--ink3); background: white; letter-spacing: .02em;
 }
@@ -529,12 +540,12 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 .metric-chip.good { border-color: #C4D4E8; background: var(--green-light); color: var(--green); }
 .metric-chip.warn { border-color: #e8d0c4; background: var(--accent-light); color: var(--accent); }
 .guardrail-note {
-  margin-top: 6px; font-size: 11px; font-style: italic; color: var(--accent);
+  margin-top: 6px; font-size: 12px; font-style: italic; color: var(--accent);
   display: flex; gap: 5px; align-items: baseline;
 }
 .details-btn {
   display: inline-flex; align-items: center; gap: 4px;
-  font-size: 11px; font-family: 'Poppins', sans-serif;
+  font-size: 12px; font-family: 'Poppins', sans-serif;
   color: var(--ink4); background: none; border: none; cursor: pointer;
   padding: 3px 0; margin-top: 6px; letter-spacing: .02em; transition: color .15s;
 }
@@ -542,7 +553,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 .details-box {
   display: none; margin-top: 6px; background: var(--paper2);
   border: 1px solid var(--rule); border-radius: var(--r); padding: 8px 10px;
-  font-family: 'Poppins', sans-serif; font-size: 10.5px;
+  font-family: 'Poppins', sans-serif; font-size: 11.5px;
   color: var(--ink3); line-height: 1.6; white-space: pre-wrap; word-break: break-word;
   max-height: 180px; overflow-y: auto;
 }
@@ -569,12 +580,12 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
   font-family: 'Poppins', sans-serif;
 }
 .quality-label {
-  font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink4);
+  font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink4);
   white-space: nowrap;
 }
 .quality-bar { flex: 1; height: 4px; border-radius: 2px; background: var(--paper3); overflow: hidden; }
 .quality-bar-fill { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
-.quality-chev { color: var(--ink4); font-size: 11px; transition: transform .2s ease; }
+.quality-chev { color: var(--ink4); font-size: 12px; transition: transform .2s ease; }
 .quality.open .quality-chev { transform: rotate(180deg); }
 .quality-detail { max-height: 0; overflow: hidden; transition: max-height .2s ease; }
 .quality.open .quality-detail { max-height: 240px; margin-top: 6px; }
@@ -594,25 +605,64 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
   padding: 20px; display: flex; flex-direction: column; gap: 12px;
   font-family: var(--ff-body);
 }
-#confirm-modal h3 { font-size: 15px; font-weight: 600; color: var(--ink); }
-#confirm-message { font-size: 13px; color: var(--ink2); line-height: 1.5; }
+#confirm-modal h3 { font-size: 16px; font-weight: 600; color: var(--ink); }
+#confirm-message { font-size: 14px; color: var(--ink2); line-height: 1.5; }
 .confirm-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
 .confirm-btn {
-  font-size: 12.5px; font-family: var(--ff-body);
+  font-size: 13.5px; font-family: var(--ff-body);
   padding: 8px 16px; border-radius: var(--r); cursor: pointer;
   border: 1px solid var(--rule2); background: white; color: var(--ink2); transition: filter .15s;
 }
 .confirm-btn.danger { background: #C0392B; border-color: #C0392B; color: white; }
 .confirm-btn:hover { filter: brightness(0.97); }
+
+/* ── HEADER + INFO ── */
+.topbar-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.info-btn {
+  background: none; border: none; cursor: pointer; color: var(--ink4);
+  padding: 0; display: flex; flex-shrink: 0; margin-top: 3px; transition: color .15s;
+}
+.info-btn:hover { color: var(--accent); }
+.info-btn svg { width: 16px; height: 16px; }
+.info-popover {
+  margin-top: 8px; background: white; border: 1px solid #ECE9E1;
+  border-radius: var(--r); padding: 10px 12px;
+  font-size: 13px; line-height: 1.55; color: var(--ink2);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+/* ── MAP LAYERS rows (datasets restyled: dot + name + count + active) ── */
+.dataset-row { cursor: pointer; }
+.dataset-row input[type=checkbox] { display: none; }
+.ds-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--ink4); transition: background .15s; }
+.dataset-name { flex: 1; }
+.ds-count { flex-shrink: 0; font-size: 12px; color: var(--ink4); font-family: 'Poppins', sans-serif; white-space: nowrap; }
+.ds-active { display: none; }
+.dataset-del { opacity: 0; transition: opacity .15s, color .15s; }
+.dataset-row:hover .dataset-del { opacity: 1; }
+.dataset-row:has(input:checked) { background: #EAF1F7; }
+.dataset-row:has(input:checked) .ds-dot { background: var(--accent); }
+.dataset-row:has(input:checked) .ds-count { color: var(--accent); }
+.dataset-row:has(input:checked) .ds-active { display: inline; }
 </style>
 </head>
 <body>
 <div id="app">
   <div id="sidebar">
     <div id="topbar">
-      <h1>GeoChat&thinsp;—&thinsp;Hybrid RAG</h1>
+      <div class="topbar-row">
+        <h1>GeoChat</h1>
+        <button class="info-btn" id="info-btn" onclick="toggleInfo(event)" aria-label="About GeoChat" title="About GeoChat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        </button>
+      </div>
       <div class="topbar-sub">
-        <span class="topbar-tagline">Ask in plain language — map, documents, or both</span>
+        <span class="topbar-tagline">hybrid RAG · map + documents</span>
+      </div>
+      <div id="info-popover" class="info-popover" style="display:none">
+        <b>GeoChat</b> is a hybrid geospatial assistant. Ask in plain language and it searches your
+        map datasets, your uploaded documents, and official sources — then answers with citations
+        and plots matching places on the map.
       </div>
     </div>
 
@@ -623,9 +673,9 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
           <button class="sec-toggle" id="sec-toggle-datasets" onclick="toggleSection('datasets')" aria-label="Collapse datasets">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
           </button>
-          <span class="dp-title">Datasets</span>
+          <span class="dp-title">Map layers</span>
         </span>
-        <button class="dp-upload-btn" id="upload-open-btn" onclick="openUploadModal()">+ geojson</button>
+        <button class="dp-upload-btn" id="upload-open-btn" onclick="openUploadModal()">+ add</button>
       </div>
       <div id="dataset-list">
         <div class="dp-empty">No datasets yet — upload a GeoJSON or CSV to get started.</div>
@@ -641,7 +691,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
           </button>
           <span class="dp-title">Documents</span>
         </span>
-        <button class="dp-upload-btn" id="doc-upload-btn" onclick="document.getElementById('doc-file-input').click()">+ document</button>
+        <button class="dp-upload-btn" id="doc-upload-btn" onclick="document.getElementById('doc-file-input').click()">+ add</button>
       </div>
       <input type="file" id="doc-file-input" accept=".pdf,.docx,.txt,.md,.markdown,.html,.htm,.csv" style="display:none" onchange="uploadDocument(this.files[0])"/>
       <div id="document-list">
@@ -653,7 +703,6 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
     <div id="messages">
       <div class="msg-wrap ai">
         <span class="msg-label">Assistant</span>
-        <div class="bubble" id="welcome-bubble">Upload a <b>map dataset</b> (GeoJSON / CSV) to plot places, and/or a <b>knowledge document</b> (PDF, DOCX, TXT, MD, HTML) to answer factual questions. Then just ask — I'll figure out whether to search the map, the documents, or both.</div>
       </div>
       <div class="msg-wrap ai">
         <span class="msg-label">Suggestions</span>
@@ -667,7 +716,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
           <button class="sec-toggle" id="sec-toggle-layers" onclick="toggleSection('layers')" aria-label="Collapse map layers">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
           </button>
-          <span class="lp-title">Map layers</span>
+          <span class="lp-title">Plotted</span>
         </span>
         <button class="clear-btn" onclick="clearLayers()">clear all</button>
       </div>
@@ -675,11 +724,13 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
     </div>
 
     <div id="input-area">
-      <textarea id="chat-input" rows="1" placeholder="Select a dataset above first…" disabled></textarea>
+      <textarea id="chat-input" rows="1" placeholder="Ask about the map or your documents…" disabled></textarea>
       <button id="send-btn" onclick="sendQuery()" aria-label="Send" disabled>
         <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
     </div>
+
+    <div class="resize-handle" id="sidebar-resize" title="Drag to resize"></div>
   </div>
 
   <div id="map-wrap">
@@ -733,7 +784,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 
       <!-- 2a: ask auto vs manual -->
       <div id="um-desc-choice">
-        <p style="font-size:12.5px;color:var(--ink3);line-height:1.5;margin-bottom:8px">
+        <p style="font-size:14px;color:var(--ink3);line-height:1.5;margin-bottom:8px">
           Column descriptions help the assistant understand your data. Want me to
           draft them automatically, or write them yourself?
         </p>
@@ -805,7 +856,49 @@ window.addEventListener('load', () => {
   autoResize();
   refreshDatasets();
   refreshDocuments();
+  initSidebarResize();
 });
+
+// ── INFO POPOVER (brief app description) ─────────────────────────────────────
+function toggleInfo(e) {
+  if (e) e.stopPropagation();
+  const pop = document.getElementById('info-popover');
+  pop.style.display = pop.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', e => {
+  const pop = document.getElementById('info-popover');
+  if (pop && pop.style.display === 'block' &&
+      !pop.contains(e.target) && e.target.closest('.info-btn') === null) {
+    pop.style.display = 'none';
+  }
+});
+
+// ── DRAG-TO-RESIZE SIDEBAR (UI only) ─────────────────────────────────────────
+function initSidebarResize() {
+  const handle = document.getElementById('sidebar-resize');
+  const sidebar = document.getElementById('sidebar');
+  if (!handle || !sidebar) return;
+  let dragging = false;
+  handle.addEventListener('mousedown', e => {
+    dragging = true; handle.classList.add('dragging');
+    document.body.style.cursor = 'ew-resize'; document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const left = sidebar.getBoundingClientRect().left;
+    let w = Math.max(240, Math.min(640, e.clientX - left));
+    sidebar.style.width = w + 'px';
+    sidebar.style.minWidth = w + 'px';
+    if (typeof map !== 'undefined' && map) map.invalidateSize();  // redraw only
+  });
+  window.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false; handle.classList.remove('dragging');
+    document.body.style.cursor = ''; document.body.style.userSelect = '';
+    if (typeof map !== 'undefined' && map) map.invalidateSize();
+  });
+}
 
 function buildSuggestions() {
   const wrap = document.getElementById('suggestions');
@@ -880,23 +973,23 @@ function renderDatasetList() {
   list.innerHTML = '';
 
   if (!datasets.length) {
-    list.innerHTML = '<div class="dp-empty">No datasets yet — upload a GeoJSON or CSV to get started.</div>';
+    list.innerHTML = '<div class="dp-empty">No layers yet — + add a GeoJSON or CSV.</div>';
     updateInputEnabled();
     return;
   }
 
   datasets.forEach(ds => {
-    const row = document.createElement('div');
+    // <label> so a click toggles the (hidden) checkbox -> selects the layer.
+    const row = document.createElement('label');
     row.className = 'dataset-row';
     const checked = selectedDatasetIds.has(ds.id) ? 'checked' : '';
-    const colCount = (ds.columns || []).length;
+    const count = (ds.columns || []).length;
     row.innerHTML = `
       <input type="checkbox" ${checked} onchange="toggleDataset('${ds.id}', this.checked)"/>
-      <div class="dataset-info">
-        <span class="dataset-name" title="${esc(ds.display_name)}">${esc(ds.display_name)}</span>
-        <span class="dataset-meta">${ds.geometry_type.toLowerCase()} · ${colCount} column${colCount!==1?'s':''}</span>
-      </div>
-      <button class="dataset-del" title="Delete dataset" onclick="deleteDataset('${ds.id}')">✕</button>`;
+      <span class="ds-dot"></span>
+      <span class="dataset-name" title="${esc(ds.display_name)}">${esc(ds.display_name)}</span>
+      <span class="ds-count"><span class="ds-n">${count}</span><span class="ds-active"> · active</span></span>
+      <button class="dataset-del" title="Delete layer" onclick="event.preventDefault();event.stopPropagation();deleteDataset('${ds.id}')">✕</button>`;
     list.appendChild(row);
   });
 
@@ -917,9 +1010,7 @@ function updateInputEnabled() {
   ta.disabled = !enabled;
   btn.disabled = !enabled;
   if (!enabled) {
-    ta.placeholder = 'Select a dataset or add a document first…';
-  } else if (selectedDatasetIds.size > 0) {
-    ta.placeholder = 'Ask about the map, your documents, or both…';
+    ta.placeholder = 'Add a layer to begin…';
   } else {
     ta.placeholder = 'Ask me a question';
   }
