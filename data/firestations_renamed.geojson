@@ -1,0 +1,3846 @@
+{
+  "type": "FeatureCollection",
+  "generator": "overpass-turbo",
+  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+  "timestamp": "2026-07-15T15:18:00Z",
+  "features": [
+    {
+      "type": "node",
+      "lat": 33.1953702,
+      "lon": 35.5687138,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "מכבי אש קרית שמונה",
+        "name:en": "Kiryat Shmonna fire station",
+        "name:he": "מכבי אש קרית שמונה"
+      },
+      "osm_id": 372864289
+    },
+    {
+      "type": "node",
+      "lat": 32.2185156,
+      "lon": 34.9850609,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 392132807
+    },
+    {
+      "type": "node",
+      "lat": 33.4975118,
+      "lon": 36.2453968,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 411679353
+    },
+    {
+      "type": "node",
+      "lat": 33.5171589,
+      "lon": 36.2601719,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 411679682
+    },
+    {
+      "type": "node",
+      "lat": 31.6912523,
+      "lon": 35.219517,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "Bethlehem Fire Station",
+        "name:ar": "اطفائية بيت لحم"
+      },
+      "osm_id": 431634644
+    },
+    {
+      "type": "node",
+      "lat": 32.1795484,
+      "lon": 35.2494884,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "Bourin Civil Defence",
+        "name:ar": "الدفاع المدني"
+      },
+      "osm_id": 431901135
+    },
+    {
+      "type": "node",
+      "lat": 32.2219669,
+      "lon": 35.2650039,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "Nablus Fire Station",
+        "name:ar": "اطفائية بلدية نابلس"
+      },
+      "osm_id": 432052238
+    },
+    {
+      "type": "node",
+      "lat": 32.2127027,
+      "lon": 35.2971443,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "Nablus",
+        "name:ar": "اطفائية نابلس"
+      },
+      "osm_id": 432156710
+    },
+    {
+      "type": "node",
+      "lat": 31.5093622,
+      "lon": 35.108283,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "Hebron Municipality Fire Station",
+        "name:ar": "إطفائية الخليل",
+        "name:en": "Hebron Municipality Fire Station"
+      },
+      "osm_id": 432199970
+    },
+    {
+      "type": "node",
+      "lat": 31.9040777,
+      "lon": 35.2127018,
+      "tags": {
+        "addr:city": "البيرة",
+        "amenity": "fire_station",
+        "name": "مركز اطفاء البيرة",
+        "name:ar": "مركز اطفاء البيرة",
+        "name:en": "Al-Bira Fire Station"
+      },
+      "osm_id": 432260776
+    },
+    {
+      "type": "node",
+      "lat": 31.9459959,
+      "lon": 35.0217355,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "Ne'leen Fire Station",
+        "name:ar": "مركز اطفاء"
+      },
+      "osm_id": 432263459
+    },
+    {
+      "type": "node",
+      "lat": 31.8933967,
+      "lon": 35.1877364,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "The Main Fire Station",
+        "name:ar": "محطة المحروقات الرئيسية",
+        "name:en": "The Main Fire Station"
+      },
+      "osm_id": 432266682
+    },
+    {
+      "type": "node",
+      "lat": 31.891188,
+      "lon": 35.2021374,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "Aldefa' Almadani",
+        "name:ar": "الدفاع المدني",
+        "name:en": "Aldefa' Almadani"
+      },
+      "osm_id": 432277323
+    },
+    {
+      "type": "node",
+      "lat": 31.7606324,
+      "lon": 35.2603199,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "Fire Station",
+        "name:ar": "الاطفائية",
+        "name:ro": "Post de Pompieri"
+      },
+      "osm_id": 432292407
+    },
+    {
+      "type": "node",
+      "lat": 31.9689115,
+      "lon": 35.2020959,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "Bir Ziet fire station",
+        "name:ar": "الدفاع المدني بيرزيت",
+        "name:en": "Birzeit Civil Defense"
+      },
+      "osm_id": 432296160
+    },
+    {
+      "type": "node",
+      "lat": 32.1789467,
+      "lon": 35.0563747,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "'Azzun Fire Department",
+        "name:ar": "دفاع مدني عزون"
+      },
+      "osm_id": 432326189
+    },
+    {
+      "type": "node",
+      "lat": 32.0819872,
+      "lon": 35.1819586,
+      "tags": {
+        "addr:city": "سلفيت",
+        "amenity": "fire_station",
+        "name": "مديرية الدفاع المدني الفلسطيني",
+        "name:ar": "مديرية الدفاع المدني الفلسطيني",
+        "name:en": "Palestinian Civil Defense Directorate"
+      },
+      "osm_id": 432356686
+    },
+    {
+      "type": "node",
+      "lat": 22.3139536,
+      "lon": 39.1052682,
+      "tags": {
+        "amenity": "fire_station",
+        "check_date": "2024-04-17",
+        "name": "KAUST Firestation"
+      },
+      "osm_id": 478487359
+    },
+    {
+      "type": "node",
+      "lat": 31.3338614,
+      "lon": 34.3558165,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "Civil Defense",
+        "name:ar": "الدفاع المدنى الدقات"
+      },
+      "osm_id": 505126649
+    },
+    {
+      "type": "node",
+      "lat": 30.0672492,
+      "lon": 31.3689579,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 512417734
+    },
+    {
+      "type": "node",
+      "lat": 32.6659733,
+      "lon": 35.1058645,
+      "tags": {
+        "amenity": "fire_station",
+        "check_date": "2024-04-09",
+        "name": "תחנת כיבוי אש יוקנעם",
+        "name:en": "Yokne'am fire station",
+        "name:he": "תחנת כיבוי אש יוקנעם"
+      },
+      "osm_id": 563335173
+    },
+    {
+      "type": "node",
+      "lat": 30.3028631,
+      "lon": 31.7441051,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 570066363
+    },
+    {
+      "type": "node",
+      "lat": 21.6039987,
+      "lon": 39.1116325,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 616442437
+    },
+    {
+      "type": "node",
+      "lat": 21.6623579,
+      "lon": 39.1477801,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 616445825
+    },
+    {
+      "type": "node",
+      "lat": 32.0100895,
+      "lon": 34.7973451,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 658451076
+    },
+    {
+      "type": "node",
+      "lat": 33.4836516,
+      "lon": 36.292069,
+      "tags": {
+        "alt_name": "إطفاء الميدان",
+        "amenity": "fire_station",
+        "name": "إطفاء الميدان",
+        "name:ar": "إطفاء الميدان",
+        "name:en": "Al Midan"
+      },
+      "osm_id": 667259390
+    },
+    {
+      "type": "node",
+      "lat": 31.0639151,
+      "lon": 35.0225864,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "מכבי אש דימונה",
+        "name:en": "Dimona fire station",
+        "name:he": "מכבי אש דימונה"
+      },
+      "osm_id": 673368985
+    },
+    {
+      "type": "node",
+      "lat": 31.7851854,
+      "lon": 35.2372157,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 685500643
+    },
+    {
+      "type": "node",
+      "lat": 31.9783096,
+      "lon": 34.7914893,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 739484222
+    },
+    {
+      "type": "node",
+      "lat": 32.7990705,
+      "lon": 35.0213126,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 746361259
+    },
+    {
+      "type": "node",
+      "lat": 31.7495402,
+      "lon": 34.9794331,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 759956581
+    },
+    {
+      "type": "node",
+      "lat": 31.9574767,
+      "lon": 35.2569876,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 783844707
+    },
+    {
+      "type": "node",
+      "lat": 33.0081464,
+      "lon": 35.107886,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 791214090
+    },
+    {
+      "type": "node",
+      "lat": 32.6987735,
+      "lon": 35.30912,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 800029750
+    },
+    {
+      "type": "node",
+      "lat": 32.9937276,
+      "lon": 35.7110462,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 837538121
+    },
+    {
+      "type": "node",
+      "lat": 32.4815519,
+      "lon": 35.1589527,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 910770624
+    },
+    {
+      "type": "node",
+      "lat": 32.5017235,
+      "lon": 35.4928792,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 929840924
+    },
+    {
+      "type": "node",
+      "lat": 32.6165359,
+      "lon": 35.2883078,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "מכבי אש עפולה",
+        "name:en": "Afula Fire Brigade",
+        "name:he": "מכבי אש עפולה"
+      },
+      "osm_id": 945622719
+    },
+    {
+      "type": "node",
+      "lat": 30.0563657,
+      "lon": 31.2819733,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 987129754
+    },
+    {
+      "type": "node",
+      "lat": 31.8107645,
+      "lon": 34.9315786,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 988613946
+    },
+    {
+      "type": "node",
+      "lat": 29.5652826,
+      "lon": 34.949993,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 1096158063
+    },
+    {
+      "type": "node",
+      "lat": 31.3189616,
+      "lon": 34.6168031,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "מכבי אש אופקים",
+        "name:en": "Ofakim fire station",
+        "name:he": "מכבי אש אופקים"
+      },
+      "osm_id": 1107350999
+    },
+    {
+      "type": "node",
+      "lat": 30.094396,
+      "lon": 31.3309138,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "محطة إطفاء صلاح الدين",
+        "name:ar": "محطة إطفاء صلاح الدين",
+        "name:en": "Salah El Din Fire Station"
+      },
+      "osm_id": 1195158320
+    },
+    {
+      "type": "node",
+      "lat": 32.1063892,
+      "lon": 34.833702,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "מכבי אש, תחנת עתידים",
+        "name:en": "Atidim Station Fire Brigade",
+        "name:he": "מכבי אש, תחנת עתידים"
+      },
+      "osm_id": 1212527366
+    },
+    {
+      "type": "node",
+      "lat": 31.5341677,
+      "lon": 35.0985046,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "Hebron Fire station"
+      },
+      "osm_id": 1404611806
+    },
+    {
+      "type": "node",
+      "lat": 32.0909621,
+      "lon": 34.8393915,
+      "tags": {
+        "amenity": "fire_station",
+        "check_date": "2025-04-25",
+        "name": "תחנת כיבוי אש בני ברק",
+        "name:he": "תחנת כיבוי אש בני ברק"
+      },
+      "osm_id": 1430686521
+    },
+    {
+      "type": "node",
+      "lat": 31.6594567,
+      "lon": 34.5890566,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "שירותי כיבוי והצלה אשקלון",
+        "name:en": "Ashkelon fire station",
+        "name:he": "שירותי כיבוי והצלה אשקלון"
+      },
+      "osm_id": 1470906133
+    },
+    {
+      "type": "node",
+      "lat": 30.1833603,
+      "lon": 31.2237961,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 1501997088
+    },
+    {
+      "type": "node",
+      "lat": 32.0675385,
+      "lon": 34.8329591,
+      "tags": {
+        "addr:city": "רמת גן",
+        "addr:housenumber": "13",
+        "addr:street": "אריה בן אליעזר",
+        "amenity": "fire_station",
+        "check_date": "2025-12-28",
+        "name": "Ramat Gan Fire Station",
+        "name:en": "Ramat Gan Fire Station",
+        "name:he": "תחנת כיבוי אש רמת גן",
+        "opening_hours": "24/7",
+        "operator": "Government",
+        "phone": "+97236742222",
+        "website": "https://www.gov.il/he/Departments/israel_national_fire_and_rescue_authority"
+      },
+      "osm_id": 1693941208
+    },
+    {
+      "type": "node",
+      "lat": 32.7972512,
+      "lon": 35.6865655,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "מכבי אש בני יהודה",
+        "name:he": "מכבי אש בני יהודה"
+      },
+      "osm_id": 1732262347
+    },
+    {
+      "type": "node",
+      "lat": 28.4950249,
+      "lon": 34.5172483,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 1755546521
+    },
+    {
+      "type": "node",
+      "lat": 33.2316107,
+      "lon": 35.7561417,
+      "tags": {
+        "addr:city": "مسعدة",
+        "amenity": "fire_station"
+      },
+      "osm_id": 1760624193
+    },
+    {
+      "type": "node",
+      "lat": 33.5330435,
+      "lon": 36.3238224,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 1780525420
+    },
+    {
+      "type": "node",
+      "lat": 31.1840611,
+      "lon": 35.7081405,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "Al Karak Fire Station"
+      },
+      "osm_id": 1784466037
+    },
+    {
+      "type": "node",
+      "lat": 29.5915317,
+      "lon": 32.7207632,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 1784962231
+    },
+    {
+      "type": "node",
+      "lat": 30.883378,
+      "lon": 31.4592804,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "مطافي السنبلاوين",
+        "name:ar": "مطافي السنبلاوين",
+        "name:en": "Al-Sunbullawayn Fire Department"
+      },
+      "osm_id": 1824916904
+    },
+    {
+      "type": "node",
+      "lat": 27.239859,
+      "lon": 33.8303798,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 1825138368
+    },
+    {
+      "type": "node",
+      "lat": 33.5478687,
+      "lon": 36.2126937,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "دائرة اطفاء قدسيا",
+        "name:en": "Qodsia Fire Department"
+      },
+      "osm_id": 1825642363
+    },
+    {
+      "type": "node",
+      "lat": 25.0285113,
+      "lon": 37.2641874,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "الدفاع المدني"
+      },
+      "osm_id": 1848169607
+    },
+    {
+      "type": "node",
+      "lat": 33.6669526,
+      "lon": 35.4894342,
+      "tags": {
+        "addr:city": "الدبية",
+        "amenity": "fire_station",
+        "name": "الدفاع المدني",
+        "name:ar": "الدفاع المدني"
+      },
+      "osm_id": 1888088157
+    },
+    {
+      "type": "node",
+      "lat": 28.0950422,
+      "lon": 30.7602666,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "Fire Station"
+      },
+      "osm_id": 1889173608
+    },
+    {
+      "type": "node",
+      "lat": 32.00634,
+      "lon": 35.8785124,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 1923532464
+    },
+    {
+      "type": "node",
+      "lat": 32.0616796,
+      "lon": 35.8846779,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "Abu Nuseir"
+      },
+      "osm_id": 1932939397
+    },
+    {
+      "type": "node",
+      "lat": 29.978314,
+      "lon": 30.9418872,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 1937391236
+    },
+    {
+      "type": "node",
+      "lat": 32.0617203,
+      "lon": 35.884676,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "Abu Nuseir Civil Defence"
+      },
+      "osm_id": 1960435907
+    },
+    {
+      "type": "node",
+      "lat": 25.2613481,
+      "lon": 34.7786168,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 1962294223
+    },
+    {
+      "type": "node",
+      "lat": 32.4394698,
+      "lon": 34.9309953,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "מכבי אש חדרה",
+        "name:en": "Hadera Fire station",
+        "name:he": "מכבי אש חדרה"
+      },
+      "osm_id": 1976543873
+    },
+    {
+      "type": "node",
+      "lat": 29.5554745,
+      "lon": 34.955836,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 2080604714
+    },
+    {
+      "type": "node",
+      "lat": 31.9984521,
+      "lon": 34.8900323,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "כיבוי אש נתב”ג"
+      },
+      "osm_id": 2083860593
+    },
+    {
+      "type": "node",
+      "lat": 27.1964632,
+      "lon": 31.1854652,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 2315311452
+    },
+    {
+      "type": "node",
+      "lat": 30.4984763,
+      "lon": 35.5260737,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 2528846655
+    },
+    {
+      "type": "node",
+      "lat": 31.4576332,
+      "lon": 35.1103846,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "Yatta Civil Defence"
+      },
+      "osm_id": 2666606035
+    },
+    {
+      "type": "node",
+      "lat": 31.0474638,
+      "lon": 31.3956564,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 3119541337
+    },
+    {
+      "type": "node",
+      "lat": 31.048264,
+      "lon": 31.3889082,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 3119541338
+    },
+    {
+      "type": "node",
+      "lat": 30.1051579,
+      "lon": 31.3267534,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "Fire Station"
+      },
+      "osm_id": 3157857224
+    },
+    {
+      "type": "node",
+      "lat": 31.9367186,
+      "lon": 34.8871706,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "מכבי אש רמלה",
+        "name:en": "Ramle Fire Department",
+        "name:he": "מכבי אש רמלה"
+      },
+      "osm_id": 3663524726
+    },
+    {
+      "type": "node",
+      "lat": 31.8032575,
+      "lon": 35.3293001,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 3781285929
+    },
+    {
+      "type": "node",
+      "lat": 32.70833,
+      "lon": 35.3173985,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "מכבי אש יזרעאל",
+        "name:en": "Izrael fire station",
+        "name:he": "מכבי אש יזרעאל"
+      },
+      "osm_id": 3805637623
+    },
+    {
+      "type": "node",
+      "lat": 31.240898,
+      "lon": 29.9930528,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 4016850207
+    },
+    {
+      "type": "node",
+      "lat": 32.0323734,
+      "lon": 35.1995919,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "Abwein Fire Station",
+        "name:ar": "مركز اطفائية عبوين"
+      },
+      "osm_id": 4293698989
+    },
+    {
+      "type": "node",
+      "lat": 21.505618,
+      "lon": 39.1805623,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 4340943926
+    },
+    {
+      "type": "node",
+      "lat": 30.1003789,
+      "lon": 31.3121846,
+      "tags": {
+        "addr:postcode": "11321",
+        "addr:street": "طومان باى",
+        "amenity": "fire_station",
+        "name": "مطافئ الزيتون",
+        "name:ar": "مطافئ الزيتون",
+        "name:en": "Al zaytone fire station",
+        "opening_hours": "24/7"
+      },
+      "osm_id": 4432276692
+    },
+    {
+      "type": "node",
+      "lat": 31.5068474,
+      "lon": 34.4710992,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "الدفاع المدني",
+        "name:ar": "الدفاع المدني"
+      },
+      "osm_id": 4453609290
+    },
+    {
+      "type": "node",
+      "lat": 32.3095115,
+      "lon": 35.0233676,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "الدفاع المدني",
+        "name:ar": "الدفاع المدني"
+      },
+      "osm_id": 4482106194
+    },
+    {
+      "type": "node",
+      "lat": 32.2201111,
+      "lon": 35.2504666,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "اطفائية 24",
+        "name:ar": "اطفائية 24"
+      },
+      "osm_id": 4501150892
+    },
+    {
+      "type": "node",
+      "lat": 32.2201275,
+      "lon": 35.2510136,
+      "tags": {
+        "addr:city": "نابلس",
+        "amenity": "fire_station",
+        "name": "صالون الحسناء للسيدات",
+        "name:ar": "صالون الحسناء للسيدات",
+        "name:en": "Al hasna Salon for Ladies"
+      },
+      "osm_id": 4501231089
+    },
+    {
+      "type": "node",
+      "lat": 32.4147287,
+      "lon": 35.2827355,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "الدفاع المدني"
+      },
+      "osm_id": 4526184889
+    },
+    {
+      "type": "node",
+      "lat": 21.5365789,
+      "lon": 39.2025171,
+      "tags": {
+        "addr:housenumber": "1",
+        "addr:street": "Falasteen Street شارع فلسطين",
+        "amenity": "fire_station",
+        "email": "musicy17@gmail.com",
+        "name": "منزل",
+        "name:ar": "منزل",
+        "name:en": "Home",
+        "phone": "0572104171"
+      },
+      "osm_id": 4534544392
+    },
+    {
+      "type": "node",
+      "lat": 30.1171072,
+      "lon": 31.2462273,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "قسم اطفاء شبرا الخيمه",
+        "name:ar": "قسم اطفاء شبرا الخيمه",
+        "name:en": "Shobra al-kheima fire station"
+      },
+      "osm_id": 4534948889
+    },
+    {
+      "type": "node",
+      "lat": 32.4977809,
+      "lon": 35.2407198,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "اطفائية اليامون",
+        "name:ar": "اطفائية اليامون"
+      },
+      "osm_id": 4579119989
+    },
+    {
+      "type": "node",
+      "lat": 31.2328171,
+      "lon": 34.1094834,
+      "tags": {
+        "amenity": "fire_station",
+        "name:en": "Zowaid"
+      },
+      "osm_id": 4579529092
+    },
+    {
+      "type": "node",
+      "lat": 30.1910164,
+      "lon": 35.7066368,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 4617737401
+    },
+    {
+      "type": "node",
+      "lat": 31.6971786,
+      "lon": 35.1890717,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "اطفائية بيت لحم",
+        "name:ar": "اطفائية بيت لحم",
+        "name:en": "Fire Station Bethlehem"
+      },
+      "osm_id": 4693157689
+    },
+    {
+      "type": "node",
+      "lat": 32.1914012,
+      "lon": 34.9736913,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "الدفاع المدني",
+        "name:ar": "الدفاع المدني",
+        "name:en": "Civil Defense"
+      },
+      "osm_id": 4697066589
+    },
+    {
+      "type": "node",
+      "lat": 32.330002,
+      "lon": 35.2247291,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "مديرية الدفاع المدني واسناد الشمال",
+        "name:ar": "مديرية الدفاع المدني واسناد الشمال"
+      },
+      "osm_id": 4738179025
+    },
+    {
+      "type": "node",
+      "lat": 33.4131857,
+      "lon": 36.5225993,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "إطفاء المطار (البناء الجديد)",
+        "name:ar": "إطفاء المطار (البناء الجديد)",
+        "name:fr": "Service d'incendie",
+        "opening_hours": "24/7"
+      },
+      "osm_id": 4894459721
+    },
+    {
+      "type": "node",
+      "lat": 32.7061447,
+      "lon": 35.0607339,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "תחנת רכס הכרמל עוספיה",
+        "name:he": "תחנת רכס הכרמל עוספיה"
+      },
+      "osm_id": 4907816994
+    },
+    {
+      "type": "node",
+      "lat": 31.9044322,
+      "lon": 35.2135508,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "مركز اطفاء البيرة",
+        "name:ar": "مركز اطفاء البيرة",
+        "name:en": "Al-Bireh Fire Station",
+        "phone": "+97022405595"
+      },
+      "osm_id": 4951037721
+    },
+    {
+      "type": "node",
+      "lat": 32.5336259,
+      "lon": 35.8276675,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "Irbid West Fire Station"
+      },
+      "osm_id": 4973223289
+    },
+    {
+      "type": "node",
+      "lat": 32.3086585,
+      "lon": 35.3634426,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "مركز اطفائية طوباس",
+        "name:ar": "مركز اطفائية طوباس",
+        "name:en": "tubass fire station"
+      },
+      "osm_id": 4993505321
+    },
+    {
+      "type": "node",
+      "lat": 32.085244,
+      "lon": 34.8007655,
+      "tags": {
+        "addr:city": "רמת גן",
+        "addr:housenumber": "3",
+        "addr:street": "הרקון",
+        "amenity": "fire_station",
+        "name": "כיבוי אש רמת גן - בורסה",
+        "name:en": "Ramat Gan Fire Station - Bursa",
+        "name:he": "כיבוי אש רמת גן - בורסה",
+        "opening_hours": "24/7",
+        "operator": "Government",
+        "phone": "+972 036742222",
+        "website": "https://www.gov.il/he/Departments/israel_national_fire_and_rescue_authority"
+      },
+      "osm_id": 5084345846
+    },
+    {
+      "type": "node",
+      "lat": 33.5054286,
+      "lon": 36.328978,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "مركز الدفاع المدني",
+        "name:ar": "مركز الدفاع المدني"
+      },
+      "osm_id": 5102729121
+    },
+    {
+      "type": "node",
+      "lat": 30.6129114,
+      "lon": 35.1879173,
+      "tags": {
+        "amenity": "fire_station",
+        "is_in:village": "ספיר",
+        "name": "תחנת כיבוי אש ספיר",
+        "name:en": "Sapir Fire Station",
+        "name:he": "תחנת כיבוי אש ספיר",
+        "opening_hours": "24/7",
+        "phone": "+972 08-643-6628",
+        "website": "https://www.gov.il/he/Departments/israel_national_fire_and_rescue_authority"
+      },
+      "osm_id": 5179065484
+    },
+    {
+      "type": "node",
+      "lat": 31.5087551,
+      "lon": 31.8322609,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 5551667837
+    },
+    {
+      "type": "node",
+      "lat": 32.3271239,
+      "lon": 35.2156397,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "اطفائيه"
+      },
+      "osm_id": 5574475822
+    },
+    {
+      "type": "node",
+      "lat": 32.062223,
+      "lon": 34.7923563,
+      "tags": {
+        "amenity": "fire_station",
+        "check_date": "2026-01-25",
+        "name": "תחנת כיבוי אש אלון",
+        "name:he": "תחנת כיבוי אש אלון"
+      },
+      "osm_id": 5594905576
+    },
+    {
+      "type": "node",
+      "lat": 31.4028357,
+      "lon": 34.7552518,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 5594939943
+    },
+    {
+      "type": "node",
+      "lat": 33.4960096,
+      "lon": 36.2899127,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 5615831223
+    },
+    {
+      "type": "node",
+      "lat": 32.1999216,
+      "lon": 35.1327564,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "مركز الدفاع المدني",
+        "name:en": "Fire station"
+      },
+      "osm_id": 6145703089
+    },
+    {
+      "type": "node",
+      "lat": 32.1350701,
+      "lon": 34.8528508,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 6483090044
+    },
+    {
+      "type": "node",
+      "lat": 31.8260806,
+      "lon": 35.2377532,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "תחנת כיבוי אש/מד\"א \"פסגה\"",
+        "name:he": "תחנת כיבוי אש/מד\"א \"פסגה\""
+      },
+      "osm_id": 6553344985
+    },
+    {
+      "type": "node",
+      "lat": 31.7825673,
+      "lon": 35.2046434,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "תחנת הלאום",
+        "name:he": "תחנת הלאום"
+      },
+      "osm_id": 6732001538
+    },
+    {
+      "type": "node",
+      "lat": 32.0725184,
+      "lon": 34.784916,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 6781468786
+    },
+    {
+      "type": "node",
+      "lat": 30.7813742,
+      "lon": 27.1096606,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "مطافئ مليحة.",
+        "name:ar": "مطافئ مليحة."
+      },
+      "osm_id": 6964137385
+    },
+    {
+      "type": "node",
+      "lat": 32.0319565,
+      "lon": 36.0821558,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 7112036894
+    },
+    {
+      "type": "node",
+      "lat": 28.5033219,
+      "lon": 35.0030358,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 7923506410
+    },
+    {
+      "type": "node",
+      "lat": 33.7708982,
+      "lon": 35.9012876,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "al defaa al mdani"
+      },
+      "osm_id": 8244775089
+    },
+    {
+      "type": "node",
+      "lat": 27.6495839,
+      "lon": 22.4982613,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "محطة الإطفاء حقل السرير",
+        "name:en": "Sarir fire station",
+        "opening_hours": "24/7",
+        "phone": "883555",
+        "website": "https://www.agoco.com/"
+      },
+      "osm_id": 8262190217
+    },
+    {
+      "type": "node",
+      "lat": 27.6695742,
+      "lon": 22.49406,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "قسم السلامة",
+        "name:en": "Fire & safety office"
+      },
+      "osm_id": 8476218518
+    },
+    {
+      "type": "node",
+      "lat": 21.5183419,
+      "lon": 39.1934305,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 9402203867
+    },
+    {
+      "type": "node",
+      "lat": 27.57086,
+      "lon": 22.3409773,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "محطة الإطفاء",
+        "name:en": "fire station"
+      },
+      "osm_id": 9875504624
+    },
+    {
+      "type": "node",
+      "lat": 27.6703083,
+      "lon": 22.4913272,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "foam station 2"
+      },
+      "osm_id": 9875504629
+    },
+    {
+      "type": "node",
+      "lat": 27.5786049,
+      "lon": 22.4028663,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "محطة الإطفاء",
+        "name:en": "fire station"
+      },
+      "osm_id": 9875513117
+    },
+    {
+      "type": "node",
+      "lat": 30.0151152,
+      "lon": 31.1851802,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "وحده إطفاء كفر طهرمس"
+      },
+      "osm_id": 10266018007
+    },
+    {
+      "type": "node",
+      "lat": 27.8113457,
+      "lon": 22.4291163,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "محطة الإطفاء مجمع 4",
+        "name:en": "Fire station GC4"
+      },
+      "osm_id": 10780239605
+    },
+    {
+      "type": "node",
+      "lat": 27.6497356,
+      "lon": 22.4981102,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "fire vehicles shelter"
+      },
+      "osm_id": 10793519605
+    },
+    {
+      "type": "node",
+      "lat": 27.6713319,
+      "lon": 22.4905954,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "foam station no3"
+      },
+      "osm_id": 10793586605
+    },
+    {
+      "type": "node",
+      "lat": 27.6689846,
+      "lon": 22.4924599,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "foam station no 1"
+      },
+      "osm_id": 10793588105
+    },
+    {
+      "type": "node",
+      "lat": 32.7585111,
+      "lon": 35.0235008,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 11470893042
+    },
+    {
+      "type": "node",
+      "lat": 24.2773903,
+      "lon": 37.5582744,
+      "tags": {
+        "amenity": "fire_station",
+        "survey:date": "2024-08-06"
+      },
+      "osm_id": 12094815788
+    },
+    {
+      "type": "node",
+      "lat": 24.0094374,
+      "lon": 38.2068923,
+      "tags": {
+        "amenity": "fire_station",
+        "survey:date": "2024-08-31"
+      },
+      "osm_id": 12149629473
+    },
+    {
+      "type": "node",
+      "lat": 24.003988,
+      "lon": 38.2190931,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "محطة إطفاء الهيئة الملكية",
+        "name:en": "fire station of royal commision. station no. 1",
+        "survey:date": "2024-09-19"
+      },
+      "osm_id": 12149827223
+    },
+    {
+      "type": "node",
+      "lat": 23.7875779,
+      "lon": 38.7794455,
+      "tags": {
+        "amenity": "fire_station",
+        "survey:date": "2024-10-12"
+      },
+      "osm_id": 12247904536
+    },
+    {
+      "type": "node",
+      "lat": 24.329853,
+      "lon": 38.4290606,
+      "tags": {
+        "amenity": "fire_station",
+        "survey:date": "2024-10-15"
+      },
+      "osm_id": 12255472065
+    },
+    {
+      "type": "node",
+      "lat": 24.0934141,
+      "lon": 38.0349652,
+      "tags": {
+        "amenity": "fire_station",
+        "survey:date": "2024-10-16"
+      },
+      "osm_id": 12255472068
+    },
+    {
+      "type": "node",
+      "lat": 31.817896,
+      "lon": 36.1020194,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "مركز الدفاع المدني الموقر"
+      },
+      "osm_id": 12373153123
+    },
+    {
+      "type": "node",
+      "lat": 29.9255532,
+      "lon": 31.2840583,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 13188218933
+    },
+    {
+      "type": "node",
+      "lat": 30.0160118,
+      "lon": 31.2144866,
+      "tags": {
+        "addr:country": "EG",
+        "addr:district": "الجيزه",
+        "addr:district:en": "Al Giza",
+        "addr:housenumber": "4",
+        "addr:postcode": "12513",
+        "addr:province": "الجيزه",
+        "addr:province:en": "Giza",
+        "addr:street": "شارع همدان",
+        "addr:street:en": "Hamdan Street",
+        "addr:subdistrict": "اولى",
+        "addr:subdistrict:en": "First",
+        "amenity": "fire_station",
+        "name": "نقطة إطفاء همدان",
+        "name:ar": "نقطة إطفاء همدان",
+        "operator": "الإدارة العامة للحماية المدنية بالجيزة"
+      },
+      "osm_id": 13205799138
+    },
+    {
+      "type": "node",
+      "lat": 30.0498285,
+      "lon": 31.2496049,
+      "tags": {
+        "amenity": "fire_station",
+        "name": "مطافي القاهرة",
+        "name:ar": "مطافي القاهرة",
+        "official_name": "مقر إدارة الحماية المدنية وإطفاء القاهرة",
+        "operator": "إدارة الحماية المدنية وإطفاء القاهرة"
+      },
+      "osm_id": 13205799139
+    },
+    {
+      "type": "node",
+      "lat": 29.9913701,
+      "lon": 30.9804088,
+      "tags": {
+        "amenity": "fire_station",
+        "check_date": "2025-11-13",
+        "name": "نقطة إطفاء الحي المتميز"
+      },
+      "osm_id": 13301725197
+    },
+    {
+      "type": "node",
+      "lat": 26.1586848,
+      "lon": 32.7229344,
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 13313723521
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.1799498,
+        "lon": 34.8338512
+      },
+      "nodes": [
+        1108420912,
+        1108420913,
+        1108420914,
+        1108420915,
+        1108420912
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 95597860
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.3217561,
+        "lon": 34.8679281
+      },
+      "nodes": [
+        1244065085,
+        1244065449,
+        1244065596,
+        1244065276,
+        1244064854,
+        1244065107,
+        1244065584,
+        1244064957,
+        1244065085
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "check_date": "2026-07-05",
+        "name": "מכבי אש נתניה",
+        "name:en": "Netanya fire station",
+        "name:he": "מכבי אש נתניה"
+      },
+      "osm_id": 108409554
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.6948173,
+        "lon": 36.5707448
+      },
+      "nodes": [
+        1252663889,
+        1252663918,
+        1252663934,
+        1252663911,
+        1252663914,
+        1252663936,
+        1252663937,
+        1252663932,
+        1252663889
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "الإطفائية",
+        "name:en": "Fire Station"
+      },
+      "osm_id": 109432112
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 28.5090347,
+        "lon": 34.508252
+      },
+      "nodes": [
+        1746781006,
+        1746781014,
+        1746781011,
+        1746781007,
+        1746781003,
+        1746781006
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 162873783
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 29.945228,
+        "lon": 30.915973
+      },
+      "nodes": [
+        2630603903,
+        1811708190,
+        1811708201,
+        2630603901,
+        2630603900,
+        2630603902,
+        2630603903
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "مطافئ 6 أكتوبر",
+        "name:ar": "مطافئ 6 أكتوبر",
+        "name:en": "6th October Fire Station",
+        "operator": "حكومى"
+      },
+      "osm_id": 170019231
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.7994322,
+        "lon": 34.9834612
+      },
+      "nodes": [
+        2066045569,
+        2066045570,
+        2066045568,
+        2066045567,
+        2066045569
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 196252680
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.9260521,
+        "lon": 35.0826907
+      },
+      "nodes": [
+        2069728419,
+        2069728440,
+        2069728417,
+        2069728423,
+        2069728429,
+        2069728438,
+        2069728413,
+        2069728425,
+        2069728419
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "כיבוי והצלה עכו",
+        "name:de": "Feuerwehr Akko",
+        "name:en": "Akko fire station",
+        "name:he": "כיבוי והצלה עכו"
+      },
+      "osm_id": 196671450
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.9460441,
+        "lon": 35.8312337
+      },
+      "nodes": [
+        2096006070,
+        2096006071,
+        2096006069,
+        2096006068,
+        2096006070
+      ],
+      "tags": {
+        "addr:housenumber": "6",
+        "addr:street": "Al-Khansa' Street",
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "السوق الشعبي",
+        "name:ar": "السوق الشعبي",
+        "name:en": "Civil Defense"
+      },
+      "osm_id": 199615415
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.9282596,
+        "lon": 35.9027559
+      },
+      "nodes": [
+        13772894933,
+        2106800091,
+        2106800044,
+        2106800110,
+        2106800155,
+        2106800228,
+        13772894932,
+        2106800281,
+        2106800232,
+        2106800240,
+        2106800226,
+        2106800273,
+        2106800214,
+        2106800103,
+        13772894933
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 200712119
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.097999,
+        "lon": 34.8869229
+      },
+      "nodes": [
+        2166943286,
+        5154204594,
+        5154204595,
+        5154204596,
+        2166943233,
+        2166943246,
+        5154204597,
+        5154204598,
+        1125149483,
+        2166943221,
+        2166943335,
+        2166943295,
+        2166943326,
+        2166943297,
+        2166943214,
+        2166943195,
+        2166943277,
+        2166943274,
+        2166943283,
+        2166943286
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "fire_station"
+      },
+      "osm_id": 206653908
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 30.3709052,
+        "lon": 30.502066
+      },
+      "nodes": [
+        13207829555,
+        13207829554,
+        13207829553,
+        2207127662,
+        13207829555
+      ],
+      "tags": {
+        "addr:city": "مدينة السادات",
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "مركز إطفاء السكنية",
+        "name:ar": "مركز إطفاء السكنية"
+      },
+      "osm_id": 210636126
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.0978571,
+        "lon": 34.8872786
+      },
+      "nodes": [
+        2220186189,
+        2220186194,
+        2220186204,
+        2220186192,
+        2220186213,
+        2220186215,
+        2220186196,
+        2220186203,
+        2220186189
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 212135133
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.8611226,
+        "lon": 35.0983114
+      },
+      "nodes": [
+        2382720622,
+        2382720623,
+        2382720624,
+        2382720625,
+        2382720622
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 229712338
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.80755,
+        "lon": 34.661097
+      },
+      "nodes": [
+        2467301252,
+        3788878435,
+        2467301253,
+        3788878434,
+        3788878432,
+        3788878433,
+        3788878431,
+        3788878430,
+        3788878429,
+        2467301254,
+        3788878437,
+        3788878436,
+        2467301255,
+        12459048806,
+        2467301252
+      ],
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 238920067
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 28.5561745,
+        "lon": 33.9462342
+      },
+      "nodes": [
+        2721507255,
+        2721507256,
+        2721507257,
+        2721507258,
+        2721507255
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "public",
+        "name": "مطافى",
+        "name:ar": "مطافى",
+        "name:es": "Bomberos"
+      },
+      "osm_id": 266618785
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.5659949,
+        "lon": 34.9564199
+      },
+      "nodes": [
+        2820034862,
+        2820034863,
+        2820034864,
+        2820034865,
+        2820034867,
+        2820034862
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "מכבי אש זכרון יעקב",
+        "name:en": "Zichron Yaakov Fire station",
+        "name:he": "מכבי אש זכרון יעקב"
+      },
+      "osm_id": 277497913
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.8734715,
+        "lon": 34.7329649
+      },
+      "nodes": [
+        2889296336,
+        2889296337,
+        2889296338,
+        2889296339,
+        2889296336
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "מכבי אש יבנה",
+        "name:en": "Yavne Fire Station",
+        "name:he": "מכבי אש יבנה"
+      },
+      "osm_id": 285248678
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.1950776,
+        "lon": 29.9059106
+      },
+      "nodes": [
+        3053263308,
+        3053263311,
+        3053263309,
+        3053263310,
+        3053263308
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "المطافئ",
+        "name:ar": "المطافئ"
+      },
+      "osm_id": 301227938
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.4153888,
+        "lon": 34.5894916
+      },
+      "nodes": [
+        3109214061,
+        3109214062,
+        3109214063,
+        3109214064,
+        3109214061
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "מכבי אש נתיבות",
+        "name:en": "Netivot fire station",
+        "name:he": "מכבי אש נתיבות"
+      },
+      "osm_id": 306104641
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.6969173,
+        "lon": 35.1899137
+      },
+      "nodes": [
+        3299946869,
+        3299946870,
+        3299946871,
+        3299946872,
+        3299946869
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "اطفائية بيت لحم",
+        "name:ar": "اطفائية بيت لحم",
+        "name:en": "Fire Station Bethlehem"
+      },
+      "osm_id": 323206880
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.7628733,
+        "lon": 22.244022
+      },
+      "nodes": [
+        3331669675,
+        3331669676,
+        3331669677,
+        3331669678,
+        3331669675
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "الدفاع المدني",
+        "name:ar": "الدفاع المدني",
+        "name:en": "Civil defense"
+      },
+      "osm_id": 326516780
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.0095078,
+        "lon": 34.7980438
+      },
+      "nodes": [
+        13719608633,
+        3413348206,
+        3413348071,
+        3413348219,
+        13719608633
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "שירותי כיבוי והצלה חולון"
+      },
+      "osm_id": 334233829
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 22.2841246,
+        "lon": 39.1110394
+      },
+      "nodes": [
+        3431099943,
+        3431099940,
+        3431099938,
+        3431099939,
+        3431099943
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "Thuwal Fire Station",
+        "name:en": "Thuwal Fire Station"
+      },
+      "osm_id": 336024411
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.9366998,
+        "lon": 34.8872087
+      },
+      "nodes": [
+        3454507905,
+        3454507926,
+        3454507940,
+        3454507906,
+        3454507901,
+        3454505974,
+        3454507930,
+        3454507927,
+        3454507924,
+        3454507925,
+        3454505971,
+        3454507908,
+        3454507905
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 338374487
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.9369983,
+        "lon": 34.8868332
+      },
+      "nodes": [
+        3454505979,
+        3454507894,
+        3454507934,
+        3454507907,
+        3454507895,
+        3454507911,
+        3454505979
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 338374490
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.0373639,
+        "lon": 34.866472
+      },
+      "nodes": [
+        3471127149,
+        3471127150,
+        3471127151,
+        3471127152,
+        3471127149
+      ],
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 339910648
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 33.6964065,
+        "lon": 35.5547017
+      },
+      "nodes": [
+        3498680909,
+        3498680910,
+        3498680911,
+        3498680912,
+        3498680909
+      ],
+      "tags": {
+        "addr:city": "Deir Al Kamar",
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "Civil Defence Deir al Kamar",
+        "name:en": "Civil Defence Deir al Kamar"
+      },
+      "osm_id": 342915950
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.0290848,
+        "lon": 34.8974458
+      },
+      "nodes": [
+        3697006851,
+        3697006879,
+        3697006874,
+        3697006845,
+        3697006851
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 365701039
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 33.5868667,
+        "lon": 36.3264341
+      },
+      "nodes": [
+        3745936565,
+        3745936566,
+        3745936567,
+        3745936568,
+        3745936565
+      ],
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 370930841
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.0941781,
+        "lon": 34.9418472
+      },
+      "nodes": [
+        3822589999,
+        3822589965,
+        3822589966,
+        3822589967,
+        3822589999
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 378899586
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.7598213,
+        "lon": 35.1987985
+      },
+      "nodes": [
+        3988978049,
+        3988978050,
+        3988978051,
+        3988978052,
+        3988978053,
+        3988978054,
+        3988978055,
+        3988978056,
+        3988987857,
+        3988987858,
+        3988987862,
+        3988987859,
+        3988987860,
+        3988987861,
+        3988987863,
+        3988987864,
+        2141599746,
+        3988978049
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "name": "תחנת כיבוי אש גבעת מרדכי",
+        "name:he": "תחנת כיבוי אש גבעת מרדכי"
+      },
+      "osm_id": 396096155
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.4028123,
+        "lon": 34.7553312
+      },
+      "nodes": [
+        4199654692,
+        4199654279,
+        4199654689,
+        4199654266,
+        4199654692
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "محطة الاطفاء",
+        "name:ar": "محطة الاطفاء"
+      },
+      "osm_id": 419979064
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.2225449,
+        "lon": 35.2649526
+      },
+      "nodes": [
+        4319850754,
+        4319850985,
+        4319851117,
+        4319850780,
+        4319850754
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "اطفائية بلدية نابلس"
+      },
+      "osm_id": 433076824
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 25.6859695,
+        "lon": 32.6337743
+      },
+      "nodes": [
+        4703594169,
+        4703594170,
+        4703594171,
+        4703418686,
+        4703594169
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "Luxor Fire department"
+      },
+      "osm_id": 476938612
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.7289925,
+        "lon": 35.0816188
+      },
+      "nodes": [
+        4973185398,
+        4973185397,
+        4973185399,
+        4973185400,
+        4973185404,
+        4973185405,
+        4973185401,
+        4973185398
+      ],
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 507897755
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.7289045,
+        "lon": 35.0818436
+      },
+      "nodes": [
+        4973185402,
+        4973185403,
+        4973185404,
+        4973185405,
+        4973185402
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 507897756
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.7291099,
+        "lon": 35.0815265
+      },
+      "nodes": [
+        4973185406,
+        4973185407,
+        4973185408,
+        4973185409,
+        4973185406
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 507897757
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.1124846,
+        "lon": 35.0350112
+      },
+      "nodes": [
+        5040004081,
+        5040004082,
+        5040004083,
+        5040004084,
+        5040004085,
+        5040004086,
+        5040004087,
+        5040004081
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "תחנת כיבוי אש",
+        "name:he": "תחנת כיבוי אש"
+      },
+      "osm_id": 516250839
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.6849043,
+        "lon": 34.9477229
+      },
+      "nodes": [
+        5151153057,
+        5151153058,
+        1338882867,
+        5151153059,
+        5151153060,
+        5151153057
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 530471738
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.6729374,
+        "lon": 35.2515454
+      },
+      "nodes": [
+        5273280373,
+        5273280374,
+        5273280375,
+        5273280376,
+        5282829955,
+        5282829956,
+        5282829954,
+        5273280373
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 545632896
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.957186,
+        "lon": 35.2570523
+      },
+      "nodes": [
+        5301276822,
+        5301276871,
+        5301276869,
+        5301276847,
+        5301276823,
+        5301276862,
+        5301276822
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 548764376
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.9575347,
+        "lon": 35.256917
+      },
+      "nodes": [
+        5301276849,
+        5301276826,
+        5301276875,
+        5301276829,
+        5301276828,
+        5301276872,
+        5301276849
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "חילוץ והצלה עפרה",
+        "name:he": "חילוץ והצלה עפרה"
+      },
+      "osm_id": 548764380
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.1274494,
+        "lon": 30.6454552
+      },
+      "nodes": [
+        5442095251,
+        5442095252,
+        5442095253,
+        5442095254,
+        5442095251
+      ],
+      "tags": {
+        "addr:city": "دسوق",
+        "addr:street": "الميدان الإبراهيمي",
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "وحدة إطفاء دسوق",
+        "name:ar": "وحدة إطفاء دسوق"
+      },
+      "osm_id": 564939657
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.2873083,
+        "lon": 30.0319092
+      },
+      "nodes": [
+        5579257342,
+        5579257343,
+        5579257344,
+        5579257345,
+        5579257346,
+        5579257347,
+        5579257342
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "building:levels": "2",
+        "height": "6"
+      },
+      "osm_id": 583581858
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.714726,
+        "lon": 34.9961754
+      },
+      "nodes": [
+        5581310049,
+        5581310046,
+        5581310047,
+        5581310048,
+        5581310049
+      ],
+      "tags": {
+        "addr:city": "בית שמש",
+        "addr:housenumber": "18",
+        "addr:street": "נחל דולב",
+        "amenity": "fire_station",
+        "name": "תחנת רמה",
+        "operator": "כבאות והצלה"
+      },
+      "osm_id": 583798712
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.4393657,
+        "lon": 34.9311928
+      },
+      "nodes": [
+        5610012937,
+        5610012942,
+        5610012941,
+        5610011991,
+        5610012938,
+        5610012939,
+        5610012940,
+        5610012943,
+        5610012937
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "שירותי כבאות והצלה",
+        "name:he": "שירותי כבאות והצלה"
+      },
+      "osm_id": 587301752
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 21.9723677,
+        "lon": 39.3689899
+      },
+      "nodes": [
+        5848425827,
+        5848425828,
+        5848425829,
+        5848425830,
+        5848425827
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "الإدارة العامة للدفاع المدني"
+      },
+      "osm_id": 618783767
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 21.479886,
+        "lon": 39.2405148
+      },
+      "nodes": [
+        6131285872,
+        6131285873,
+        6131285874,
+        6131285875,
+        6131285872
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 654311930
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.1033695,
+        "lon": 35.168053
+      },
+      "nodes": [
+        6171408854,
+        6171408855,
+        6797444762,
+        6797444763,
+        6797444761,
+        6797485548,
+        6171408857,
+        6797485543,
+        6797485544,
+        6797485546,
+        6797485545,
+        6797485547,
+        6171408858,
+        6797444764,
+        6797444765,
+        6797444766,
+        6171408854
+      ],
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 659153416
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.2185663,
+        "lon": 34.9851017
+      },
+      "nodes": [
+        6594603075,
+        6594608249,
+        6594608231,
+        6594608263,
+        6594603075
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "כיבוי אש",
+        "name:he": "כיבוי אש"
+      },
+      "osm_id": 702243388
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 33.3334441,
+        "lon": 35.5710024
+      },
+      "nodes": [
+        6610939901,
+        6610939902,
+        6610939903,
+        8108048638,
+        6610939904,
+        6610939905,
+        6610939906,
+        6610939907,
+        6610939908,
+        6610939909,
+        6610939910,
+        12407740284,
+        12407740282,
+        12407740285,
+        12407740286,
+        12407740279,
+        12407740281,
+        12407740287,
+        12407740283,
+        12407740280,
+        6610939917,
+        6610939918,
+        6610939919,
+        6610939920,
+        6610939921,
+        6610939901
+      ],
+      "tags": {
+        "addr:city": "القليعة",
+        "amenity": "fire_station"
+      },
+      "osm_id": 704057210
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 30.0301816,
+        "lon": 31.2294011
+      },
+      "nodes": [
+        316934471,
+        7026559963,
+        7026559961,
+        7026559957,
+        316934471
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "مطافئ قصر العينى",
+        "name:ar": "مطافئ قصر العينى",
+        "name:en": "Kasr El Ainy Fire Station"
+      },
+      "osm_id": 751628797
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.9298992,
+        "lon": 35.0267372
+      },
+      "nodes": [
+        7046311105,
+        7046311059,
+        7046311031,
+        7046311090,
+        7046311105
+      ],
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 754223215
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.930045,
+        "lon": 35.0267776
+      },
+      "nodes": [
+        7046311163,
+        7046311063,
+        7046311037,
+        7046310997,
+        7046311163
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "name": "חשמונאים",
+        "name:he": "חשמונאים"
+      },
+      "osm_id": 754223220
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.9299282,
+        "lon": 35.0264257
+      },
+      "nodes": [
+        7046310067,
+        7046310027,
+        7046311014,
+        7046311186,
+        7046310067
+      ],
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 754223236
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.9301327,
+        "lon": 35.0265759
+      },
+      "nodes": [
+        7046310036,
+        7046311169,
+        7046311181,
+        7046311064,
+        7046310036
+      ],
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 754223255
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.0476008,
+        "lon": 36.0942357
+      },
+      "nodes": [
+        7112061243,
+        7112061244,
+        7112061245,
+        7112061246,
+        7112061243
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "دفاع مدني جبل طارق"
+      },
+      "osm_id": 761228476
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.9179065,
+        "lon": 35.0009066
+      },
+      "nodes": [
+        8094665152,
+        9210373003,
+        8094665143,
+        8094665144,
+        7473948584,
+        8094665146,
+        8094665151,
+        8094665152
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "name": "תחנת כיבוי אש מודיעין",
+        "name:he": "תחנת כיבוי אש מודיעין"
+      },
+      "osm_id": 799164650
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 28.3886503,
+        "lon": 36.5544443
+      },
+      "nodes": [
+        7913143216,
+        7913143217,
+        7913143218,
+        7913143219,
+        7913143220,
+        7913143221,
+        7913143216
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 848019003
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 28.3910022,
+        "lon": 36.5337382
+      },
+      "nodes": [
+        7913143351,
+        7913143352,
+        7913143353,
+        7913143354,
+        7913143351
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 848019038
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 28.853135,
+        "lon": 36.2696682
+      },
+      "nodes": [
+        7924609468,
+        7924609469,
+        7924609470,
+        7924609471,
+        7924609468
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 849381170
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 25.0484027,
+        "lon": 38.1295385
+      },
+      "nodes": [
+        7954391310,
+        7954391311,
+        7954391312,
+        7954391313,
+        7954391310
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 852700240
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 26.6129315,
+        "lon": 37.9235852
+      },
+      "nodes": [
+        7956005820,
+        7956005821,
+        7956005822,
+        7956005823,
+        7956005820
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 852984703
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.52948,
+        "lon": 34.5998683
+      },
+      "nodes": [
+        8173674421,
+        8173674422,
+        8173674423,
+        8173674424,
+        8173674425,
+        8173674426,
+        8173674421
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "name": "כיבוי אש שדרות",
+        "name:he": "כיבוי אש שדרות"
+      },
+      "osm_id": 878618838
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.2495091,
+        "lon": 32.2816344
+      },
+      "nodes": [
+        8263765324,
+        8263765325,
+        8263765326,
+        8263765327,
+        8263765328,
+        8263765329,
+        8263765324
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "El Dwahi Fire Station"
+      },
+      "osm_id": 888861985
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 24.1495819,
+        "lon": 38.0665625
+      },
+      "nodes": [
+        8671707938,
+        8671707935,
+        8671707936,
+        8671707937,
+        8671707938
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "fire_station",
+        "fire_station:type": "airport"
+      },
+      "osm_id": 935792861
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.5294738,
+        "lon": 34.5999282
+      },
+      "nodes": [
+        8930144358,
+        8930144359,
+        8930144360,
+        8930144361,
+        8930144362,
+        8930144363,
+        8930144364,
+        8930144365,
+        8930144358
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 965319287
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.1646045,
+        "lon": 34.8249485
+      },
+      "nodes": [
+        7772795200,
+        7772795201,
+        9038884819,
+        8913812459,
+        8913812480,
+        9038884820,
+        9038876489,
+        8913812493,
+        8913812494,
+        8913812495,
+        429346610,
+        7772795200
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "barrier": "wall",
+        "name": "מכבי אש",
+        "name:en": "Fire station",
+        "name:he": "מכבי אש"
+      },
+      "osm_id": 976771232
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 30.031002,
+        "lon": 31.188721
+      },
+      "nodes": [
+        9103575064,
+        9103575065,
+        9103575066,
+        9103575067,
+        9103575068,
+        9103575069,
+        9103575064
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "محطه اطفاء حريق"
+      },
+      "osm_id": 984675364
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 33.5257335,
+        "lon": 36.2248004
+      },
+      "nodes": [
+        9207400472,
+        9207400473,
+        9207400485,
+        2144343127,
+        9207400474,
+        9207400475,
+        9207400476,
+        9207400477,
+        9207400478,
+        9207400479,
+        9207400480,
+        9207400472
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "إطفاء دمر"
+      },
+      "osm_id": 997137062
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.037414,
+        "lon": 34.8665125
+      },
+      "nodes": [
+        9252557960,
+        9252557961,
+        9252557962,
+        9252557963,
+        9252557964,
+        9252557960
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 1002548977
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.2191533,
+        "lon": 29.9944828
+      },
+      "nodes": [
+        9366401135,
+        9366401136,
+        9366401137,
+        9366401138,
+        9366401135
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 1015362866
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.2192601,
+        "lon": 29.9947532
+      },
+      "nodes": [
+        9366401139,
+        9366401140,
+        9366401141,
+        9366401142,
+        9366401139
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 1015362867
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.2192831,
+        "lon": 29.9949624
+      },
+      "nodes": [
+        9366401143,
+        9366401144,
+        9366401145,
+        9366401146,
+        9366401143
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 1015362868
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.2193226,
+        "lon": 29.995455
+      },
+      "nodes": [
+        9366401147,
+        9366401148,
+        9366401149,
+        9366401150,
+        9366401147
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 1015362869
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.2189017,
+        "lon": 29.9969672
+      },
+      "nodes": [
+        9368607174,
+        9368607175,
+        9368607176,
+        9368607177,
+        9368607174
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 1015679034
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.2196056,
+        "lon": 29.9969224
+      },
+      "nodes": [
+        9368607178,
+        9368607179,
+        9368607180,
+        9368607181,
+        9368607178
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 1015679035
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.2193981,
+        "lon": 29.9962985
+      },
+      "nodes": [
+        9368607182,
+        9368607183,
+        9368607184,
+        9368607185,
+        9368607182
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 1015679036
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.2191319,
+        "lon": 29.9963074
+      },
+      "nodes": [
+        9368607186,
+        9368607187,
+        9368607188,
+        9368607189,
+        9368607186
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 1015679037
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.2187893,
+        "lon": 29.9963304
+      },
+      "nodes": [
+        9368607190,
+        9368607191,
+        9368607192,
+        9368607193,
+        9368607190
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 1015679038
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.2185631,
+        "lon": 29.9960712
+      },
+      "nodes": [
+        9368607194,
+        9368607195,
+        9368607196,
+        9368607197,
+        9368607194
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 1015679039
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.2190999,
+        "lon": 29.9956323
+      },
+      "nodes": [
+        9525771968,
+        9525771969,
+        9525771970,
+        9525771971,
+        9525771972,
+        9525771973,
+        9525771974,
+        9525771975,
+        9525771976,
+        9525771977,
+        9525771978,
+        9525771979,
+        9525771980,
+        9525771981,
+        9525771982,
+        9525771983,
+        9525771968
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "layer": "1"
+      },
+      "osm_id": 1034005659
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.1321021,
+        "lon": 36.063844
+      },
+      "nodes": [
+        9590349508,
+        9590349509,
+        9590349510,
+        9590349511,
+        9590349508
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "مركز دفاع مدني السخنة"
+      },
+      "osm_id": 1041734872
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.1805291,
+        "lon": 34.8965958
+      },
+      "nodes": [
+        9683161021,
+        9683161022,
+        9683161023,
+        9683161024,
+        9683161025,
+        9683161026,
+        9683161027,
+        9683161028,
+        9683161029,
+        9683161030,
+        9683161031,
+        9683161032,
+        9683161033,
+        9683161034,
+        9683161021
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "תחנת כיבוי אש כפר סבא",
+        "name:en": "Kfar Saba Fire Station",
+        "name:he": "תחנת כיבוי אש כפר סבא"
+      },
+      "osm_id": 1053662445
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.6400151,
+        "lon": 35.839221
+      },
+      "nodes": [
+        9870581053,
+        9870581054,
+        9870581055,
+        9870581056,
+        9870581057,
+        9870581058,
+        9870581053
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "مركز دفاع مدني بني كنانة",
+        "phone": "911"
+      },
+      "osm_id": 1076373236
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 28.1067123,
+        "lon": 35.1196081
+      },
+      "nodes": [
+        9921381638,
+        9921381639,
+        9921381640,
+        9921381641,
+        9921381642,
+        9921381643,
+        11730574623,
+        9921381644,
+        11730574624,
+        9921381645,
+        9921381646,
+        9921381647,
+        9921381638
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "osm_id": 1082567399
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.4450463,
+        "lon": 34.8831494
+      },
+      "nodes": [
+        10213603294,
+        10213603295,
+        10213603296,
+        10213603297,
+        10213603294
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "name": "שירותי כבאות והצלה - גבעת אולגה",
+        "name:he": "שירותי כבאות והצלה - גבעת אולגה"
+      },
+      "osm_id": 1116740818
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 30.1117119,
+        "lon": 30.8873679
+      },
+      "nodes": [
+        10231918421,
+        10231918420,
+        10231918419,
+        10231918418,
+        10231918421
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "fire_station",
+        "fire_station:type": "airport"
+      },
+      "osm_id": 1118762843
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 30.034204,
+        "lon": 31.201365
+      },
+      "nodes": [
+        10246980895,
+        10246980896,
+        10246980897,
+        10246980898,
+        10246980899,
+        10246980900,
+        10246980901,
+        10246980902,
+        10246980895
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "مطافي الجيزة",
+        "name:ar": "مطافي الجيزة",
+        "operator": "الإدارة العامة للحماية المدنية بالجيزة"
+      },
+      "osm_id": 1120356159
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.6117834,
+        "lon": 35.2039728
+      },
+      "nodes": [
+        11006033863,
+        11006033864,
+        11494728412,
+        11494728413,
+        11006033863
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "name": "גרור כיבוי",
+        "name:he": "גרור כיבוי"
+      },
+      "osm_id": 1184857981
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 33.5454162,
+        "lon": 36.3062733
+      },
+      "nodes": [
+        11080720142,
+        11080720143,
+        11080720144,
+        11080720145,
+        11080720142
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "name": "مركز اطفاء ابن النفيس"
+      },
+      "osm_id": 1193730219
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.8915634,
+        "lon": 35.9248629
+      },
+      "nodes": [
+        11292076069,
+        11292076070,
+        11292076071,
+        11296357802,
+        11296357801,
+        11296357800,
+        11292076072,
+        1743202081,
+        11292076069
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "name": "الدفاع المدني"
+      },
+      "osm_id": 1218639268
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 30.015648,
+        "lon": 31.2412261
+      },
+      "nodes": [
+        12770391982,
+        12770391983,
+        12770391984,
+        12770391985,
+        12770391986,
+        12770391987,
+        12770391988,
+        12770391989,
+        12770391990,
+        12770391991,
+        12770391982
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "مطافي عين الصيرة",
+        "name:ar": "مطافي عين الصيرة",
+        "operator": "الإدارة العامة للحماية المدنية بالقاهرة",
+        "source": "microsoft/BuildingFootprints"
+      },
+      "osm_id": 1379118653
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.7851826,
+        "lon": 35.2372074
+      },
+      "nodes": [
+        12916845470,
+        12916845471,
+        12916845481,
+        12916845472,
+        12916845473,
+        12916845474,
+        12916845475,
+        12916845477,
+        12916845478,
+        12916845470
+      ],
+      "tags": {
+        "amenity": "fire_station"
+      },
+      "osm_id": 1395431353
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.8608981,
+        "lon": 35.4757936
+      },
+      "nodes": [
+        13360396264,
+        432344428,
+        13360396265,
+        13360396266,
+        13360396267,
+        13360396268,
+        13360396269,
+        13360396270,
+        13360396271,
+        13360396272,
+        13360396273,
+        13360396274,
+        13360396275,
+        13360396276,
+        13360396277,
+        13360396278,
+        13360396162,
+        13360396264
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "name": "وحدة الترخيص- أريحا",
+        "name:ar": "وحدة الترخيص- أريحا",
+        "name:en": "Jericho License Department"
+      },
+      "osm_id": 1456776476
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 30.0411622,
+        "lon": 30.9749106
+      },
+      "nodes": [
+        13361331554,
+        13361331555,
+        13361331556,
+        13361331557,
+        13361331558,
+        13361331559,
+        13361331554
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "name": "ادارة الحمايه المدنية زايد 2",
+        "name:ar": "ادارة الحمايه المدنية زايد 2",
+        "name:en": "Fire Station Zayed 2"
+      },
+      "osm_id": 1456880272
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 30.0377671,
+        "lon": 31.00927
+      },
+      "nodes": [
+        13361331560,
+        13361331561,
+        13361331562,
+        13361331563,
+        13361331564,
+        13361331565,
+        13361331560
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "name": "ادارة الحمايه المدنية زايد 1",
+        "name:ar": "ادارة الحمايه المدنية زايد 1",
+        "name:en": "Fire Station Zayed 1"
+      },
+      "osm_id": 1456880273
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 33.5664844,
+        "lon": 35.3748956
+      },
+      "nodes": [
+        13418274460,
+        13621010853,
+        13418274461,
+        13418274462,
+        13418274463,
+        13418274460
+      ],
+      "tags": {
+        "addr:city": "صيدا",
+        "amenity": "fire_station",
+        "building": "yes",
+        "name": "محطة إطفاء حريق",
+        "name:ar": "محطة إطفاء حريق",
+        "name:fr": "Caserne de Pompiers"
+      },
+      "osm_id": 1462845662
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 32.9246665,
+        "lon": 35.322555
+      },
+      "nodes": [
+        13532797411,
+        13532797423,
+        13532797414,
+        13532797415,
+        13532797416,
+        13532797412,
+        13532797411
+      ],
+      "tags": {
+        "addr:city": "כרמיאל",
+        "addr:housenumber": "64",
+        "addr:street": "החרושת",
+        "alt_name": "כבאות והצלה כרמיאל",
+        "alt_name:en": "Fire Station Karmiel",
+        "alt_name:he": "כבאות והצלה כרמיאל;תחנת כיבוי אש כרמיאל",
+        "amenity": "fire_station",
+        "image": "https://www.zhk.co.il/wp-content/uploads/2021/10/תחנת-כיבוי-אש-מכבי-אש-כרמיאל-2019-660x330.jpg",
+        "name": "כבאות והצלה גליל מרכזי",
+        "name:en": "Fire & Rescue Station of Central Galilee",
+        "name:he": "כבאות והצלה גליל מרכזי",
+        "official_name": "כבאות והצלה לישראל גליל מרכזי",
+        "phone": "+972 4 995 6854"
+      },
+      "osm_id": 1475102794
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.8934489,
+        "lon": 35.1880604
+      },
+      "nodes": [
+        13660421717,
+        13660421785,
+        13660421718,
+        13660421719,
+        13660421720,
+        13660421721,
+        13660421722,
+        13660421717
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "name": "The Main Fire Station",
+        "name:ar": "محطة المحروقات الرئيسية",
+        "name:en": "The Main Fire Station",
+        "source": "microsoft/BuildingFootprints"
+      },
+      "osm_id": 1490425417
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.9150823,
+        "lon": 35.9533404
+      },
+      "nodes": [
+        13734720287,
+        13734720288,
+        13734720289,
+        13734720290,
+        13734720287
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "name": "دفاع مدني القويسمة"
+      },
+      "osm_id": 1499899579
+    },
+    {
+      "type": "way",
+      "center": {
+        "lat": 31.760461,
+        "lon": 35.2605585
+      },
+      "nodes": [
+        13904502963,
+        13904502964,
+        13904502965,
+        13904502966,
+        13904502967,
+        13904502968,
+        13904502963
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "building": "fire_station",
+        "source": "microsoft/BuildingFootprints"
+      },
+      "osm_id": 1525491255
+    },
+    {
+      "type": "relation",
+      "center": {
+        "lat": 31.896585,
+        "lon": 34.7976666
+      },
+      "members": [
+        {
+          "type": "way",
+          "ref": 173161248,
+          "role": "inner"
+        },
+        {
+          "type": "way",
+          "ref": 108234277,
+          "role": "inner"
+        },
+        {
+          "type": "way",
+          "ref": 173161235,
+          "role": "inner"
+        }
+      ],
+      "tags": {
+        "amenity": "fire_station",
+        "name": "מתחם מכבי האש רחובות",
+        "name:he": "מתחם מכבי האש רחובות",
+        "site": "services",
+        "type": "multipolygon"
+      },
+      "osm_id": 16265389
+    }
+  ]
+}

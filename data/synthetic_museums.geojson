@@ -1,0 +1,275 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          31.2357,
+          30.0444
+        ]
+      },
+      "properties": {
+        "id": "1",
+        "source_id": "museum_1",
+        "tourism": "museum",
+        "name": "Egyptian Museum",
+        "name_en": "Egyptian Museum",
+        "name_ar": "",
+        "category": "Museum",
+        "opening_hours": "09:00-17:00",
+        "wheelchair": "yes",
+        "rating": 4.5,
+        "reviews": 100,
+        "addr_country": "Egypt",
+        "addr_province": "Cairo",
+        "addr_city": "Cairo",
+        "description": "Synthetic museum for testing"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          31.233,
+          30.05
+        ]
+      },
+      "properties": {
+        "id": "2",
+        "source_id": "museum_2",
+        "tourism": "museum",
+        "name": "Museum of Islamic Art",
+        "name_en": "Museum of Islamic Art",
+        "name_ar": "",
+        "category": "Museum",
+        "opening_hours": "09:00-17:00",
+        "wheelchair": "yes",
+        "rating": 4.5,
+        "reviews": 200,
+        "addr_country": "Egypt",
+        "addr_province": "Cairo",
+        "addr_city": "Cairo",
+        "description": "Synthetic museum for testing"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          31.24,
+          30.043
+        ]
+      },
+      "properties": {
+        "id": "3",
+        "source_id": "museum_3",
+        "tourism": "museum",
+        "name": "Coptic Museum",
+        "name_en": "Coptic Museum",
+        "name_ar": "",
+        "category": "Museum",
+        "opening_hours": "09:00-17:00",
+        "wheelchair": "yes",
+        "rating": 4.5,
+        "reviews": 300,
+        "addr_country": "Egypt",
+        "addr_province": "Cairo",
+        "addr_city": "Cairo",
+        "description": "Synthetic museum for testing"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          31.246,
+          30.038
+        ]
+      },
+      "properties": {
+        "id": "4",
+        "source_id": "museum_4",
+        "tourism": "museum",
+        "name": "Abdeen Palace Museum",
+        "name_en": "Abdeen Palace Museum",
+        "name_ar": "",
+        "category": "Museum",
+        "opening_hours": "09:00-17:00",
+        "wheelchair": "yes",
+        "rating": 4.5,
+        "reviews": 400,
+        "addr_country": "Egypt",
+        "addr_province": "Cairo",
+        "addr_city": "Cairo",
+        "description": "Synthetic museum for testing"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          31.23,
+          30.041
+        ]
+      },
+      "properties": {
+        "id": "5",
+        "source_id": "museum_5",
+        "tourism": "museum",
+        "name": "National Museum of Egyptian Civilization",
+        "name_en": "National Museum of Egyptian Civilization",
+        "name_ar": "",
+        "category": "Museum",
+        "opening_hours": "09:00-17:00",
+        "wheelchair": "yes",
+        "rating": 4.5,
+        "reviews": 500,
+        "addr_country": "Egypt",
+        "addr_province": "Cairo",
+        "addr_city": "Cairo",
+        "description": "Synthetic museum for testing"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          31.228,
+          30.047
+        ]
+      },
+      "properties": {
+        "id": "6",
+        "source_id": "museum_6",
+        "tourism": "museum",
+        "name": "Railway Museum",
+        "name_en": "Railway Museum",
+        "name_ar": "",
+        "category": "Museum",
+        "opening_hours": "09:00-17:00",
+        "wheelchair": "yes",
+        "rating": 4.5,
+        "reviews": 600,
+        "addr_country": "Egypt",
+        "addr_province": "Cairo",
+        "addr_city": "Cairo",
+        "description": "Synthetic museum for testing"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          31.242,
+          30.049
+        ]
+      },
+      "properties": {
+        "id": "7",
+        "source_id": "museum_7",
+        "tourism": "museum",
+        "name": "Umm Kulthum Museum",
+        "name_en": "Umm Kulthum Museum",
+        "name_ar": "",
+        "category": "Museum",
+        "opening_hours": "09:00-17:00",
+        "wheelchair": "yes",
+        "rating": 4.5,
+        "reviews": 700,
+        "addr_country": "Egypt",
+        "addr_province": "Cairo",
+        "addr_city": "Cairo",
+        "description": "Synthetic museum for testing"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          31.237,
+          30.036
+        ]
+      },
+      "properties": {
+        "id": "8",
+        "source_id": "museum_8",
+        "tourism": "museum",
+        "name": "Gayer-Anderson Museum",
+        "name_en": "Gayer-Anderson Museum",
+        "name_ar": "",
+        "category": "Museum",
+        "opening_hours": "09:00-17:00",
+        "wheelchair": "yes",
+        "rating": 4.5,
+        "reviews": 800,
+        "addr_country": "Egypt",
+        "addr_province": "Cairo",
+        "addr_city": "Cairo",
+        "description": "Synthetic museum for testing"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          31.25,
+          30.045
+        ]
+      },
+      "properties": {
+        "id": "9",
+        "source_id": "museum_9",
+        "tourism": "museum",
+        "name": "Museum of Modern Egyptian Art",
+        "name_en": "Museum of Modern Egyptian Art",
+        "name_ar": "",
+        "category": "Museum",
+        "opening_hours": "09:00-17:00",
+        "wheelchair": "yes",
+        "rating": 4.5,
+        "reviews": 900,
+        "addr_country": "Egypt",
+        "addr_province": "Cairo",
+        "addr_city": "Cairo",
+        "description": "Synthetic museum for testing"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          31.244,
+          30.041
+        ]
+      },
+      "properties": {
+        "id": "10",
+        "source_id": "museum_10",
+        "tourism": "museum",
+        "name": "Child Museum",
+        "name_en": "Child Museum",
+        "name_ar": "",
+        "category": "Museum",
+        "opening_hours": "09:00-17:00",
+        "wheelchair": "yes",
+        "rating": 4.5,
+        "reviews": 1000,
+        "addr_country": "Egypt",
+        "addr_province": "Cairo",
+        "addr_city": "Cairo",
+        "description": "Synthetic museum for testing"
+      }
+    }
+  ]
+}

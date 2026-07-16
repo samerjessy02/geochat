@@ -1,0 +1,84 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_id": "relation/16265389",
+        "amenity": "fire_station",
+        "name": "מתחם מכבי האש רחובות"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [34.7976666, 31.896585]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_id": "way/95597860",
+        "amenity": "fire_station",
+        "building": "yes"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [34.8338512, 32.1799498]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_id": "way/108409554",
+        "amenity": "fire_station",
+        "name": "מכבי אש נתניה",
+        "name:en": "Netanya fire station",
+        "building": "yes"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [34.8679281, 32.3217561]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_id": "way/1041734872",
+        "amenity": "fire_station",
+        "name": "مركز دفاع مدني السخنة",
+        "building": "yes"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [36.063844, 32.1321021]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_id": "way/1076373236",
+        "amenity": "fire_station",
+        "name": "مركز دفاع مدني بني كنانة",
+        "phone": "911",
+        "building": "yes"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [35.839221, 32.6400151]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_id": "way/109432112",
+        "amenity": "fire_station",
+        "name": "الإطفائية",
+        "name:en": "Fire Station",
+        "building": "yes"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [36.5707448, 32.6948173]
+      }
+    }
+  ]
+}

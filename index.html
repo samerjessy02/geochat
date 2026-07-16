@@ -6,27 +6,28 @@
 <title>Geo Chatbot</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,300;0,400;0,500;1,300;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --paper: #faf8f3;
-  --paper2: #f3f0e8;
-  --paper3: #ece8de;
-  --ink: #1a1714;
-  --ink2: #3d3830;
-  --ink3: #7a7265;
-  --ink4: #a89e92;
+  --paper: #FAF9F6;        /* background / sidebar */
+  --paper2: #F0EEE7;       /* card / message bubble background */
+  --paper3: #E8E7E3;       /* subtle neutral surface */
+  --ink: #333333;          /* primary text */
+  --ink2: #333333;         /* primary text */
+  --ink3: #7a7265;         /* secondary / muted (existing token, unchanged) */
+  --ink4: #a89e92;         /* muted (existing token, unchanged) */
   --rule: #ddd8cc;
   --rule2: #ccc7bb;
-  --accent: #b85c2a;
-  --accent-light: #f5ede6;
-  --accent-mid: #d4784a;
-  --green: #3a6b4a;
-  --green-light: #eaf2ec;
-  --ff-display: 'IBM Plex Serif', Georgia, serif;
-  --ff-body: 'IBM Plex Serif', Georgia, serif;
+  --accent: #2F6FA8;       /* primary accent: buttons, links, active, user bubbles */
+  --accent-light: #E7F0F8; /* accent tint (user bubble bg, active fills) */
+  --accent-mid: #4A85BC;   /* accent focus/border */
+  --green: #2F6FA8;        /* status/success indicators now use accent blue */
+  --green-light: #E7F0F8;
+  --ff-display: 'Poppins', sans-serif;
+  --ff-body: 'Poppins', sans-serif;
   --r: 6px;
   --r-lg: 12px;
 }
@@ -64,7 +65,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 .status {
   display: flex; align-items: center; gap: 5px;
   font-size: 11px; color: var(--ink4);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: 'Poppins', sans-serif;
   letter-spacing: .04em;
 }
 .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
@@ -79,10 +80,10 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 .dp-header { display: flex; align-items: center; justify-content: space-between; }
 .dp-title {
   font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
-  color: var(--ink4); font-family: 'IBM Plex Mono', monospace;
+  color: var(--ink4); font-family: 'Poppins', sans-serif;
 }
 .dp-upload-btn {
-  font-size: 11px; font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; font-family: 'Poppins', sans-serif;
   color: var(--accent); background: white; border: 1px solid #e8d0c4;
   padding: 4px 10px; border-radius: 20px; cursor: pointer;
   letter-spacing: .03em; transition: all .15s;
@@ -93,9 +94,10 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 #dataset-list { display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto; }
 .dataset-row {
   display: flex; align-items: center; gap: 8px;
-  padding: 6px 8px; border-radius: var(--r);
-  background: white; border: 1px solid var(--rule);
+  padding: 5px 6px; border-radius: var(--r);
+  background: transparent; transition: background .15s;
 }
+.dataset-row:hover { background: var(--paper); }
 .dataset-row input[type=checkbox] {
   appearance: none; width: 13px; height: 13px;
   border-radius: 3px; border: 1.5px solid var(--rule2);
@@ -108,7 +110,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .dataset-meta {
-  font-size: 10px; color: var(--ink4); font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; color: var(--ink4); font-family: 'Poppins', sans-serif;
 }
 .dataset-del {
   background: none; border: none; cursor: pointer; color: var(--ink4);
@@ -135,7 +137,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 }
 .um-label {
   font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase;
-  color: var(--ink4); font-family: 'IBM Plex Mono', monospace; margin-bottom: 4px; display: block;
+  color: var(--ink4); font-family: 'Poppins', sans-serif; margin-bottom: 4px; display: block;
 }
 .um-input {
   width: 100%; background: white; border: 1px solid var(--rule2);
@@ -152,7 +154,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 .um-file-drop.has-file { border-color: var(--green); color: var(--green); background: var(--green-light); }
 .um-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
 .um-btn {
-  font-size: 12px; font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px; font-family: 'Poppins', sans-serif;
   padding: 7px 14px; border-radius: var(--r); cursor: pointer;
   border: 1px solid var(--rule2); background: white; color: var(--ink3);
 }
@@ -172,7 +174,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 }
 .col-desc-name { font-size: 12.5px; font-weight: 500; color: var(--ink); }
 .col-desc-type {
-  font-size: 10px; color: var(--ink4); font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; color: var(--ink4); font-family: 'Poppins', sans-serif;
 }
 .col-desc-input {
   width: 100%; border: 1px solid var(--rule); border-radius: 4px;
@@ -196,7 +198,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 
 .msg-label {
   font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
-  color: var(--ink4); font-family: 'IBM Plex Mono', monospace;
+  color: var(--ink4); font-family: 'Poppins', sans-serif;
 }
 .msg-wrap.user .msg-label { color: var(--accent); }
 
@@ -205,7 +207,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
   border-radius: var(--r); font-weight: 400;
 }
 .msg-wrap.ai .bubble {
-  background: white;
+  background: var(--paper2);
   border: 1px solid var(--rule);
   color: var(--ink2);
   border-radius: 2px var(--r) var(--r) var(--r);
@@ -221,19 +223,19 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 
 .count-tag {
   display: inline-block;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: 'Poppins', sans-serif;
   font-size: 11px; font-style: normal;
   background: var(--green-light);
   color: var(--green);
   padding: 1px 7px; border-radius: 20px;
-  border: 1px solid #c0d9c8;
+  border: 1px solid #C4D4E8;
   margin-left: 4px;
 }
 
 /* sql */
 .sql-btn {
   display: inline-flex; align-items: center; gap: 4px;
-  font-size: 11px; font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; font-family: 'Poppins', sans-serif;
   color: var(--ink4); background: none; border: none; cursor: pointer;
   padding: 3px 0; margin-top: 5px; letter-spacing: .02em;
   transition: color .15s;
@@ -243,7 +245,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
   display: none; margin-top: 6px;
   background: var(--paper2); border: 1px solid var(--rule);
   border-radius: var(--r); padding: 10px 12px;
-  font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+  font-family: 'Poppins', sans-serif; font-size: 11px;
   color: var(--ink3); line-height: 1.6;
   white-space: pre-wrap; word-break: break-all;
   max-height: 150px; overflow-y: auto;
@@ -254,7 +256,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 .thinking {
   display: flex; align-items: center; gap: 4px;
   padding: 10px 14px;
-  background: white; border: 1px solid var(--rule);
+  background: var(--paper2); border: 1px solid var(--rule);
   border-radius: 2px var(--r) var(--r) var(--r);
   width: fit-content;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
@@ -296,24 +298,29 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 .lp-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .lp-title {
   font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
-  color: var(--ink4); font-family: 'IBM Plex Mono', monospace;
+  color: var(--ink4); font-family: 'Poppins', sans-serif;
 }
 .clear-btn {
-  font-size: 10px; font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; font-family: 'Poppins', sans-serif;
   color: var(--ink4); background: none; border: none; cursor: pointer;
   letter-spacing: .04em; transition: color .15s;
 }
 .clear-btn:hover { color: var(--accent); }
 #layer-list { display: flex; flex-direction: column; gap: 5px; max-height: 100px; overflow-y: auto; }
-.layer-row { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-.layer-row input[type=checkbox] {
-  appearance: none; width: 13px; height: 13px;
-  border-radius: 3px; border: 1.5px solid var(--rule2);
-  cursor: pointer; background: white; transition: all .15s; flex-shrink: 0;
+.layer-row {
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  padding: 5px 8px; border-radius: var(--r); transition: background .15s;
 }
-.layer-row input[type=checkbox]:checked { background: var(--accent); border-color: var(--accent); }
-.layer-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.layer-label { font-size: 12px; color: var(--ink3); font-family: var(--ff-body); font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.layer-row:hover { background: var(--paper); }
+/* hidden checkbox keeps the existing toggle logic; row (a <label>) toggles it */
+.layer-row input[type=checkbox] { display: none; }
+.layer-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--ink4); transition: background .15s; }
+.layer-label { flex: 1; font-size: 12px; color: var(--ink3); font-family: var(--ff-body); font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.layer-count { flex-shrink: 0; font-size: 10px; color: var(--ink4); font-family: 'Poppins', sans-serif; }
+/* active (visible) layer: light-blue tint + accent dot */
+.layer-row:has(input:checked) { background: #EAF1F7; }
+.layer-row:has(input:checked) .layer-dot { background: var(--accent); }
+.layer-row:has(input:checked) .layer-label { color: var(--ink2); }
 
 /* input */
 #input-area {
@@ -322,11 +329,12 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
   display: flex; gap: 8px; align-items: flex-end;
   background: var(--paper);
 }
+/* rounded input pill — the primary action of the panel */
 #chat-input {
   flex: 1;
   background: white;
   border: 1px solid var(--rule2);
-  border-radius: var(--r); padding: 9px 12px;
+  border-radius: 10px; padding: 10px 14px;
   font-size: 13.5px; color: var(--ink);
   font-family: var(--ff-body); font-weight: 400;
   outline: none; resize: none; line-height: 1.5;
@@ -335,20 +343,21 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 #chat-input::placeholder { color: var(--ink4); font-style: italic; }
 #chat-input:focus { border-color: var(--accent-mid); }
 #chat-input:disabled { background: var(--paper2); color: var(--ink4); }
+/* circular accent send button */
 #send-btn {
-  width: 36px; height: 36px; border-radius: var(--r);
+  width: 38px; height: 38px; border-radius: 50%;
   background: var(--accent); border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; transition: background .15s, transform .1s;
 }
-#send-btn:hover { background: #a34f22; }
+#send-btn:hover { background: var(--accent-mid); }
 #send-btn:active { transform: scale(.95); }
 #send-btn:disabled { background: var(--ink4); cursor: default; }
 #send-btn svg { width: 14px; height: 14px; stroke: white; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 
 /* map */
 #map-wrap { flex: 1; position: relative; }
-#map { height: 100%; width: 100%; }
+#map { height: 100%; width: 100%; background: #E4E4E0; }
 
 /* result badge */
 #result-badge {
@@ -357,7 +366,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
   background: white;
   border: 1px solid var(--rule2);
   border-radius: 20px; padding: 7px 18px;
-  font-size: 12px; font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px; font-family: 'Poppins', sans-serif;
   color: var(--green); letter-spacing: .03em;
   display: none; white-space: nowrap;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -371,7 +380,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
   border: 1px solid var(--rule2);
   border-radius: var(--r-lg);
   box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-  font-family: 'IBM Plex Serif', Georgia, serif;
+  font-family: var(--ff-body);
   color: var(--ink2);
 }
 .serif-popup .leaflet-popup-tip { background: white; }
@@ -409,7 +418,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 #rag-category-badge {
-  font-size: 10px; font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; font-family: 'Poppins', sans-serif;
   background: var(--accent-light); color: var(--accent);
   border: 1px solid #e8d0c4;
   padding: 2px 8px; border-radius: 20px;
@@ -440,7 +449,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 
 #rag-source {
   display: flex; align-items: center; gap: 5px;
-  font-size: 10.5px; font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px; font-family: 'Poppins', sans-serif;
   color: var(--ink4); border-top: 1px solid var(--rule);
   padding-top: 8px; letter-spacing: .03em;
 }
@@ -457,33 +466,194 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 .rag-skeleton.short { width: 60%; }
 .rag-skeleton.medium { width: 85%; }
 .rag-skeleton.tall { height: 40px; }
+
+/* ── DOCUMENTS PANEL ── */
+#documents-panel {
+  border-bottom: 1px solid var(--rule);
+  padding: 12px 18px;
+  background: var(--paper2);
+  display: flex; flex-direction: column; gap: 8px;
+}
+#document-list { display: flex; flex-direction: column; gap: 6px; max-height: 130px; overflow-y: auto; }
+.doc-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 6px; border-radius: var(--r);
+  background: transparent; transition: background .15s;
+}
+.doc-row:hover { background: var(--paper); }
+.doc-icon { font-size: 12px; color: var(--accent); flex-shrink: 0; font-family: 'Poppins', sans-serif; }
+.doc-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.doc-name { font-size: 12px; color: var(--ink2); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doc-meta { font-size: 10px; color: var(--ink4); font-family: 'Poppins', sans-serif; }
+.doc-del { background: none; border: none; cursor: pointer; color: var(--ink4); font-size: 13px; padding: 2px 4px; flex-shrink: 0; transition: color .15s; }
+.doc-del:hover { color: var(--accent); }
+
+/* ── INTENT TAG + KNOWLEDGE ANSWER ── */
+.intent-tag {
+  display: inline-block; font-family: 'Poppins', sans-serif;
+  font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase;
+  padding: 1px 7px; border-radius: 20px; margin-bottom: 4px;
+  border: 1px solid var(--rule2); color: var(--ink3); background: var(--paper2);
+}
+.intent-tag.map    { color: var(--accent); border-color: #e8d0c4; background: var(--accent-light); }
+.intent-tag.knowledge { color: var(--green); border-color: #C4D4E8; background: var(--green-light); }
+.intent-tag.hybrid { color: #2a6bb8; border-color: #c4d4e8; background: #eaf0f7; }
+
+.answer-body { font-size: 13.5px; line-height: 1.65; color: var(--ink2); }
+.answer-sources {
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--rule);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.answer-sources-title {
+  font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink4); font-family: 'Poppins', sans-serif;
+}
+.cite-chip {
+  font-size: 11px; color: var(--ink3); line-height: 1.4;
+  display: flex; gap: 5px; align-items: baseline;
+}
+.cite-chip::before { content: '§'; color: var(--accent); flex-shrink: 0; }
+.cite-chip a { color: var(--accent); text-decoration: none; word-break: break-all; }
+.cite-chip a:hover { text-decoration: underline; }
+.src-tier {
+  font-size: 9.5px; font-family: 'Poppins', sans-serif; color: var(--ink4);
+  letter-spacing: .03em;
+}
+.metrics-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.metric-chip {
+  font-family: 'Poppins', sans-serif; font-size: 10px;
+  padding: 2px 7px; border-radius: 20px; border: 1px solid var(--rule2);
+  color: var(--ink3); background: white; letter-spacing: .02em;
+}
+.metric-chip b { color: var(--ink); font-weight: 500; }
+.metric-chip.good { border-color: #C4D4E8; background: var(--green-light); color: var(--green); }
+.metric-chip.warn { border-color: #e8d0c4; background: var(--accent-light); color: var(--accent); }
+.guardrail-note {
+  margin-top: 6px; font-size: 11px; font-style: italic; color: var(--accent);
+  display: flex; gap: 5px; align-items: baseline;
+}
+.details-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-family: 'Poppins', sans-serif;
+  color: var(--ink4); background: none; border: none; cursor: pointer;
+  padding: 3px 0; margin-top: 6px; letter-spacing: .02em; transition: color .15s;
+}
+.details-btn:hover { color: var(--accent); }
+.details-box {
+  display: none; margin-top: 6px; background: var(--paper2);
+  border: 1px solid var(--rule); border-radius: var(--r); padding: 8px 10px;
+  font-family: 'Poppins', sans-serif; font-size: 10.5px;
+  color: var(--ink3); line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+  max-height: 180px; overflow-y: auto;
+}
+.details-box.open { display: block; }
+
+/* ── PER-SECTION COLLAPSE (independent per section, sidebar width unchanged) ── */
+.sec-head { display: flex; align-items: center; gap: 5px; min-width: 0; }
+.sec-toggle {
+  background: none; border: none; cursor: pointer; color: var(--ink4);
+  padding: 0; display: flex; align-items: center; flex-shrink: 0; transition: color .15s;
+}
+.sec-toggle:hover { color: var(--accent); }
+.sec-toggle svg { width: 13px; height: 13px; transition: transform .2s ease; }
+.sec-toggle.collapsed svg { transform: rotate(180deg); }   /* chevron-up -> chevron-down */
+/* section bodies animate their own height only */
+#dataset-list, #document-list, #layer-list { transition: max-height .2s ease; }
+.sec-collapsed { max-height: 0 !important; overflow: hidden !important; }
+
+/* ── LAST-ANSWER QUALITY (collapsed metrics) ── */
+.quality { margin-top: 8px; }
+.quality-summary {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  background: none; border: none; cursor: pointer; padding: 4px 0;
+  font-family: 'Poppins', sans-serif;
+}
+.quality-label {
+  font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink4);
+  white-space: nowrap;
+}
+.quality-bar { flex: 1; height: 4px; border-radius: 2px; background: var(--paper3); overflow: hidden; }
+.quality-bar-fill { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
+.quality-chev { color: var(--ink4); font-size: 11px; transition: transform .2s ease; }
+.quality.open .quality-chev { transform: rotate(180deg); }
+.quality-detail { max-height: 0; overflow: hidden; transition: max-height .2s ease; }
+.quality.open .quality-detail { max-height: 240px; margin-top: 6px; }
+
+/* ── RED PIN MARKER (Leaflet divIcon) ── */
+.pin-marker { background: none; border: none; }
+
+/* ── THEMED CONFIRM DIALOG ── */
+#confirm-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 2100;
+  background: rgba(26,23,20,0.35); align-items: center; justify-content: center;
+}
+#confirm-modal {
+  width: 340px; max-width: 90vw;
+  background: var(--paper); border: 1px solid #ECE9E1;
+  border-radius: var(--r-lg); box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  padding: 20px; display: flex; flex-direction: column; gap: 12px;
+  font-family: var(--ff-body);
+}
+#confirm-modal h3 { font-size: 15px; font-weight: 600; color: var(--ink); }
+#confirm-message { font-size: 13px; color: var(--ink2); line-height: 1.5; }
+.confirm-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+.confirm-btn {
+  font-size: 12.5px; font-family: var(--ff-body);
+  padding: 8px 16px; border-radius: var(--r); cursor: pointer;
+  border: 1px solid var(--rule2); background: white; color: var(--ink2); transition: filter .15s;
+}
+.confirm-btn.danger { background: #C0392B; border-color: #C0392B; color: white; }
+.confirm-btn:hover { filter: brightness(0.97); }
 </style>
 </head>
 <body>
 <div id="app">
   <div id="sidebar">
     <div id="topbar">
-      <h1>GeoChat&thinsp;—&thinsp;Spatial</h1>
+      <h1>GeoChat&thinsp;—&thinsp;Hybrid RAG</h1>
       <div class="topbar-sub">
-        <span class="topbar-tagline">Ask in plain language, see on the map</span>
+        <span class="topbar-tagline">Ask in plain language — map, documents, or both</span>
       </div>
     </div>
 
     <!-- ── DATASETS PANEL ── -->
     <div id="datasets-panel">
       <div class="dp-header">
-        <span class="dp-title">Your datasets</span>
-        <button class="dp-upload-btn" id="upload-open-btn" onclick="openUploadModal()">+ upload</button>
+        <span class="sec-head">
+          <button class="sec-toggle" id="sec-toggle-datasets" onclick="toggleSection('datasets')" aria-label="Collapse datasets">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+          <span class="dp-title">Datasets</span>
+        </span>
+        <button class="dp-upload-btn" id="upload-open-btn" onclick="openUploadModal()">+ geojson</button>
       </div>
       <div id="dataset-list">
         <div class="dp-empty">No datasets yet — upload a GeoJSON or CSV to get started.</div>
       </div>
     </div>
 
+    <!-- ── DOCUMENTS PANEL ── -->
+    <div id="documents-panel">
+      <div class="dp-header">
+        <span class="sec-head">
+          <button class="sec-toggle" id="sec-toggle-documents" onclick="toggleSection('documents')" aria-label="Collapse documents">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+          <span class="dp-title">Documents</span>
+        </span>
+        <button class="dp-upload-btn" id="doc-upload-btn" onclick="document.getElementById('doc-file-input').click()">+ document</button>
+      </div>
+      <input type="file" id="doc-file-input" accept=".pdf,.docx,.txt,.md,.markdown,.html,.htm,.csv" style="display:none" onchange="uploadDocument(this.files[0])"/>
+      <div id="document-list">
+        <div class="dp-empty">No documents yet — add a PDF, DOCX, TXT, MD or HTML to answer factual questions.</div>
+      </div>
+      <div class="um-status" id="doc-status"></div>
+    </div>
+
     <div id="messages">
       <div class="msg-wrap ai">
         <span class="msg-label">Assistant</span>
-        <div class="bubble" id="welcome-bubble">Upload a dataset to get started — a GeoJSON file or a CSV with latitude/longitude columns. Once it's selected below, ask me anything about it and I'll query it and render the results on the map.</div>
+        <div class="bubble" id="welcome-bubble">Upload a <b>map dataset</b> (GeoJSON / CSV) to plot places, and/or a <b>knowledge document</b> (PDF, DOCX, TXT, MD, HTML) to answer factual questions. Then just ask — I'll figure out whether to search the map, the documents, or both.</div>
       </div>
       <div class="msg-wrap ai">
         <span class="msg-label">Suggestions</span>
@@ -493,7 +663,12 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 
     <div id="layers-panel">
       <div class="lp-header">
-        <span class="lp-title">Active layers</span>
+        <span class="sec-head">
+          <button class="sec-toggle" id="sec-toggle-layers" onclick="toggleSection('layers')" aria-label="Collapse map layers">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+          <span class="lp-title">Map layers</span>
+        </span>
         <button class="clear-btn" onclick="clearLayers()">clear all</button>
       </div>
       <div id="layer-list"></div>
@@ -555,15 +730,42 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 
     <!-- STEP 2: describe columns -->
     <div id="um-step-describe" style="display:none">
-      <p style="font-size:12.5px;color:var(--ink3);line-height:1.5;margin-bottom:4px">
-        Add a short description for each column — this helps the assistant understand what your data means.
-      </p>
-      <div id="col-desc-list"></div>
-      <div class="um-status" id="um-describe-status"></div>
-      <div class="um-row">
-        <button class="um-btn" onclick="skipDescriptions()">Skip</button>
-        <button class="um-btn primary" onclick="saveDescriptions()">Save & finish</button>
+
+      <!-- 2a: ask auto vs manual -->
+      <div id="um-desc-choice">
+        <p style="font-size:12.5px;color:var(--ink3);line-height:1.5;margin-bottom:8px">
+          Column descriptions help the assistant understand your data. Want me to
+          draft them automatically, or write them yourself?
+        </p>
+        <div class="um-status" id="um-choice-status"></div>
+        <div class="um-row">
+          <button class="um-btn" onclick="chooseManualDescriptions()">Write manually</button>
+          <button class="um-btn primary" id="um-auto-btn" onclick="autoGenerateDescriptions()">✨ Auto-generate</button>
+        </div>
       </div>
+
+      <!-- 2b: review / edit + save -->
+      <div id="um-desc-editor" style="display:none">
+        <p id="um-desc-hint" style="font-size:12.5px;color:var(--ink3);line-height:1.5;margin-bottom:4px"></p>
+        <div id="col-desc-list"></div>
+        <div class="um-status" id="um-describe-status"></div>
+        <div class="um-row">
+          <button class="um-btn" onclick="skipDescriptions()">Skip</button>
+          <button class="um-btn primary" onclick="saveDescriptions()">Save &amp; finish</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── THEMED CONFIRM DIALOG ── -->
+<div id="confirm-backdrop">
+  <div id="confirm-modal">
+    <h3 id="confirm-title">Are you sure?</h3>
+    <div id="confirm-message"></div>
+    <div class="confirm-row">
+      <button class="confirm-btn" onclick="_confirmClose(false)">Cancel</button>
+      <button class="confirm-btn danger" id="confirm-ok" onclick="_confirmClose(true)">Delete</button>
     </div>
   </div>
 </div>
@@ -573,9 +775,9 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 const API = 'http://localhost:8000';
 
 const GENERIC_SUGGESTIONS = [
-  'Show me everything in this dataset',
-  'Find the 10 nearest items to a given point',
-  'Which items have the highest rating?'
+  'Show cafes on the map',                                  // MAP
+  'What are the opening hours mentioned in my documents?',  // KNOWLEDGE
+  'Show museums on the map and tell me about their history' // HYBRID
 ];
 
 const COLORS = ['#b85c2a','#3a6b4a','#2a6bb8','#7a3a8a','#8a6a2a','#2a8a6a','#8a2a4a'];
@@ -583,9 +785,12 @@ let colorIndex = 0, layerGroups = {}, layers = [], map;
 
 // ── DATASET STATE ──────────────────────────────────────────────────────────
 let datasets = [];                 // full list from GET /datasets
-let selectedDatasetIds = new Set();// which ones are checked -> sent with /chat
+let selectedDatasetIds = new Set();// which ones are checked -> sent with /query
 let pendingUpload = null;          // { file, displayName } while modal open
 let pendingIngestResult = null;    // response from /datasets/upload, before describe step
+
+// ── DOCUMENT STATE ─────────────────────────────────────────────────────────
+let documents = [];                // full list from GET /documents
 
 // Track current RAG request to avoid stale results
 let ragRequestId = 0;
@@ -593,12 +798,13 @@ let ragRequestId = 0;
 window.addEventListener('load', () => {
   map = L.map('map', { zoomControl: false }).setView([30.044, 31.235], 12);
   L.control.zoom({ position: 'bottomright' }).addTo(map);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    attribution: '© OpenStreetMap © CARTO', maxZoom: 19
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap contributors © CARTO', maxZoom: 19
   }).addTo(map);
   buildSuggestions();
   autoResize();
   refreshDatasets();
+  refreshDocuments();
 });
 
 function buildSuggestions() {
@@ -611,6 +817,44 @@ function buildSuggestions() {
     wrap.appendChild(b);
   });
 }
+
+// ── PER-SECTION COLLAPSE (UI state only, independent per section) ─────────────
+// Default: datasets + documents expanded, layers expanded; metrics collapse is
+// per-answer (handled by toggleQuality). Sidebar width never changes.
+const sectionExpanded = { datasets: true, documents: true, layers: true };
+const _sectionListId = { datasets: 'dataset-list', documents: 'document-list', layers: 'layer-list' };
+function toggleSection(name) {
+  sectionExpanded[name] = !sectionExpanded[name];
+  const collapsed = !sectionExpanded[name];
+  const list = document.getElementById(_sectionListId[name]);
+  const btn = document.getElementById('sec-toggle-' + name);
+  if (list) list.classList.toggle('sec-collapsed', collapsed);
+  if (btn) btn.classList.toggle('collapsed', collapsed);
+}
+
+// Collapse the "last answer quality" metric breakdown (expand on click).
+function toggleQuality(id) { document.getElementById(id).classList.toggle('open'); }
+
+// ── THEMED CONFIRM DIALOG (replaces window.confirm; same confirm/cancel logic) ─
+let _confirmResolve = null;
+function confirmDialog(message, { title = 'Are you sure?', confirmText = 'Delete', danger = true } = {}) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-message').textContent = message;
+  const okBtn = document.getElementById('confirm-ok');
+  okBtn.textContent = confirmText;
+  okBtn.className = 'confirm-btn' + (danger ? ' danger' : '');
+  document.getElementById('confirm-backdrop').style.display = 'flex';
+  return new Promise(resolve => { _confirmResolve = resolve; });
+}
+function _confirmClose(val) {
+  document.getElementById('confirm-backdrop').style.display = 'none';
+  if (_confirmResolve) { _confirmResolve(val); _confirmResolve = null; }
+}
+// Backdrop click cancels.
+document.addEventListener('DOMContentLoaded', () => {
+  const bd = document.getElementById('confirm-backdrop');
+  if (bd) bd.addEventListener('click', e => { if (e.target === bd) _confirmClose(false); });
+});
 
 function autoResize() {
   const ta = document.getElementById('chat-input');
@@ -667,14 +911,106 @@ function toggleDataset(id, checked) {
 function updateInputEnabled() {
   const ta = document.getElementById('chat-input');
   const btn = document.getElementById('send-btn');
-  const enabled = selectedDatasetIds.size > 0;
+  // Enable when a map dataset is selected OR any knowledge document exists —
+  // the router decides which pipeline to use per query.
+  const enabled = selectedDatasetIds.size > 0 || documents.length > 0;
   ta.disabled = !enabled;
   btn.disabled = !enabled;
-  ta.placeholder = enabled ? 'Ask a question about your selected dataset(s)…' : 'Select a dataset above first…';
+  if (!enabled) {
+    ta.placeholder = 'Select a dataset or add a document first…';
+  } else if (selectedDatasetIds.size > 0) {
+    ta.placeholder = 'Ask about the map, your documents, or both…';
+  } else {
+    ta.placeholder = 'Ask me a question';
+  }
+}
+
+// ── DOCUMENTS (RAG) ──────────────────────────────────────────────────────────
+
+async function refreshDocuments() {
+  try {
+    const res = await fetch(`${API}/documents`);
+    if (!res.ok) return;
+    documents = await res.json();
+    renderDocumentList();
+  } catch (e) {
+    console.warn('Could not load documents:', e);
+  }
+}
+
+function renderDocumentList() {
+  const list = document.getElementById('document-list');
+  list.innerHTML = '';
+  if (!documents.length) {
+    list.innerHTML = '<div class="dp-empty">No documents yet — add a PDF, DOCX, TXT, MD or HTML to answer factual questions.</div>';
+    updateInputEnabled();
+    return;
+  }
+  documents.forEach(doc => {
+    const row = document.createElement('div');
+    row.className = 'doc-row';
+    const ext = (doc.filetype || 'doc').toUpperCase();
+    row.innerHTML = `
+      <span class="doc-icon">${esc(ext)}</span>
+      <div class="doc-info">
+        <span class="doc-name" title="${esc(doc.title)}">${esc(doc.title)}</span>
+        <span class="doc-meta">${doc.chunk_count} chunk${doc.chunk_count!==1?'s':''} · ${doc.page_count} page${doc.page_count!==1?'s':''}</span>
+      </div>
+      <button class="doc-del" title="Delete document" onclick="deleteDocument('${doc.id}')">✕</button>`;
+    list.appendChild(row);
+  });
+  updateInputEnabled();
+}
+
+async function uploadDocument(file) {
+  if (!file) return;
+  const statusEl = document.getElementById('doc-status');
+  statusEl.classList.remove('error');
+  statusEl.textContent = `Ingesting “${file.name}” — parsing, chunking & embedding…`;
+  document.getElementById('doc-file-input').value = '';
+
+  const form = new FormData();
+  form.append('file', file);
+  form.append('title', file.name);
+
+  let res;
+  try {
+    res = await fetch(`${API}/documents/upload`, { method: 'POST', body: form });
+  } catch (e) {
+    statusEl.textContent = `Could not reach the server at ${API} (${e.message}).`;
+    statusEl.classList.add('error');
+    return;
+  }
+  const r = await readResponse(res);
+  if (!r.ok) {
+    statusEl.textContent = errorReason(r);
+    statusEl.classList.add('error');
+    return;
+  }
+  const data = r.data || {};
+  let msg = `Indexed “${data.title}” — ${data.chunk_count} chunks.`;
+  if (data.injection_flags && data.injection_flags.length) {
+    msg += ` ⚠ neutralized: ${data.injection_flags.join(', ')}.`;
+  }
+  statusEl.textContent = msg;
+  await refreshDocuments();
+}
+
+async function deleteDocument(id) {
+  if (!(await confirmDialog('Delete this document from the knowledge index?',
+      { title: 'Delete document', confirmText: 'Delete' }))) return;
+  try {
+    const res = await fetch(`${API}/documents/${id}`, { method: 'DELETE' });
+    if (!res.ok) { alert('Could not delete document.'); return; }
+    await refreshDocuments();
+  } catch {
+    alert('Could not reach the server.');
+  }
 }
 
 async function deleteDataset(id) {
-  if (!confirm('Delete this dataset? This cannot be undone.')) return;
+  if (!(await confirmDialog('Delete this dataset? This cannot be undone.',
+      { title: 'Delete dataset', confirmText: 'Delete' }))) return;
   try {
     const res = await fetch(`${API}/datasets/${id}`, { method: 'DELETE' });
     if (!res.ok) { alert('Could not delete dataset.'); return; }
@@ -763,6 +1099,13 @@ function showDescribeStep(result) {
   document.getElementById('um-step-file').style.display = 'none';
   document.getElementById('um-step-describe').style.display = 'block';
 
+  // Start on the auto-vs-manual choice; the editor is revealed after a choice.
+  document.getElementById('um-desc-choice').style.display = 'block';
+  document.getElementById('um-desc-editor').style.display = 'none';
+  const choiceStatus = document.getElementById('um-choice-status');
+  choiceStatus.textContent = ''; choiceStatus.classList.remove('error');
+  document.getElementById('um-auto-btn').disabled = false;
+
   const listEl = document.getElementById('col-desc-list');
   listEl.innerHTML = '';
   (result.columns || []).forEach(col => {
@@ -777,6 +1120,56 @@ function showDescribeStep(result) {
              placeholder="What does this column mean?"/>`;
     listEl.appendChild(row);
   });
+}
+
+// Reveal the editable list (used by both the manual and auto paths).
+function showDescEditor(hint) {
+  document.getElementById('um-desc-choice').style.display = 'none';
+  document.getElementById('um-desc-editor').style.display = 'block';
+  document.getElementById('um-desc-hint').textContent = hint;
+}
+
+// User chose to write descriptions themselves — show empty fields.
+function chooseManualDescriptions() {
+  showDescEditor('Write a short description for each column, then save.');
+}
+
+// User chose auto-generation — call the backend, then let them review/edit.
+async function autoGenerateDescriptions() {
+  if (!pendingIngestResult) return;
+  const statusEl = document.getElementById('um-choice-status');
+  const btn = document.getElementById('um-auto-btn');
+  statusEl.classList.remove('error');
+  statusEl.textContent = '✨ Generating descriptions from your data…';
+  btn.disabled = true;
+
+  const columns = (pendingIngestResult.columns || []).map(c => ({
+    column_name: c.column_name, data_type: c.data_type, description: ''
+  }));
+
+  let res;
+  try {
+    res = await fetch(`${API}/datasets/describe/auto`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dataset_id: pendingIngestResult.dataset_id, columns })
+    });
+  } catch (e) {
+    statusEl.textContent = `Could not reach the server (${e.message}).`;
+    statusEl.classList.add('error'); btn.disabled = false; return;
+  }
+  const r = await readResponse(res);
+  if (!r.ok || !r.data) {
+    statusEl.textContent = (r.data && errorReason(r)) || 'Auto-generation failed — you can write them manually.';
+    statusEl.classList.add('error'); btn.disabled = false; return;
+  }
+
+  // Pre-fill the inputs with the generated descriptions for review.
+  const map = {};
+  (r.data.columns || []).forEach(c => { map[c.column_name] = c.description || ''; });
+  document.querySelectorAll('#col-desc-list .col-desc-input').forEach(inp => {
+    if (map[inp.dataset.col]) inp.value = map[inp.dataset.col];
+  });
+  showDescEditor('Review the auto-generated descriptions and edit any that aren’t right, then save.');
 }
 
 async function saveDescriptions() {
@@ -828,36 +1221,102 @@ async function finishUpload() {
 
 // ── CHAT ──────────────────────────────────────────────────────────────────────
 
+// Read a fetch Response safely: parse JSON when possible, otherwise keep the
+// raw text. Distinguishes real network failures from HTTP error responses so
+// the UI can show the ACTUAL cause instead of a generic "server down" message.
+async function readResponse(res) {
+  const raw = await res.text();
+  let data = null;
+  try { data = raw ? JSON.parse(raw) : null; } catch { /* non-JSON body */ }
+  return { ok: res.ok, status: res.status, data, raw };
+}
+
+// Turn any error payload into a human string.
+function errorReason(r) {
+  const d = r.data && r.data.detail !== undefined ? r.data.detail : r.data;
+  if (d && Array.isArray(d.reasons)) return d.reasons.join(' ');
+  if (d && d.error) return d.error;
+  if (typeof d === 'string' && d.trim()) return d;
+  if (r.raw && r.raw.trim()) return `${r.raw.slice(0, 300)}`;
+  return `HTTP ${r.status}`;
+}
+
 async function sendQuery() {
   const ta = document.getElementById('chat-input');
   const q = ta.value.trim(); if (!q) return;
-  if (!selectedDatasetIds.size) return;
+  if (ta.disabled) return;
   ta.value = ''; ta.style.height = 'auto';
   appendMsg('user', q);
   const thinkEl = appendThinking();
+  let res;
   try {
-    const res = await fetch(`${API}/chat`, {
+    res = await fetch(`${API}/query`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: q, dataset_ids: Array.from(selectedDatasetIds) })
+      body: JSON.stringify({
+        message: q,
+        dataset_ids: Array.from(selectedDatasetIds),
+        allow_web: true
+      })
     });
-    const data = await res.json(); thinkEl.remove();
-    if (!res.ok) { appendMsg('ai', data.detail || 'Something went wrong.'); return; }
-    const color = COLORS[colorIndex++ % COLORS.length];
-    plotResults(data.results, q, color);
-    appendAiResult(data.results.length, data.sql);
-
-    // If the SQL has a ST_DWithin, draw radius circles around the reference points
-    const radiusInfo = parseRadiusFromSQL(data.sql);
-    if (radiusInfo) {
-      await drawRadiusCircles(radiusInfo.table, radiusInfo.meters, color);
-    }
   } catch (err) {
-    console.error(err);
+    // Only a genuine network-level failure lands here (server unreachable / CORS).
+    console.error('network error:', err);
     thinkEl.remove();
-    appendMsg(
-        'ai',
-        'Could not reach the server. Make sure FastAPI is running on port 8000.'
-    );
+    appendMsg('ai', `⚠ Could not reach the server at ${API}. Is FastAPI running? (${err.message})`);
+    return;
+  }
+
+  const r = await readResponse(res);
+  thinkEl.remove();
+
+  if (!r.ok) {
+    // Server responded, but with an error — show the real reason (e.g. Qdrant
+    // unavailable, guardrail block, model load failure), not a network message.
+    appendMsg('ai', `⚠ ${errorReason(r)}`);
+    console.error('server error', r.status, r.data || r.raw);
+    return;
+  }
+  if (!r.data) {
+    appendMsg('ai', '⚠ The server returned an unexpected (non-JSON) response.');
+    return;
+  }
+  await handleQueryResponse(r.data, q);
+}
+
+// Route the unified /query response into map plotting and/or a knowledge answer.
+async function handleQueryResponse(data, q) {
+  const intent = (data.intent && data.intent.intent) || 'UNKNOWN';
+
+  // UNKNOWN → clarifying question, nothing else to do.
+  if (data.clarification) {
+    appendKnowledgeAnswer({ answer: data.clarification, found: false }, intent, true);
+    return;
+  }
+
+  const hasKnowledge = !!data.knowledge;
+  let plotted = false;
+
+  // MAP portion (present for MAP and HYBRID).
+  if (data.map) {
+    if (data.map.error) {
+      // If a knowledge fallback answered, don't also show the map error.
+      if (!hasKnowledge) appendMsg('ai', typeof data.map.error === 'string' ? data.map.error : 'Map query failed.');
+    } else if (data.map.results && data.map.results.length) {
+      const color = COLORS[colorIndex++ % COLORS.length];
+      plotResults(data.map.results, q, color);
+      appendAiResult(data.map.results.length, data.map.sql, intent);
+      const radiusInfo = parseRadiusFromSQL(data.map.sql);
+      if (radiusInfo) await drawRadiusCircles(radiusInfo.table, radiusInfo.meters, color);
+      plotted = true;
+    } else if (!hasKnowledge) {
+      // 0 results and no knowledge fallback — tell the user plainly.
+      appendAiResult(0, data.map.sql, intent);
+    }
+  }
+
+  // KNOWLEDGE portion (present for KNOWLEDGE, HYBRID, or a MAP 0-result fallback).
+  if (data.knowledge) {
+    appendKnowledgeAnswer(data.knowledge, intent, !plotted);
   }
 }
 
@@ -962,20 +1421,125 @@ function appendMsg(role, text) {
   msgs.appendChild(wrap); msgs.scrollTop = msgs.scrollHeight;
 }
 
-function appendAiResult(count, sql) {
+function intentTag(intent) {
+  if (!intent) return '';
+  const cls = intent.toLowerCase();
+  return `<span class="intent-tag ${cls}">${esc(intent)}</span>`;
+}
+
+function appendAiResult(count, sql, intent) {
   const msgs = document.getElementById('messages');
   const id = 'sql-' + Date.now();
   const wrap = document.createElement('div');
   wrap.className = 'msg-wrap ai';
-  wrap.innerHTML = `<span class="msg-label">Assistant</span>
+  wrap.innerHTML = `<span class="msg-label">Assistant · map</span>
     <div class="bubble">
+      ${intentTag(intent)}
       Returned <span class="count-tag">${count} result${count !== 1 ? 's' : ''}</span> — plotted on the map.
       <br/><small style="color:var(--ink4);font-size:11px;font-style:italic">Hover a marker to see detailed info.</small>
       <br/><button class="sql-btn" onclick="toggleSql('${id}')">▸ view generated SQL</button>
-      <pre class="sql-box" id="${id}">${esc(sql)}</pre>
+      <pre class="sql-box" id="${id}">${esc(sql || '')}</pre>
     </div>`;
   msgs.appendChild(wrap); msgs.scrollTop = msgs.scrollHeight;
 }
+
+// Render a grounded RAG answer with citations, evaluation metrics and guardrail info.
+function appendKnowledgeAnswer(k, intent, showIntentTag) {
+  const msgs = document.getElementById('messages');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-wrap ai';
+
+  const tag = showIntentTag ? intentTag(intent) : '';
+
+  // Citations / sources block.
+  let sourcesHtml = '';
+  const cites = (k.citations && k.citations.length) ? k.citations : null;
+  const sources = k.sources || [];
+  if (cites || sources.length) {
+    const tierLabel = ({
+      dataset: 'your dataset',
+      local_index: 'your documents',
+      official_website: 'official website',
+      official_domain: 'official domain',
+      web_search: 'web search'
+    })[k.source_tier] || k.source_tier || '';
+    let items = '';
+    if (cites) {
+      items = cites.map(c => {
+        const isUrl = c.source && /^https?:\/\//i.test(c.source);
+        const label = c.title
+          ? `${esc(c.title)}${c.page != null ? ' · p.' + esc(c.page) : ''}`
+          : (c.source ? esc(c.source) : 'source');
+        const val = isUrl ? `<a href="${esc(c.source)}" target="_blank" rel="noopener">${label}</a>` : label;
+        return `<div class="cite-chip">${val}</div>`;
+      }).join('');
+    } else {
+      items = sources.map(s => {
+        const isUrl = /^https?:\/\//i.test(s);
+        const val = isUrl ? `<a href="${esc(s)}" target="_blank" rel="noopener">${esc(s)}</a>` : esc(s);
+        return `<div class="cite-chip">${val}</div>`;
+      }).join('');
+    }
+    sourcesHtml = `<div class="answer-sources">
+        <span class="answer-sources-title">Sources${tierLabel ? ' · ' + esc(tierLabel) : ''}</span>
+        ${items}
+      </div>`;
+  }
+
+  // Evaluation metric chips.
+  let metricsHtml = '';
+  const ev = k.evaluation || {};
+  const chips = [];
+  const fmt = (v) => (v == null ? '—' : (Math.round(v * 100) + '%'));
+  const cls = (v) => (v == null ? '' : (v >= 0.7 ? 'good' : (v < 0.4 ? 'warn' : '')));
+  if (ev.faithfulness != null)      chips.push(`<span class="metric-chip ${cls(ev.faithfulness)}">faithfulness <b>${fmt(ev.faithfulness)}</b></span>`);
+  if (ev.answer_relevancy != null)  chips.push(`<span class="metric-chip ${cls(ev.answer_relevancy)}">answer rel. <b>${fmt(ev.answer_relevancy)}</b></span>`);
+  if (ev.context_relevancy != null) chips.push(`<span class="metric-chip ${cls(ev.context_relevancy)}">context rel. <b>${fmt(ev.context_relevancy)}</b></span>`);
+  if (k.retrieval && k.retrieval.context_score != null) chips.push(`<span class="metric-chip ${cls(k.retrieval.context_score)}">retrieval <b>${fmt(k.retrieval.context_score)}</b></span>`);
+  if (chips.length) {
+    // collapsed "last answer quality" summary with a compact bar; expands to the
+    // full existing metric chips (nothing removed or renamed).
+    const vals = [ev.faithfulness, ev.answer_relevancy, ev.context_relevancy,
+                  (k.retrieval && k.retrieval.context_score)].filter(v => v != null);
+    const overall = vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 100) : 0;
+    const qid = 'q-' + Date.now() + '-' + Math.floor(Math.random() * 10000);
+    metricsHtml = `<div class="quality" id="${qid}">
+      <button class="quality-summary" onclick="toggleQuality('${qid}')">
+        <span class="quality-label">last answer quality</span>
+        <span class="quality-bar"><span class="quality-bar-fill" style="width:${overall}%"></span></span>
+        <span class="quality-chev">⌄</span>
+      </button>
+      <div class="quality-detail"><div class="metrics-row">${chips.join('')}</div></div>
+    </div>`;
+  }
+
+  // Guardrail note (only when it flagged something).
+  let guardHtml = '';
+  if (k.guardrail && k.guardrail.valid === false && (k.guardrail.reasons || []).length) {
+    guardHtml = `<div class="guardrail-note">⚠ ${esc(k.guardrail.reasons.join(' '))}</div>`;
+  }
+
+  // Collapsible raw details.
+  const detId = 'det-' + Date.now();
+  const detailsPayload = JSON.stringify({ retrieval: k.retrieval, evaluation: k.evaluation, guardrail: k.guardrail }, null, 2);
+  const detailsHtml = (k.retrieval || k.evaluation)
+    ? `<button class="details-btn" onclick="toggleDetails('${detId}')">▸ retrieval & evaluation details</button>
+       <pre class="details-box" id="${detId}">${esc(detailsPayload)}</pre>`
+    : '';
+
+  wrap.innerHTML = `<span class="msg-label">Assistant · knowledge</span>
+    <div class="bubble">
+      ${tag}
+      <div class="answer-body">${esc(k.answer || '')}</div>
+      ${sourcesHtml}
+      ${metricsHtml}
+      ${guardHtml}
+      ${detailsHtml}
+    </div>`;
+  msgs.appendChild(wrap); msgs.scrollTop = msgs.scrollHeight;
+}
+
+function toggleDetails(id) { document.getElementById(id).classList.toggle('open'); }
 
 function appendThinking() {
   const msgs = document.getElementById('messages');
@@ -991,6 +1555,20 @@ function toggleSql(id) { document.getElementById(id).classList.toggle('open'); }
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 // ── PLOT RESULTS ──────────────────────────────────────────────────────────────
+
+// Red SVG teardrop pin, rendered as a Leaflet divIcon (crisp at this size).
+function redPinIcon() {
+  return L.divIcon({
+    className: 'pin-marker',
+    html: '<svg width="22" height="30" viewBox="0 0 22 30" xmlns="http://www.w3.org/2000/svg">'
+        + '<path d="M11 0C4.9 0 0 4.9 0 11c0 7.6 11 19 11 19s11-11.4 11-19C22 4.9 17.1 0 11 0z" '
+        + 'fill="#C0392B" stroke="#fff" stroke-width="1.5"/>'
+        + '<circle cx="11" cy="11" r="4" fill="#fff"/></svg>',
+    iconSize: [22, 30],
+    iconAnchor: [11, 30],
+    popupAnchor: [0, -28]
+  });
+}
 
 function plotResults(results, label, color) {
   if (!results.length) { showBadge('No results found'); return; }
@@ -1009,9 +1587,7 @@ function plotResults(results, label, color) {
 
     if (geom.type === 'Point') {
       const [lng, lat] = geom.coordinates;
-      const marker = L.circleMarker([lat, lng], {
-        radius: 7, fillColor: color, color: 'white', weight: 2, fillOpacity: .9
-      }).addTo(group);
+      const marker = L.marker([lat, lng], { icon: redPinIcon() }).addTo(group);
 
       // Hover: show RAG panel
       marker.on('mouseover', () => triggerRag(meta, placeType));
@@ -1158,9 +1734,13 @@ function updateLayersPanel() {
   layers.forEach(l => {
     const row = document.createElement('label');
     row.className = 'layer-row';
+    // item count read from the existing Leaflet group (no map logic changed)
+    const g = layerGroups[l.id];
+    const count = (g && g.getLayers) ? g.getLayers().length : '';
     row.innerHTML = `<input type="checkbox" ${l.visible?'checked':''} onchange="toggleLayer('${l.id}',this.checked)"/>
-      <span class="layer-dot" style="background:${l.color}"></span>
-      <span class="layer-label" title="${l.label}">${l.label}</span>`;
+      <span class="layer-dot"></span>
+      <span class="layer-label" title="${l.label}">${l.label}</span>
+      <span class="layer-count">${count}</span>`;
     list.appendChild(row);
   });
 }

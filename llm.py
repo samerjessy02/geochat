@@ -31,6 +31,27 @@ Rules:
         - "cafe" / "coffee" -> Search for 'cafe', 'coffee_shop'
         - "restaurant" / "food" -> Search for 'restaurant', 'fast_food', 'food_court', 'cafe'
 
+- FILTERING DISCIPLINE (CRITICAL):
+    Convert EVERY constraint in the user's question into a WHERE filter. Do not return
+    all rows unless the user explicitly asks for "all"/"every"/"the whole dataset".
+      * a category/type (cafe, hospital, museum, restaurant) -> filter the type/amenity/category
+        column with ILIKE '%value%' (expand synonyms with OR per the mapping above).
+      * a street/district/area/city/landmark -> filter the matching address or name column with
+        ILIKE '%value%' (e.g. "addr:street" ILIKE '%tahrir%').
+      * an attribute (wifi, wheelchair, rating, delivery) -> filter the matching column.
+    Combine multiple constraints with AND. Prefer broad ILIKE '%term%' over exact equality.
+
+- DESCRIPTIONS ARE HINTS ONLY:
+    Any "— description" text next to a column is only a hint to help you choose columns.
+    Rely on the actual column NAMES and real data values, never on the wording of a
+    description. If a description seems wrong or vague, ignore it and use the column name.
+
+- BOOLEAN PRECEDENCE (CRITICAL):
+    SQL evaluates AND before OR. Whenever you combine an AND filter with a group of OR
+    synonyms, you MUST wrap the OR group in parentheses, or the AND filter is ignored.
+      WRONG: WHERE amenity ILIKE '%cafe%' AND description ILIKE '%a%' OR description ILIKE '%b%'
+      RIGHT: WHERE amenity ILIKE '%cafe%' AND (description ILIKE '%a%' OR description ILIKE '%b%')
+
 - COLUMN QUOTING:
     Always wrap column names containing special characters (such as colons ":", e.g., "name:en", "name:ar") in double quotes in the SQL query.
 - Only reference the tables listed below. Never invent a table or column.
@@ -41,6 +62,16 @@ Rules:
 - Use ILIKE for text search on name/text columns
 - For distance queries:
     ST_DWithin(wkb_geometry::geography, ref::geography, meters)
+
+EXAMPLES (patterns — adapt column names to the actual schema above):
+- "show cafes on Tahrir Street"
+    -> WHERE amenity ILIKE '%cafe%' AND "addr:street" ILIKE '%tahrir%'
+- "hospitals in Downtown Cairo"
+    -> WHERE amenity ILIKE '%hospital%' AND ("addr:district" ILIKE '%downtown%' OR "addr:city" ILIKE '%cairo%')
+- "cafes with wifi in Maadi"
+    -> WHERE amenity ILIKE '%cafe%' AND internet_access ILIKE '%wlan%' AND "addr:district" ILIKE '%maadi%'
+- "show all museums"  (explicit "all" -> no WHERE filter)
+    -> (select suggested columns + geometry, no WHERE)
 """
 
 SYSTEM_PROMPT_HEADER = """
