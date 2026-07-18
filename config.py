@@ -100,6 +100,10 @@ class Settings:
     # --- Retrieval -------------------------------------------------------
     retrieval_top_k: int = field(default_factory=lambda: _get_int("RETRIEVAL_TOP_K", 5))
     retrieval_candidate_k: int = field(default_factory=lambda: _get_int("RETRIEVAL_CANDIDATE_K", 20))
+    # For count / "list all" / negation queries: if the matched document has at
+    # most this many chunks, feed ALL of them (not just top-k) so the model can
+    # reason over the complete set.
+    exhaustive_max_chunks: int = field(default_factory=lambda: _get_int("EXHAUSTIVE_MAX_CHUNKS", 40))
     # Relative weights for Reciprocal Rank Fusion (dense vs. keyword).
     dense_weight: float = field(default_factory=lambda: _get_float("DENSE_WEIGHT", 1.0))
     bm25_weight: float = field(default_factory=lambda: _get_float("BM25_WEIGHT", 1.0))
@@ -121,6 +125,16 @@ class Settings:
     tavily_api_key: str | None = field(default_factory=lambda: os.getenv("TAVILY_API_KEY") or None)
     web_fallback_enabled: bool = field(default_factory=lambda: _get_bool("WEB_FALLBACK_ENABLED", True))
     web_max_pages: int = field(default_factory=lambda: _get_int("WEB_MAX_PAGES", 3))
+    # Scraper engine: "auto" (Firecrawl if a key is set, else httpx+BeautifulSoup),
+    # "firecrawl", or "httpx".
+    scraper: str = field(default_factory=lambda: os.getenv("SCRAPER", "auto").lower())
+    firecrawl_api_key: str | None = field(default_factory=lambda: os.getenv("FIRECRAWL_API_KEY") or None)
+    # Firecrawl's current API is v2 (v1 is legacy). Override if the base changes.
+    firecrawl_api_base: str = field(
+        default_factory=lambda: os.getenv("FIRECRAWL_API_BASE", "https://api.firecrawl.dev/v2").rstrip("/")
+    )
+    firecrawl_crawl_limit: int = field(default_factory=lambda: _get_int("FIRECRAWL_CRAWL_LIMIT", 10))
+    firecrawl_timeout: int = field(default_factory=lambda: _get_int("FIRECRAWL_TIMEOUT", 90))
 
     # --- Guardrails ------------------------------------------------------
     guardrails_enabled: bool = field(default_factory=lambda: _get_bool("GUARDRAILS_ENABLED", True))
