@@ -232,6 +232,13 @@ def _load_pdf(path: str, filename: str) -> list[LoadedPage]:
     """Load a PDF: pypdf by default, escalating to Docling when configured/needed."""
     strategy = settings.pdf_loader
 
+    # -- TEMPORARY: force Docling-only extraction for every PDF ---------------
+    # pypdf is switched off for now. To restore the normal pypdf-first behaviour,
+    # delete this block (and revert PDF_LOADER in .env if you changed it).
+    log.info("pdf '%s': Docling-only mode (pypdf temporarily disabled)", filename)
+    return _merge_pages(_pdf_docling(path))
+    # -- END TEMPORARY -------------------------------------------------------
+
     if strategy == "docling":
         return _merge_pages(_pdf_docling(path))
 

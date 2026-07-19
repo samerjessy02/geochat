@@ -885,6 +885,11 @@ const GENERIC_SUGGESTIONS = [
 const COLORS = ['#b85c2a','#3a6b4a','#2a6bb8','#7a3a8a','#8a6a2a','#2a8a6a','#8a2a4a'];
 let colorIndex = 0, layerGroups = {}, layers = [], map;
 
+// Conversation session id — new per page load, so a refresh starts a fresh
+// window (ConversationBufferWindowMemory keyed by this on the server).
+const SESSION_ID = (crypto.randomUUID ? crypto.randomUUID()
+  : 'sess-' + Date.now() + '-' + Math.random().toString(16).slice(2));
+
 // ── DATASET STATE ──────────────────────────────────────────────────────────
 let datasets = [];                 // full list from GET /datasets
 let selectedDatasetIds = new Set();// which ones are checked -> sent with /query
@@ -1432,7 +1437,8 @@ async function submitQuery(message, opts = {}) {
         dataset_ids: Array.from(selectedDatasetIds),
         allow_web: true,
         web_confirmed: opts.web_confirmed || false,
-        website: opts.website || null
+        website: opts.website || null,
+        session_id: SESSION_ID
       }),
       signal: controller.signal
     });

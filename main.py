@@ -46,6 +46,7 @@ from agents import column_describer
 from agents.hybrid_retriever import invalidate_bm25_cache
 from agents.intent_router import classify_intent, MAP, KNOWLEDGE, HYBRID, UNKNOWN
 from agents.knowledge_pipeline import answer_knowledge_query
+from agents.memory import get_memory, reset_memory, condense_query
 from agents.logging_config import get_logger, setup_logging, snippet
 
 setup_logging()
@@ -122,6 +123,11 @@ class QueryRequest(BaseModel):
     entity_focus: str | None = None        # override entity for web fallback
     allow_web: bool = True
     web_confirmed: bool = False            # user approved scraping the official site
+    session_id: str | None = None          # conversation window key (memory)
+
+
+class ResetMemoryRequest(BaseModel):
+    session_id: str | None = None
 
 
 class EnrichRequest(BaseModel):
@@ -301,24 +307,36 @@ def query(req: QueryRequest):
     GeoJSON-ready rows), optional ``knowledge`` (grounded answer + citations +
     evaluation + guardrail results).
     """
-    logger.info("POST /query — '%s' (datasets=%d)", snippet(req.message), len(req.dataset_ids))
+    logger.info("POST /query — '%s' (datasets=%d, session=%s)",
+                snippet(req.message), len(req.dataset_ids), req.session_id or "default")
 
     # --- input guardrail -------------------------------------------------
     guard = guardrails.check_input(req.message)
     if not guard.allowed:
         raise HTTPException(status_code=400, detail={"error": "blocked_by_guardrail", **guard.as_dict()})
 
-    intent = classify_intent(req.message)
+    # --- conversational memory (ConversationBufferWindowMemory) ----------
+    # Rewrite a follow-up into a standalone question using the last k turns, so
+    # intent classification, spatial SQL and RAG retrieval all see a
+    # self-contained query with pronouns resolved ("does it deliver?" ->
+    # "does Cilantro deliver?"). The turn is saved at the end.
+    memory = get_memory(req.session_id)
+    effective_query = condense_query(memory, req.message)
+
+    intent = classify_intent(effective_query)
     response: dict = {"intent": intent.as_dict()}
+    if effective_query != req.message:
+        response["resolved_query"] = effective_query
 
     if intent.intent == UNKNOWN:
         logger.info("/query -> UNKNOWN, asking for clarification")
         response["clarification"] = intent.clarifying_question
+        memory.add(req.message, intent.clarifying_question or "")
         return response
 
     def _run_knowledge():
         return answer_knowledge_query(
-            req.message,
+            effective_query,
             entity_focus=req.entity_focus or intent.entity_focus,
             website=req.website,
             filters={"collection": req.collection} if req.collection else None,
@@ -330,7 +348,7 @@ def query(req: QueryRequest):
     map_empty = False
     if intent.needs_map:
         try:
-            map_result = _run_spatial(req.message, req.dataset_ids)
+            map_result = _run_spatial(effective_query, req.dataset_ids)
             response["map"] = map_result
             map_empty = not map_result.get("results")
         except HTTPException as e:
@@ -352,9 +370,36 @@ def query(req: QueryRequest):
         if kanswer.found:
             response["knowledge"] = kanswer.as_dict()
 
+    # --- record the interaction in the window ----------------------------
+    # Skip the intermediate human-in-the-loop confirmation prompt so it doesn't
+    # pollute the window (the query is re-sent with web_confirmed=true anyway).
+    kn = response.get("knowledge")
+    if not (isinstance(kn, dict) and kn.get("needs_web_confirmation")):
+        memory.add(req.message, _reply_for_memory(response))
+
     logger.info("/query done — intent=%s, map=%s, knowledge=%s",
                 intent.intent, "map" in response, "knowledge" in response)
     return response
+
+
+def _reply_for_memory(response: dict) -> str:
+    """Best-effort assistant text to store for a turn (for follow-up context)."""
+    kn = response.get("knowledge")
+    if isinstance(kn, dict) and kn.get("answer"):
+        return str(kn["answer"])
+    if response.get("clarification"):
+        return str(response["clarification"])
+    mp = response.get("map")
+    if isinstance(mp, dict) and mp.get("results") is not None:
+        return f"(mapped {len(mp.get('results') or [])} feature(s))"
+    return ""
+
+
+@app.post("/memory/reset")
+def memory_reset(req: ResetMemoryRequest):
+    """Clear a session's conversation window (start a fresh conversation)."""
+    reset_memory(req.session_id)
+    return {"status": "ok"}
 
 
 # --------------------------------------------------------------------------- #

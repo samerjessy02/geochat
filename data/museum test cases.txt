@@ -1,0 +1,50 @@
+Exact-fact retrieval
+
+Egyptian Museum hours → 9:00 AM to 5:00 PM
+Coptic Museum wheelchair accessible? → Yes
+Gayer-Anderson historical period → Ottoman period (two preserved historic houses)
+
+Info not present (correct answer = "not stated / don't know")
+
+Ticket price for National Museum of Egyptian Civilization → Not mentioned
+Railway Museum opening hours → Not mentioned
+Abdeen Palace Museum wheelchair accessible? → Not mentioned
+Umm Kulthum Museum phone number → Not mentioned
+Child Museum café/restaurant → Not mentioned
+(A correct RAG system should say "not found," not guess — if it invents an answer here, that's a hallucination failure.)
+
+Paraphrase / indirect phrasing
+
+Tutankhamun's belongings → Egyptian Museum
+Egypt's train history → Railway Museum
+Famous singer's life → Umm Kulthum Museum
+Royal weapons and medals → Abdeen Palace Museum
+
+Multi-hop / comparison
+
+Wheelchair accessible AND open 9–5 → Egyptian Museum, Museum of Islamic Art, Coptic Museum (these three explicitly state both; other museums don't mention hours/accessibility, so they can't be confirmed either way)
+Museum of Islamic Art vs. Gayer-Anderson → Museum of Islamic Art: ceramics, textiles, metalwork, manuscripts, wood carvings, glassware from various Islamic periods, museum-format collection. Gayer-Anderson: Islamic art plus furniture, carpets, antiques housed in two Ottoman-era historic houses collected by one individual (Major Gayer-Anderson) — architecture/atmosphere is a defining feature, not just the collection.
+All wheelchair-accessible museums → Egyptian Museum, Museum of Islamic Art, Coptic Museum (only these three explicitly state accessibility)
+Best for family with young kids → Child Museum (interactive, hands-on exhibits, games, workshops, explicitly aimed at children/families/school groups)
+
+Ambiguous / overlapping content
+
+Islamic manuscripts → Both Museum of Islamic Art and Gayer-Anderson Museum mention manuscripts among Islamic art holdings. A good RAG answer should surface both, not merge or pick arbitrarily.
+"Artifacts" in general → Too vague — nearly every museum listed contains "artifacts" of some kind (Egyptian Museum, National Museum of Egyptian Civilization, Abdeen Palace, etc.). Correct behavior is to ask for clarification or list multiple candidates, not silently pick one.
+
+Numeric / structured (none of these exist in the text)
+
+Number of objects in Egyptian Museum's collection → Not mentioned
+Founding year of Railway Museum → Not mentioned
+Size of National Museum of Egyptian Civilization → Not mentioned
+
+Out-of-scope / adjacent (should be refused/flagged as outside the data)
+
+Route from Cairo Airport → Not covered in the text
+Closest museum to the pyramids → Not covered (no location/proximity data given)
+Dress code for Abdeen Palace Museum → Not mentioned
+
+Negation / trick framing
+
+NOT wheelchair accessible → Text doesn't explicitly say any museum is inaccessible — the other six museums simply don't mention accessibility at all, so the honest answer is "unknown for the rest, not confirmed inaccessible."
+Museum that does NOT focus on ancient Egypt → Several qualify: Museum of Islamic Art, Coptic Museum, Abdeen Palace Museum, Railway Museum, Umm Kulthum Museum, Gayer-Anderson Museum, Museum of Modern Egyptian Art, Child Museum. (Only Egyptian Museum and National Museum of Egyptian Civilization are ancient-Egypt-focused.)

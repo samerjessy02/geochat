@@ -112,6 +112,10 @@ class Settings:
     # most this many chunks, feed ALL of them (not just top-k) so the model can
     # reason over the complete set.
     exhaustive_max_chunks: int = field(default_factory=lambda: _get_int("EXHAUSTIVE_MAX_CHUNKS", 40))
+    # For count / "list all" / negation queries: if the matched document has at
+    # most this many chunks, feed ALL of them (not just top-k) so the model can
+    # reason over the complete set.
+    exhaustive_max_chunks: int = field(default_factory=lambda: _get_int("EXHAUSTIVE_MAX_CHUNKS", 40))
     # Relative weights for Reciprocal Rank Fusion (dense vs. keyword).
     dense_weight: float = field(default_factory=lambda: _get_float("DENSE_WEIGHT", 1.0))
     bm25_weight: float = field(default_factory=lambda: _get_float("BM25_WEIGHT", 1.0))
@@ -148,6 +152,16 @@ class Settings:
     # is the overall scrape budget.
     firecrawl_top_pages: int = field(default_factory=lambda: _get_int("FIRECRAWL_TOP_PAGES", 3))
     firecrawl_deep_links: int = field(default_factory=lambda: _get_int("FIRECRAWL_DEEP_LINKS", 2))
+
+    # --- Conversational memory ------------------------------------------
+    # ConversationBufferWindowMemory: keep only the last K interactions
+    # (one interaction = a user turn + the assistant's reply). Bounded by turn
+    # count so history stays small and never crowds out retrieved context.
+    memory_enabled: bool = field(default_factory=lambda: _get_bool("MEMORY_ENABLED", True))
+    memory_window_k: int = field(default_factory=lambda: _get_int("MEMORY_WINDOW_K", 5))
+    # Rewrite a follow-up ("does it deliver?") into a standalone question using
+    # the window, so retrieval + intent classification see a self-contained query.
+    memory_condense: bool = field(default_factory=lambda: _get_bool("MEMORY_CONDENSE", True))
 
     # --- Guardrails ------------------------------------------------------
     guardrails_enabled: bool = field(default_factory=lambda: _get_bool("GUARDRAILS_ENABLED", True))
