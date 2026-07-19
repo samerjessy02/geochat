@@ -97,9 +97,21 @@ class Settings:
     #           "recursive" -> always size-based RecursiveCharacterTextSplitter.
     chunk_strategy: str = field(default_factory=lambda: os.getenv("CHUNK_STRATEGY", "auto").lower())
 
+    # --- PDF extraction --------------------------------------------------
+    # "auto"    -> pypdf first; fall back to Docling when pypdf's output looks
+    #              poor (scanned / complex layout). "pypdf" / "docling" force one.
+    pdf_loader: str = field(default_factory=lambda: os.getenv("PDF_LOADER", "auto").lower())
+    # Quality gate on pypdf output (below either threshold -> escalate to Docling).
+    pdf_min_chars_per_page: int = field(default_factory=lambda: _get_int("PDF_MIN_CHARS_PER_PAGE", 40))
+    pdf_min_whitespace_ratio: float = field(default_factory=lambda: _get_float("PDF_MIN_WHITESPACE_RATIO", 0.05))
+
     # --- Retrieval -------------------------------------------------------
     retrieval_top_k: int = field(default_factory=lambda: _get_int("RETRIEVAL_TOP_K", 5))
     retrieval_candidate_k: int = field(default_factory=lambda: _get_int("RETRIEVAL_CANDIDATE_K", 20))
+    # For count / "list all" / negation queries: if the matched document has at
+    # most this many chunks, feed ALL of them (not just top-k) so the model can
+    # reason over the complete set.
+    exhaustive_max_chunks: int = field(default_factory=lambda: _get_int("EXHAUSTIVE_MAX_CHUNKS", 40))
     # Relative weights for Reciprocal Rank Fusion (dense vs. keyword).
     dense_weight: float = field(default_factory=lambda: _get_float("DENSE_WEIGHT", 1.0))
     bm25_weight: float = field(default_factory=lambda: _get_float("BM25_WEIGHT", 1.0))
@@ -121,6 +133,21 @@ class Settings:
     tavily_api_key: str | None = field(default_factory=lambda: os.getenv("TAVILY_API_KEY") or None)
     web_fallback_enabled: bool = field(default_factory=lambda: _get_bool("WEB_FALLBACK_ENABLED", True))
     web_max_pages: int = field(default_factory=lambda: _get_int("WEB_MAX_PAGES", 3))
+    # Scraper engine: "auto" (Firecrawl if a key is set, else httpx+BeautifulSoup),
+    # "firecrawl", or "httpx".
+    scraper: str = field(default_factory=lambda: os.getenv("SCRAPER", "auto").lower())
+    firecrawl_api_key: str | None = field(default_factory=lambda: os.getenv("FIRECRAWL_API_KEY") or None)
+    # Firecrawl's current API is v2 (v1 is legacy). Override if the base changes.
+    firecrawl_api_base: str = field(
+        default_factory=lambda: os.getenv("FIRECRAWL_API_BASE", "https://api.firecrawl.dev/v2").rstrip("/")
+    )
+    firecrawl_crawl_limit: int = field(default_factory=lambda: _get_int("FIRECRAWL_CRAWL_LIMIT", 10))
+    firecrawl_timeout: int = field(default_factory=lambda: _get_int("FIRECRAWL_TIMEOUT", 90))
+    # Multi-page strategy: explore the top-N ranked pages and follow up to M of
+    # each page's most relevant links (one level deeper). FIRECRAWL_CRAWL_LIMIT
+    # is the overall scrape budget.
+    firecrawl_top_pages: int = field(default_factory=lambda: _get_int("FIRECRAWL_TOP_PAGES", 3))
+    firecrawl_deep_links: int = field(default_factory=lambda: _get_int("FIRECRAWL_DEEP_LINKS", 2))
 
     # --- Guardrails ------------------------------------------------------
     guardrails_enabled: bool = field(default_factory=lambda: _get_bool("GUARDRAILS_ENABLED", True))

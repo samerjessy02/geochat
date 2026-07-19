@@ -68,6 +68,29 @@ def ensure_collection() -> None:
         )
         log.info("created Qdrant collection '%s' (dim=%d, cosine)",
                  settings.qdrant_collection, settings.embedding_dim)
+    _ensure_payload_indexes(client)
+
+
+def _ensure_payload_indexes(client) -> None:
+    """Create keyword payload indexes so metadata filters (document_id, etc.) work.
+
+    Qdrant rejects filtering/deleting by a payload field that has no index
+    ("Index required but not found for ..."). This runs idempotently on both new
+    and existing collections; already-indexed fields raise and are ignored.
+    """
+    try:
+        from qdrant_client.models import PayloadSchemaType
+    except Exception:  # noqa: BLE001
+        return
+    for field in ("document_id", "collection", "section", "chunk_id"):
+        try:
+            client.create_payload_index(
+                collection_name=settings.qdrant_collection,
+                field_name=field,
+                field_schema=PayloadSchemaType.KEYWORD,
+            )
+        except Exception:  # noqa: BLE001 — already exists / non-fatal
+            pass
 
 
 def _build_filter(filters: dict[str, Any] | None):
@@ -198,16 +221,69 @@ def scroll_all(filters: dict[str, Any] | None = None, batch: int = 256) -> Itera
             break
 
 
-def delete_by_document(document_id: str) -> None:
-    """Delete all chunks belonging to ``document_id``."""
-    from qdrant_client.models import FilterSelector
+def chunks_of_document(document_id: str, collection: str | None = None) -> list[dict]:
+    """Return all stored chunk payloads for ``document_id`` (filtered client-side).
 
-    client = get_client()
-    client.delete(
+    Filtering happens in Python rather than server-side, so it works regardless
+    of whether a Qdrant payload index exists on ``document_id``. Fine for the
+    small per-document scans used by exhaustive queries.
+    """
+    out: list[dict] = []
+    for p in scroll_all():
+        if p.get("document_id") != document_id:
+            continue
+        if collection and p.get("collection") != collection:
+            continue
+        out.append(p)
+    return out
+
+
+def delete_by_document(document_id: str) -> None:
+    """Delete all chunks belonging to ``document_id``.
+
+    Deletes by point ID (recomputed from each chunk's ``chunk_id``) rather than
+    a server-side payload filter — so it works even when no payload index exists
+    on ``document_id`` (Qdrant rejects filter-deletes without one).
+    """
+    from qdrant_client.models import PointIdsList
+
+    ids = [
+        _point_id(p["chunk_id"])
+        for p in chunks_of_document(document_id)
+        if p.get("chunk_id")
+    ]
+    if not ids:
+        log.info("no chunks to delete for document_id=%s", document_id)
+        return
+    get_client().delete(
         collection_name=settings.qdrant_collection,
-        points_selector=FilterSelector(filter=_build_filter({"document_id": document_id})),
+        points_selector=PointIdsList(points=ids),
     )
-    log.info("deleted all chunks for document_id=%s", document_id)
+    log.info("deleted %d chunk(s) for document_id=%s", len(ids), document_id)
+
+
+def delete_orphans(known_document_ids: set[str]) -> dict:
+    """Delete chunks whose ``document_id`` is not in ``known_document_ids``.
+
+    Used to clean up vectors left behind when a document's metadata row was
+    removed but its chunks weren't. Deletes by point ID (no index needed).
+    """
+    from qdrant_client.models import PointIdsList
+
+    ids: list[str] = []
+    docs: set[str] = set()
+    for p in scroll_all():
+        did = p.get("document_id")
+        if did and did not in known_document_ids and p.get("chunk_id"):
+            ids.append(_point_id(p["chunk_id"]))
+            docs.add(did)
+    if ids:
+        get_client().delete(
+            collection_name=settings.qdrant_collection,
+            points_selector=PointIdsList(points=ids),
+        )
+    log.info("purged %d orphan chunk(s) across %d document(s)", len(ids), len(docs))
+    return {"orphan_documents": len(docs), "chunks_deleted": len(ids)}
 
 
 def count() -> int:

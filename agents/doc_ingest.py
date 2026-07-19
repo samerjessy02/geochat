@@ -173,13 +173,27 @@ def list_documents() -> list[dict]:
 
 
 def delete_document(document_id: str) -> bool:
-    """Remove a document from both Postgres metadata and the Qdrant index."""
-    with engine.begin() as conn:
+    """Remove a document from both the Qdrant index and Postgres metadata.
+
+    Deletes the vectors FIRST so that if Qdrant deletion fails, the metadata row
+    is kept (the document stays listed and the user can retry) rather than being
+    orphaned with dangling chunks.
+    """
+    with engine.connect() as conn:
         row = conn.execute(
             text("SELECT id FROM rag_documents WHERE id = :id"), {"id": document_id}
         ).fetchone()
-        if not row:
-            return False
+    if not row:
+        return False
+
+    vector_store.delete_by_document(document_id)   # remove chunks first
+    with engine.begin() as conn:
         conn.execute(text("DELETE FROM rag_documents WHERE id = :id"), {"id": document_id})
-    vector_store.delete_by_document(document_id)
     return True
+
+
+def purge_orphan_chunks() -> dict:
+    """Delete Qdrant chunks whose document is no longer registered in Postgres."""
+    with engine.connect() as conn:
+        known = {str(r[0]) for r in conn.execute(text("SELECT id FROM rag_documents"))}
+    return vector_store.delete_orphans(known)

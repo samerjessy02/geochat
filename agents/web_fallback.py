@@ -141,21 +141,190 @@ def _cache_domain(entity: str, domain: str) -> None:
 # search + scrape
 # --------------------------------------------------------------------------- #
 
-def _tavily_search(query: str, include_domains: list[str] | None = None, max_results: int = 5) -> list[dict]:
-    if not settings.tavily_api_key:
-        raise WebFallbackError("TAVILY_API_KEY is not configured — official-domain discovery is unavailable.")
-    payload: dict = {"api_key": settings.tavily_api_key, "query": query, "max_results": max_results}
-    if include_domains:
-        payload["include_domains"] = include_domains
+def _use_firecrawl() -> bool:
+    """Whether Firecrawl is the active scraper (JS-rendering + crawling)."""
+    if settings.scraper == "firecrawl":
+        return bool(settings.firecrawl_api_key)
+    if settings.scraper == "auto":
+        return bool(settings.firecrawl_api_key)
+    return False
+
+
+def _fc_headers() -> dict:
+    return {"Authorization": f"Bearer {settings.firecrawl_api_key}", "Content-Type": "application/json"}
+
+
+def _fc_markdown(obj: dict) -> str | None:
+    """Pull markdown out of a Firecrawl response item, tolerant of shape."""
+    if not isinstance(obj, dict):
+        return None
+    return obj.get("markdown") or (obj.get("data") or {}).get("markdown")
+
+
+def _firecrawl_scrape(url: str) -> str | None:
+    """Scrape a single URL with Firecrawl v2 -> clean markdown (renders JS)."""
     try:
-        r = httpx.post(_TAVILY_URL, json=payload, timeout=10)
-        r.raise_for_status()
-        return r.json().get("results", [])
+        r = httpx.post(f"{settings.firecrawl_api_base}/scrape", headers=_fc_headers(),
+                       json={"url": url, "formats": ["markdown"], "onlyMainContent": True}, timeout=45)
+        if r.status_code != 200:
+            log.warning("firecrawl scrape %s -> HTTP %s: %s", url, r.status_code, r.text[:200])
+            return None
+        md = _fc_markdown(r.json())
+        if not md:
+            log.warning("firecrawl scrape %s -> no markdown in response: %s", url, r.text[:200])
+            return None
+        return redact_secrets(md)
     except Exception as e:  # noqa: BLE001
-        raise WebFallbackError(f"Web search failed: {e}") from e
+        log.warning("firecrawl scrape error for %s: %s", url, e)
+        return None
 
 
-def _scrape(url: str) -> str | None:
+def _firecrawl_scrape_full(url: str) -> tuple[str | None, list[str]]:
+    """Scrape a URL with Firecrawl v2 -> (markdown, links on the page).
+
+    The ``links`` format lets us follow the page's own links one level deeper
+    (e.g. /menu -> /drinks) using the reliable synchronous scrape.
+    """
+    try:
+        r = httpx.post(f"{settings.firecrawl_api_base}/scrape", headers=_fc_headers(),
+                       json={"url": url, "formats": ["markdown", "links"], "onlyMainContent": True},
+                       timeout=45)
+        if r.status_code != 200:
+            log.warning("firecrawl scrape %s -> HTTP %s: %s", url, r.status_code, r.text[:200])
+            return None, []
+        data = r.json().get("data") or r.json()
+        md = data.get("markdown")
+        raw_links = data.get("links") or []
+        links = [lk if isinstance(lk, str) else lk.get("url")
+                 for lk in raw_links if (isinstance(lk, str) or isinstance(lk, dict))]
+        links = [lk for lk in links if lk]
+        return (redact_secrets(md) if md else None), links
+    except Exception as e:  # noqa: BLE001
+        log.warning("firecrawl scrape error for %s: %s", url, e)
+        return None, []
+
+
+def _firecrawl_crawl(url: str, limit: int) -> list[str]:
+    """Crawl a site with Firecrawl v2 (bounded by ``limit`` pages) -> page markdowns.
+
+    Submits a crawl job then polls until it completes or ``FIRECRAWL_TIMEOUT`` elapses.
+    """
+    import time
+
+    try:
+        r = httpx.post(f"{settings.firecrawl_api_base}/crawl", headers=_fc_headers(),
+                       json={"url": url, "limit": limit,
+                             "scrapeOptions": {"formats": ["markdown"], "onlyMainContent": True}},
+                       timeout=45)
+        if r.status_code not in (200, 201):
+            log.warning("firecrawl crawl submit %s -> HTTP %s: %s", url, r.status_code, r.text[:200])
+            return []
+        job = r.json()
+        if job.get("data"):                       # some responses return pages synchronously
+            return _extract_crawl_pages(job)
+        crawl_id = job.get("id")
+        if not crawl_id:
+            log.warning("firecrawl crawl submit returned no job id: %s", str(job)[:200])
+            return []
+        deadline = time.time() + settings.firecrawl_timeout
+        while time.time() < deadline:
+            time.sleep(2)
+            pr = httpx.get(f"{settings.firecrawl_api_base}/crawl/{crawl_id}", headers=_fc_headers(), timeout=30)
+            if pr.status_code != 200:
+                log.warning("firecrawl crawl poll -> HTTP %s: %s", pr.status_code, pr.text[:200])
+                break
+            pj = pr.json()
+            status = pj.get("status")
+            if status in ("completed", "complete"):
+                pages = _extract_crawl_pages(pj)
+                log.info("firecrawl crawl of %s completed: %d page(s)", url, len(pages))
+                return pages
+            if status == "failed":
+                log.warning("firecrawl crawl of %s failed: %s", url, str(pj)[:200])
+                return []
+        log.warning("firecrawl crawl of %s timed out after %ds", url, settings.firecrawl_timeout)
+        return []
+    except Exception as e:  # noqa: BLE001
+        log.warning("firecrawl crawl error for %s: %s", url, e)
+        return []
+
+
+def _extract_crawl_pages(payload: dict) -> list[str]:
+    pages: list[str] = []
+    for item in (payload.get("data") or []):
+        md = _fc_markdown(item)
+        if md:
+            pages.append(redact_secrets(md))
+    return pages
+
+
+def _firecrawl_map(url: str, limit: int = 60) -> list[str]:
+    """Discover a site's URLs with Firecrawl v2 Map (fast, synchronous)."""
+    try:
+        r = httpx.post(f"{settings.firecrawl_api_base}/map", headers=_fc_headers(),
+                       json={"url": url, "limit": limit}, timeout=30)
+        if r.status_code != 200:
+            log.warning("firecrawl map %s -> HTTP %s: %s", url, r.status_code, r.text[:200])
+            return []
+        data = r.json()
+        links = data.get("links") or (data.get("data") or {}).get("links") or []
+        urls: list[str] = []
+        for lk in links:
+            u = lk if isinstance(lk, str) else (lk.get("url") if isinstance(lk, dict) else None)
+            if u:
+                urls.append(u)
+        return urls
+    except Exception as e:  # noqa: BLE001
+        log.warning("firecrawl map error for %s: %s", url, e)
+        return []
+
+
+# URL-path keywords that commonly hold the kind of info users ask about.
+_INFO_PATH_KEYWORDS = (
+    "menu", "price", "pricing", "product", "about", "contact", "faq", "service",
+    "location", "branch", "event", "news", "program", "academic", "admission", "hour",
+    "drink", "beverage", "coffee", "tea", "food", "cafe", "shop", "store", "catalog",
+)
+
+
+def _rank_urls(query: str, website: str, urls: list[str]) -> list[str]:
+    """Rank same-domain URLs by how relevant their path looks to the query."""
+    q_tokens = {t for t in re.findall(r"[^\W\d_]+", query.lower()) if len(t) > 2}
+    base_host = urlparse(website).netloc.lower().lstrip("www.")
+
+    def score(u: str) -> float:
+        p = urlparse(u)
+        host = p.netloc.lower().lstrip("www.")
+        if base_host and host and base_host not in host and host not in base_host:
+            return -1.0  # off-domain
+        path = (p.path + " " + p.query).lower()
+        s = float(sum(1 for t in q_tokens if t in path))
+        s += sum(1 for kw in _INFO_PATH_KEYWORDS if kw in path)
+        s -= 0.1 * path.count("/")  # prefer shallower pages on ties
+        return s
+
+    scored = [(u, score(u)) for u in urls]
+    scored = [x for x in scored if x[1] >= 0]
+    scored.sort(key=lambda x: x[1], reverse=True)
+    return [u for u, _ in scored]
+
+
+def _distinctive_overlap(query: str, text: str, website: str) -> float:
+    """Keyword overlap of the query's *distinctive* words against ``text``.
+
+    Excludes the entity/site-name tokens (e.g. "starbucks", "eg") from the query,
+    because they're trivially present on the entity's own site and would make a
+    marketing homepage look like it answers a specific question when it doesn't.
+    """
+    from agents.retrieval_validator import keyword_overlap
+
+    name_tokens = {t for t in re.findall(r"[^\W\d_]+", urlparse(website).netloc.lower())}
+    stripped = " ".join(w for w in re.findall(r"[^\W\d_]+", query) if w.lower() not in name_tokens)
+    return keyword_overlap(stripped, text)
+
+
+def _scrape_httpx(url: str) -> str | None:
+    """Fetch + extract readable text with httpx + BeautifulSoup (no JS rendering)."""
     try:
         from bs4 import BeautifulSoup
 
@@ -168,6 +337,13 @@ def _scrape(url: str) -> str | None:
         return redact_secrets(" ".join(soup.get_text(separator=" ").split()))
     except Exception:  # noqa: BLE001
         return None
+
+
+def _scrape(url: str) -> str | None:
+    """Scrape a single page — Firecrawl when enabled (renders JS), else httpx."""
+    if _use_firecrawl():
+        return _firecrawl_scrape(url)
+    return _scrape_httpx(url)
 
 
 def _extract_entity(query: str) -> str | None:
@@ -191,36 +367,6 @@ def _extract_entity(query: str) -> str | None:
         return entity.strip() if isinstance(entity, str) and entity.strip() else None
     except (LLMError, Exception):  # noqa: BLE001 — extraction is optional
         return None
-
-
-def _discover_domain(entity: str) -> str | None:
-    """Resolve an entity's official domain, ignoring social/aggregator sites.
-
-    Searches candidates, drops blocked domains (LinkedIn, Facebook, Wikipedia,
-    …), and picks the highest-scoring remaining domain (favouring .edu/.gov and
-    domains containing the entity name). Cached for reuse.
-    """
-    cached = _get_cached_domain(entity)
-    if cached and not _is_blocked_domain(cached):
-        return cached
-    if cached:
-        # A previously-cached social/aggregator domain — ignore and re-resolve.
-        log.info("ignoring stale blocked domain '%s' cached for '%s'", cached, entity)
-
-    results = _tavily_search(f"{entity} official website")
-    candidates: list[str] = []
-    for r in results:
-        dom = _root_domain(urlparse(r.get("url", "")).netloc)
-        if dom and not _is_blocked_domain(dom) and dom not in candidates:
-            candidates.append(dom)
-    if not candidates:
-        log.info("no official (non-social) domain found for '%s'", entity)
-        return None
-
-    best = max(candidates, key=lambda d: _score_domain(d, entity))
-    log.info("resolved official domain for '%s' -> %s (from %s)", entity, best, candidates)
-    _cache_domain(entity, best)
-    return best
 
 
 def _relevant_context_from_pages(query: str, texts: list[str], top_k: int = 5) -> str:
@@ -251,70 +397,93 @@ def _relevant_context_from_pages(query: str, texts: list[str], top_k: int = 5) -
         return "\n\n---\n\n".join(p[:2000] for p in pieces[:top_k])
 
 
+def _firecrawl_site_context(query: str, website: str) -> str:
+    """Scrape the official site, then go deeper until relevant content is found.
+
+    Strategy (all built on the synchronous scrape call, which is reliable):
+      1. Scrape the landing page. If it already answers, stop.
+      2. Otherwise MAP the site to discover its URLs, rank them by relevance to
+         the question, and scrape the top few (bounded by FIRECRAWL_CRAWL_LIMIT),
+         stopping early once a page clearly contains what the question asks about.
+
+    Map + targeted scrape avoids the async /crawl job (submit + poll), which is
+    slow and often doesn't finish within the timeout.
+    """
+    texts: list[str] = []
+    scraped: set[str] = set()
+    budget = [max(1, settings.firecrawl_crawl_limit)]   # overall scrape budget (mutable)
+
+    def visit(u: str) -> tuple[list[str], bool]:
+        """Scrape ``u`` once; append its text; return (its links, strong_match)."""
+        key = u.rstrip("/")
+        if key in scraped or budget[0] <= 0:
+            return [], False
+        scraped.add(key)
+        budget[0] -= 1
+        md, links = _firecrawl_scrape_full(u)
+        if md:
+            texts.append(md)
+            if _distinctive_overlap(query, md, website) >= 0.6:
+                log.info("firecrawl: relevant content found on %s", u)
+                return links, True
+        return links, False
+
+    # 1) landing page
+    _, strong = visit(website)
+    if strong:
+        return _relevant_context_from_pages(query, texts)
+
+    # 2) map the site -> take only the TOP-N ranked entry pages
+    entry = _rank_urls(query, website, _firecrawl_map(website))
+    entry = [u for u in entry if u.rstrip("/") not in scraped][: settings.firecrawl_top_pages]
+    log.info("firecrawl: exploring top %d page(s) of %s (deep %d, budget %d)",
+             len(entry), website, settings.firecrawl_deep_links, budget[0])
+
+    # 3) for each entry page, scrape it AND follow its most relevant links one level deeper
+    for u in entry:
+        links, strong = visit(u)
+        if strong:
+            return _relevant_context_from_pages(query, texts)
+        children = _rank_urls(query, website, links)
+        children = [c for c in children if c.rstrip("/") not in scraped][: settings.firecrawl_deep_links]
+        for c in children:
+            _, cstrong = visit(c)
+            if cstrong:
+                return _relevant_context_from_pages(query, texts)
+        if budget[0] <= 0:
+            break
+
+    if not texts:
+        return ""
+    return _relevant_context_from_pages(query, texts)
+
+
 def fetch_web_context(query: str, *, entity: str | None = None, website: str | None = None) -> WebContext:
-    """Assemble official-source context for ``query``.
+    """Assemble context by scraping the feature's OFFICIAL website (from GeoJSON).
+
+    The only web source is the ``website`` URL provided on the matched dataset
+    feature — there is NO general web search or domain discovery. If no official
+    website is available, the web tier returns nothing (the pipeline then refuses).
 
     Args:
         query: the user's question.
-        entity: the place/entity name (used for domain discovery + caching).
-        website: the feature's own ``website`` URL from GeoJSON, if any — tried
-            first as the highest-trust source.
+        entity: accepted for signature compatibility; not used here.
+        website: the feature's own ``website`` URL from GeoJSON.
     """
-    # Prefer an explicit entity; otherwise extract one so domain discovery
-    # searches for the entity name, not the whole question.
-    subject = entity or _extract_entity(query) or query
-    if subject != (entity or query):
-        log.info("web fallback entity resolved to '%s'", subject)
-
-    # Tier 0 — the feature's own official website.
-    if website:
-        log.info("web fallback tier 0: scraping feature website %s", website)
-        page = _scrape(website)
-        extra: list[str] = []
-        if page:
-            # Also try an "about"/"stats" page under the same domain via search.
-            if settings.tavily_api_key:
-                domain = urlparse(website).netloc
-                try:
-                    for r in _tavily_search(query, include_domains=[domain], max_results=settings.web_max_pages):
-                        t = _scrape(r["url"])
-                        if t:
-                            extra.append(t)
-                except WebFallbackError:
-                    pass
-            context = _relevant_context_from_pages(query, [page, *extra])
-            if context:
-                return WebContext(context=context, sources=[website], source_tier="official_website")
-
     if not settings.web_fallback_enabled:
         return WebContext(context="", sources=[], source_tier="disabled")
+    if not website:
+        log.info("web fallback: no official website on the feature -> skipping web tier")
+        return WebContext(context="", sources=[], source_tier="none")
 
-    # Tier A/B — discover the official domain, then search restricted to it.
-    try:
-        domain = _discover_domain(subject)
-        if domain:
-            log.info("web fallback tier A/B: official domain '%s' for '%s'", domain, subject)
-            results = _tavily_search(query, include_domains=[domain], max_results=settings.web_max_pages)
-            texts = [t for r in results if (t := _scrape(r.get("url", "")))]
-            if texts:
-                context = _relevant_context_from_pages(query, texts)
-                if context:
-                    return WebContext(
-                        context=context,
-                        sources=[r["url"] for r in results[: settings.web_max_pages]],
-                        source_tier="official_domain",
-                    )
+    if _use_firecrawl():
+        log.info("web fallback: Firecrawl scrape of official website %s", website)
+        context = _firecrawl_site_context(query, website)
+    else:
+        log.info("web fallback: httpx scrape of official website %s", website)
+        page = _scrape(website)
+        context = _relevant_context_from_pages(query, [page]) if page else ""
 
-        # Tier C — last-resort unrestricted search, clearly lower trust.
-        log.info("web fallback tier C: unrestricted search (lower trust)")
-        results = _tavily_search(query, max_results=settings.web_max_pages)
-        texts = [t for r in results if (t := _scrape(r.get("url", "")))]
-        context = _relevant_context_from_pages(query, texts) if texts else ""
-        return WebContext(
-            context=context,
-            sources=[r["url"] for r in results[: settings.web_max_pages]] if results else [],
-            source_tier="web_search",
-        )
-    except WebFallbackError as e:
-        log.warning("web fallback unavailable: %s", e)
-        return WebContext(context="", sources=[], source_tier="unavailable")
+    if context:
+        return WebContext(context=context, sources=[website], source_tier="official_website")
+    return WebContext(context="", sources=[website], source_tier="none")

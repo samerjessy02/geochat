@@ -33,10 +33,11 @@ rank-bm25>=0.2.2
 # ---- Document ingestion + chunking (LangChain) ----
 langchain-community>=0.3.0
 langchain-text-splitters>=0.3.0
-pypdf>=5.0.0            # PyPDFLoader
+pypdf>=5.0.0            # PyPDFLoader (default PDF extractor)
 docx2txt>=0.8          # Docx2txtLoader
 beautifulsoup4>=4.12.3 # BSHTMLLoader
 lxml>=5.3.0
+# docling>=2.0.0       # optional: fallback PDF extractor for scanned/complex PDFs
 
 # ---- Web fallback ----
 httpx>=0.28.1

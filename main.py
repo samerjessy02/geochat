@@ -46,7 +46,6 @@ from agents import column_describer
 from agents.hybrid_retriever import invalidate_bm25_cache
 from agents.intent_router import classify_intent, MAP, KNOWLEDGE, HYBRID, UNKNOWN
 from agents.knowledge_pipeline import answer_knowledge_query
-from agents.web_fallback import ensure_domain_cache_table
 from agents.logging_config import get_logger, setup_logging, snippet
 
 setup_logging()
@@ -97,7 +96,6 @@ def startup() -> None:
     registry.init_registry()
     try:
         doc_ingest.init_documents_table()
-        ensure_domain_cache_table()
     except Exception as e:  # noqa: BLE001 — never block spatial startup on RAG stores
         logger.warning("RAG metadata tables unavailable at startup: %s", e)
     try:
@@ -123,6 +121,7 @@ class QueryRequest(BaseModel):
     website: str | None = None             # focused feature's official website
     entity_focus: str | None = None        # override entity for web fallback
     allow_web: bool = True
+    web_confirmed: bool = False            # user approved scraping the official site
 
 
 class EnrichRequest(BaseModel):
@@ -238,6 +237,17 @@ def delete_document(document_id: str):
     return {"status": "deleted"}
 
 
+@app.post("/documents/purge-orphans")
+def purge_orphans():
+    """Delete Qdrant chunks whose document is no longer registered (cleanup)."""
+    try:
+        result = doc_ingest.purge_orphan_chunks()
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Purge failed: {e}")
+    invalidate_bm25_cache()
+    return result
+
+
 # --------------------------------------------------------------------------- #
 # spatial helper (shared by /chat and /query)
 # --------------------------------------------------------------------------- #
@@ -314,6 +324,7 @@ def query(req: QueryRequest):
             filters={"collection": req.collection} if req.collection else None,
             allow_web=req.allow_web,
             dataset_ids=req.dataset_ids,
+            web_confirmed=req.web_confirmed,
         )
 
     map_empty = False

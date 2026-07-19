@@ -30,7 +30,22 @@ log = get_logger("dataset_lookup")
 _GEOM = "wkb_geometry"
 # Column-name fragments that indicate a name/label field to match the entity on.
 _NAME_HINTS = ("name", "title", "label", "brand", "operator", "display_name")
-_WEBSITE_HINTS = ("website", "url", "homepage", "site")
+_WEBSITE_HINTS = ("website", "url", "homepage", "site", "web")
+# Social/media columns that also hold URLs but are NOT the official website.
+_SOCIAL_HINTS = ("facebook", "instagram", "twitter", "tiktok", "youtube", "linkedin", "whatsapp")
+
+
+def _looks_like_url(v: str) -> bool:
+    v = v.strip()
+    if v.lower().startswith(("http://", "https://")):
+        return True
+    # bare domain, e.g. "www.cilantro.com" or "cilantro.com.eg"
+    return " " not in v and "." in v and "@" not in v and 3 < len(v) <= 200
+
+
+def _normalize_url(v: str) -> str:
+    v = v.strip()
+    return v if v.lower().startswith(("http://", "https://")) else "https://" + v.lstrip("/")
 
 
 @dataclass
@@ -67,8 +82,12 @@ def _format_record(display_name: str, row: dict) -> tuple[str, str | None]:
         sval = str(value).strip()
         if not sval or sval.lower() == "nan":
             continue
-        if website is None and any(h in key.lower() for h in _WEBSITE_HINTS) and sval.startswith("http"):
-            website = sval
+        kl = key.lower()
+        if (website is None
+                and any(h in kl for h in _WEBSITE_HINTS)
+                and not any(s in kl for s in _SOCIAL_HINTS)
+                and _looks_like_url(sval)):
+            website = _normalize_url(sval)
         parts.append(f"{key}: {sval}")
     if not parts:
         return "", website
