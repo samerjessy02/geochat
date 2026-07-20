@@ -1,0 +1,31 @@
+solar_system.txt
+
+Which planet is the hottest? — Venus (~465 °C).
+How many moons does Mars have, and what are their names? — Two: Phobos and Deimos.
+What is Mercury's orbital period? — 88 days.
+When was Pluto reclassified as a dwarf planet? — 2006.
+How long does sunlight take to reach Earth? — About 8 minutes 20 seconds.
+Where is the asteroid belt located? — Between Mars and Jupiter.
+What percentage of the Solar System's mass is the Sun? — About 99.86%.
+How far is one astronomical unit? — About 149.6 million km.
+
+company_handbook.md
+
+How many PTO days does an employee with 7 years' tenure get? — 25 days.
+How many days per week can employees work remotely? — Up to three, with manager approval.
+What's the receipt threshold for expenses? — Receipts required for anything over $25.
+Within how many days must expenses be submitted? — 30 days.
+Who founded Acme Corp and when? — Jane Doe and Rahul Mehta, in 2011.
+What's the minimum password length? — 12 characters (rotated every 90 days).
+How much unused PTO can be carried over? — Up to 5 days per year.
+When are reimbursements processed? — The 15th of each month.
+
+coffee_guide.html
+
+What is the ideal water temperature for brewing? — 90–96 °C (195–205 °F).
+What ratio makes a stronger cup? — 1:14 (vs. the standard 1:16).
+How long should a French Press steep? — 4 minutes.
+How long does cold brew steep? — 12 to 24 hours.
+Which roast has the most caffeine? — Light roast.
+What pressure is used for espresso? — 9 bars (25–30 second extraction).
+How long do whole beans stay fresh after roasting? — About 3 to 4 weeks.

@@ -1,0 +1,24 @@
+SOLAR SYSTEM FACT SHEET
+========================
+
+The Sun is a G-type main-sequence star located at the center of the Solar System.
+It accounts for about 99.86% of the total mass of the Solar System.
+
+PLANETS (in order from the Sun):
+1. Mercury - smallest planet, no moons, orbital period 88 days.
+2. Venus - hottest planet, surface temperature around 465 degrees Celsius.
+3. Earth - the only planet known to support life, has one moon.
+4. Mars - the Red Planet, has two moons named Phobos and Deimos.
+5. Jupiter - largest planet, has 95 known moons including Ganymede.
+6. Saturn - famous for its ring system, has 146 known moons.
+7. Uranus - an ice giant that rotates on its side.
+8. Neptune - the windiest planet, with winds up to 2,100 km/h.
+
+KEY FACTS
+---------
+- The asteroid belt lies between Mars and Jupiter.
+- Pluto was reclassified as a dwarf planet in 2006.
+- Light from the Sun takes about 8 minutes and 20 seconds to reach Earth.
+- The Kuiper Belt is a region of icy bodies beyond Neptune.
+- One astronomical unit (AU) is the average distance from Earth to the Sun,
+  approximately 149.6 million kilometers.

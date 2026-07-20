@@ -1,0 +1,19 @@
+In your app, one cache entry = one answered query. Here's exactly what each entry holds (from semantic_cache.py, the _Entry):
+
+vector — the query's embedding (1024 floats, L2-normalized). This is the real "key" — lookups match on similarity to this, not on text.
+scope — what the answer depends on: selected datasets + collection, e.g. ds=[nbe]|col=. A query only matches entries with the same scope.
+query — the condensed query string, e.g. "what is the location of NBE". Kept for logging/debugging ("matched=…") and readability, not used for matching.
+value — the full /query response that gets returned on a hit. That's the expensive payload: intent, and depending on the route, map (the generated SQL + result rows/geometry) and/or knowledge (the answer, sources, citations, evaluation scores, guardrail).
+ts — timestamp, used for TTL expiry and LRU eviction.
+
+So conceptually the pair is: key = (embedding, scope) → value = the whole cached response.
+
+When we move this to Redis Stack, it maps to one hash per entry with a real string key:
+
+Key:   cache:q:<uuid>          (or a hash of query+scope)
+Fields in the hash:
+   embedding  -> packed float32 bytes   (indexed for KNN vector search)
+   scope      -> "ds=[nbe]|col="        (indexed as a TAG to filter by)
+   query      -> "what is the location of NBE"
+   answer     -> the response JSON (serialized)
+   ts         -> 1700000000

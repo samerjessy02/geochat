@@ -1,0 +1,18 @@
+bank_name,branch,address,city,governorate,latitude,longitude,phone,website,swift,type,founded
+National Bank of Egypt (NBE),Head Office,"1187 Corniche El Nil, National Bank Tower, Boulak",Cairo,Cairo,30.0611,31.2296,19623,nbe.com.eg,NBEGEGCXXXX,Public,1898
+Banque Misr,Head Office,"151 Mohamed Farid St, Downtown",Cairo,Cairo,30.0478,31.2447,19888,banquemisr.com,BMISEGCXXXX,Public,1920
+Banque du Caire,Head Office,"6 Dr. Mostafa Abou Zahra St, Nasr City",Cairo,Cairo,30.0577,31.3389,16990,banqueducaire.com,BCAIEGCXXXX,Public,1952
+Commercial International Bank (CIB),Main Branch,"Nile Tower, 21/23 Charles de Gaulle St, Giza",Cairo,Giza,30.0264,31.2211,19666,cibeg.com,CIBEEGCXXXX,Private,1975
+QNB Alahli,Head Office,"Dakahlia Building, 5 Champollion St, Downtown",Cairo,Cairo,30.0492,31.2377,19700,qnbalahli.com,QNBAEGCXXXX,Foreign (Qatar),1978
+Bank of Alexandria (AlexBank),Cairo Main Branch,"49 Kasr El Nil St, Downtown",Cairo,Cairo,30.0489,31.2411,19033,alexbank.com,ALEXEGCXXXX,Private (Intesa Sanpaolo),1957
+Arab African International Bank (AAIB),Head Office,"5 Midan Al Saray Al Koubra, Garden City",Cairo,Cairo,30.0361,31.2315,19555,aaibank.com,ARAIEGCXXXX,Private/Joint,1964
+Faisal Islamic Bank of Egypt,Head Office,"3 26th of July St, Downtown",Cairo,Cairo,30.0533,31.2372,0223939990,faisalbank.com.eg,FIEGEGCXXXX,Islamic,1977
+Abu Dhabi Islamic Bank (ADIB) Egypt,Head Office,"9 Rostom St, Garden City",Cairo,Cairo,30.0388,31.2312,16668,adib.eg,MIDBEGCXXXX,Islamic (UAE),1980
+Suez Canal Bank,Head Office,"7 Abdel Kader Hamza St, Garden City",Cairo,Cairo,30.0369,31.2308,16986,scbank.com.eg,SUCAEGCXXXX,Private,1978
+Egyptian Gulf Bank (EG Bank),Head Office,"8 Talaat Harb Square, Downtown",Cairo,Cairo,30.0498,31.2416,16991,egbank.com,EGGBEGCXXXX,Private,1981
+Emirates NBD Egypt,Head Office,"Plot 85, City Center, First Sector, 5th Settlement, New Cairo",Cairo,Cairo,30.0075,31.4262,16990,emiratesnbd.com.eg,EBILEGCXXXX,Foreign (UAE),1983
+National Bank of Kuwait (NBK) Egypt,Head Office,"Plot 155, City Center, 5th Settlement, New Cairo",Cairo,Cairo,30.0090,31.4275,19336,nbkegypt.com,NBKUEGCXXXX,Foreign (Kuwait),1980
+Attijariwafa Bank Egypt,Head Office,"Smart Village, KM 28 Cairo-Alex Desert Rd (main branch: Downtown Cairo)",Cairo,Cairo,30.0522,31.2402,19100,attijariwafa.com.eg,BMAOEGCXXXX,Foreign (Morocco),1980
+Export Development Bank of Egypt (EBank),Head Office,"108 Mohyeldin Abou El Ezz St, Dokki",Cairo,Giza,30.0388,31.2069,19102,ebank.eg,EXDVEGCXXXX,Public,1983
+Housing and Development Bank (HDB),Head Office,"12 Syria St, Mohandessin",Cairo,Giza,30.0575,31.2050,19995,hdb-egy.com,HDBKEGCAXXX,Public,1979
+SAIB Bank,Head Office,"56 Gameat El Dowal El Arabeya St, Mohandessin",Cairo,Giza,30.0533,31.2019,19911,saib.com.eg,SAIBEGCXXXX,Private,1976

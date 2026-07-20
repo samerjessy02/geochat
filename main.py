@@ -47,7 +47,10 @@ from agents.hybrid_retriever import invalidate_bm25_cache
 from agents.intent_router import classify_intent, MAP, KNOWLEDGE, HYBRID, UNKNOWN
 from agents.knowledge_pipeline import answer_knowledge_query
 from agents.memory import get_memory, reset_memory, condense_query
+from agents import semantic_cache
+from agents import embeddings
 from agents.logging_config import get_logger, setup_logging, snippet
+from config import settings
 
 setup_logging()
 logger = get_logger("api")
@@ -157,11 +160,13 @@ class DescribeColumnsRequest(BaseModel):
 async def upload_dataset(file: UploadFile = File(...), display_name: str = Form(...)):
     raw = await file.read()
     try:
-        return ingest.ingest_file(file.filename, raw, display_name)
+        result = ingest.ingest_file(file.filename, raw, display_name)
     except ingest.IngestError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=f"Unexpected error during ingestion: {e}")
+    semantic_cache.invalidate("dataset uploaded")  # map answers may change
+    return result
 
 
 @app.post("/datasets/describe")
@@ -193,6 +198,7 @@ def list_datasets():
 def delete_dataset(dataset_id: str):
     if not registry.delete_dataset(dataset_id):
         raise HTTPException(status_code=404, detail="Dataset not found")
+    semantic_cache.invalidate("dataset deleted")
     return {"status": "deleted"}
 
 
@@ -218,6 +224,7 @@ async def upload_document(
         logger.exception("document ingestion failed for '%s'", file.filename)
         raise HTTPException(status_code=500, detail=f"Document ingestion failed: {e}")
     invalidate_bm25_cache()  # keyword index must see the new chunks
+    semantic_cache.invalidate("document uploaded")  # answers may change
     return {
         "document_id": result.document_id,
         "title": result.title,
@@ -240,6 +247,7 @@ def delete_document(document_id: str):
     if not doc_ingest.delete_document(document_id):
         raise HTTPException(status_code=404, detail="Document not found")
     invalidate_bm25_cache()
+    semantic_cache.invalidate("document deleted")
     return {"status": "deleted"}
 
 
@@ -251,6 +259,7 @@ def purge_orphans():
     except Exception as e:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=f"Purge failed: {e}")
     invalidate_bm25_cache()
+    semantic_cache.invalidate("orphan chunks purged")
     return result
 
 
@@ -323,6 +332,25 @@ def query(req: QueryRequest):
     memory = get_memory(req.session_id)
     effective_query = condense_query(memory, req.message)
 
+    # --- semantic cache lookup (before any LLM / retrieval work) ----------
+    # Embed the (condensed) query and look for a semantically-equivalent past
+    # question in the same dataset/collection scope. A hit returns the stored
+    # response and skips intent classification, SQL, retrieval and generation.
+    cache = semantic_cache.get_cache()
+    scope = semantic_cache.scope_key(req.dataset_ids, req.collection)
+    query_vec = _embed_for_cache(effective_query) if settings.cache_enabled else None
+    if query_vec is not None:
+        hit = cache.get(query_vec, scope)
+        if hit is not None:
+            cached, sim, matched = hit
+            logger.info("/query CACHE HIT (sim=%.3f, matched=%s) -> skipping pipeline",
+                        sim, snippet(matched))
+            response = dict(cached)
+            response["cache_hit"] = True
+            response["cache_similarity"] = round(sim, 3)
+            memory.add(req.message, _reply_for_memory(response))
+            return response
+
     intent = classify_intent(effective_query)
     response: dict = {"intent": intent.as_dict()}
     if effective_query != req.message:
@@ -377,9 +405,38 @@ def query(req: QueryRequest):
     if not (isinstance(kn, dict) and kn.get("needs_web_confirmation")):
         memory.add(req.message, _reply_for_memory(response))
 
+    # --- store a useful answer in the semantic cache ---------------------
+    if query_vec is not None and _is_cacheable(response):
+        cache.put(query_vec, scope, dict(response), effective_query)
+
     logger.info("/query done — intent=%s, map=%s, knowledge=%s",
                 intent.intent, "map" in response, "knowledge" in response)
     return response
+
+
+def _embed_for_cache(text: str) -> list[float] | None:
+    """Embed a query for cache keying; returns None (cache-skipped) on failure."""
+    try:
+        return embeddings.embed_query(text)
+    except Exception as e:  # noqa: BLE001 — never fail a request because caching couldn't embed
+        logger.warning("cache: could not embed query (%s) — proceeding without cache", e)
+        return None
+
+
+def _is_cacheable(response: dict) -> bool:
+    """Only cache responses that carry a real answer (not clarifications, HITL
+    prompts, errors, or empty results)."""
+    if response.get("clarification"):
+        return False
+    kn = response.get("knowledge")
+    if isinstance(kn, dict):
+        if kn.get("needs_web_confirmation"):
+            return False
+        if kn.get("source_tier") in ("error", "awaiting_confirmation"):
+            return False
+    has_map = isinstance(response.get("map"), dict) and bool(response["map"].get("results"))
+    has_knowledge = isinstance(kn, dict) and bool(kn.get("found"))
+    return bool(has_map or has_knowledge)
 
 
 def _reply_for_memory(response: dict) -> str:
@@ -431,4 +488,5 @@ def health():
     return {
         "status": "ok",
         "documents_indexed": vector_store.count(),
+        "cache": semantic_cache.get_cache().stats() if settings.cache_enabled else {"enabled": False},
     }

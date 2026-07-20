@@ -75,6 +75,25 @@ class Settings:
     llm_temperature: float = field(default_factory=lambda: _get_float("LLM_TEMPERATURE", 0.1))
     llm_max_tokens: int = field(default_factory=lambda: _get_int("LLM_MAX_TOKENS", 1024))
 
+    # --- SBG / Bedrock primary (optional) --------------------------------
+    # A managed chat gateway (Bedrock-backed). When configured (base URL + key),
+    # it becomes the PRIMARY model; every call falls back automatically to the
+    # LLM_PROVIDER above if the gateway is unreachable or errors. Leave
+    # SBG_API_BASE/SBG_API_KEY unset to keep using LLM_PROVIDER only.
+    sbg_enabled: bool = field(default_factory=lambda: _get_bool("SBG_ENABLED", True))
+    sbg_api_base: str = field(default_factory=lambda: os.getenv("SBG_API_BASE", "").rstrip("/"))
+    sbg_chat_path: str = field(default_factory=lambda: os.getenv("SBG_CHAT_PATH", "/student/chat"))
+    sbg_api_key: str | None = field(default_factory=lambda: os.getenv("SBG_API_KEY") or None)
+    sbg_model_id: str = field(
+        default_factory=lambda: os.getenv("SBG_MODEL_ID", "anthropic.claude-3-haiku-20240307-v1:0")
+    )
+    sbg_timeout: int = field(default_factory=lambda: _get_int("SBG_TIMEOUT", 60))
+
+    @property
+    def sbg_available(self) -> bool:
+        """True when the SBG gateway is configured enough to try as primary."""
+        return bool(self.sbg_enabled and self.sbg_api_base and self.sbg_api_key)
+
     # --- Embeddings ------------------------------------------------------
     embedding_model: str = field(
         default_factory=lambda: os.getenv("EMBEDDING_MODEL", "intfloat/multilingual-e5-large")
@@ -162,6 +181,20 @@ class Settings:
     # Rewrite a follow-up ("does it deliver?") into a standalone question using
     # the window, so retrieval + intent classification see a self-contained query.
     memory_condense: bool = field(default_factory=lambda: _get_bool("MEMORY_CONDENSE", True))
+
+    # --- Semantic response cache ----------------------------------------
+    # Cache full /query responses keyed on the query's EMBEDDING (semantic
+    # meaning), not the raw string — so "what is NBE's location" and "locate NBE"
+    # hit the same entry. A hit skips intent classification, SQL generation,
+    # retrieval and LLM generation entirely.
+    cache_enabled: bool = field(default_factory=lambda: _get_bool("CACHE_ENABLED", True))
+    # Cosine similarity (0..1) a new query must reach against a cached query to be
+    # a hit. Higher = stricter (fewer false hits); e5 paraphrases sit ~0.90–0.97.
+    cache_threshold: float = field(default_factory=lambda: _get_float("CACHE_SIMILARITY_THRESHOLD", 0.93))
+    cache_max_entries: int = field(default_factory=lambda: _get_int("CACHE_MAX_ENTRIES", 512))
+    # Entry lifetime in seconds; 0 disables time-based expiry (rely on
+    # invalidation when documents/datasets change).
+    cache_ttl: int = field(default_factory=lambda: _get_int("CACHE_TTL_SECONDS", 0))
 
     # --- Guardrails ------------------------------------------------------
     guardrails_enabled: bool = field(default_factory=lambda: _get_bool("GUARDRAILS_ENABLED", True))
