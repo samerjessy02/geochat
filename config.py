@@ -196,6 +196,14 @@ class Settings:
     # invalidation when documents/datasets change).
     cache_ttl: int = field(default_factory=lambda: _get_int("CACHE_TTL_SECONDS", 0))
 
+    # --- Routing (Valhalla) ----------------------------------------------
+    # Self-hosted routing engine for walk/drive routes and isochrones. Default is
+    # the port the gis-ops Valhalla docker image serves on. Change if you mapped a
+    # different host port or run it elsewhere.
+    routing_enabled: bool = field(default_factory=lambda: _get_bool("ROUTING_ENABLED", True))
+    valhalla_url: str = field(default_factory=lambda: os.getenv("VALHALLA_URL", "http://localhost:8002").rstrip("/"))
+    valhalla_timeout: int = field(default_factory=lambda: _get_int("VALHALLA_TIMEOUT", 15))
+
     # --- Guardrails ------------------------------------------------------
     guardrails_enabled: bool = field(default_factory=lambda: _get_bool("GUARDRAILS_ENABLED", True))
     max_query_chars: int = field(default_factory=lambda: _get_int("MAX_QUERY_CHARS", 2000))

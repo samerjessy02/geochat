@@ -27,6 +27,8 @@ results in one response.
 
 from __future__ import annotations
 
+import re
+
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -43,6 +45,9 @@ from agents import guardrails
 from agents import doc_ingest
 from agents import vector_store
 from agents import column_describer
+from agents import spatial_search
+from agents import routing
+from agents import geojson_validator as gjv
 from agents.hybrid_retriever import invalidate_bm25_cache
 from agents.intent_router import classify_intent, MAP, KNOWLEDGE, HYBRID, UNKNOWN
 from agents.knowledge_pipeline import answer_knowledge_query
@@ -99,6 +104,11 @@ def startup() -> None:
     ensure_postgis()
     registry.init_registry()
     try:
+        n = registry.ensure_spatial_indexes()
+        logger.info("spatial indexes ensured on %d dataset table(s)", n)
+    except Exception as e:  # noqa: BLE001 — never block startup on index backfill
+        logger.warning("could not backfill spatial indexes: %s", e)
+    try:
         doc_ingest.init_documents_table()
     except Exception as e:  # noqa: BLE001 — never block spatial startup on RAG stores
         logger.warning("RAG metadata tables unavailable at startup: %s", e)
@@ -133,6 +143,26 @@ class ResetMemoryRequest(BaseModel):
     session_id: str | None = None
 
 
+class RouteRequest(BaseModel):
+    # Either place names (geocoded against datasets) or explicit [lon, lat] pairs.
+    from_place: str | None = None
+    to_place: str | None = None
+    from_lonlat: list[float] | None = None
+    to_lonlat: list[float] | None = None
+    mode: str = "auto"                      # auto | pedestrian | bicycle
+    dataset_ids: list[str] = []
+
+
+class PolygonSearchRequest(BaseModel):
+    geometry: dict                          # GeoJSON Polygon / MultiPolygon
+    feature_type: str | None = None         # e.g. "schools" (matched to a dataset)
+    dataset_id: str | None = None           # or an explicit dataset id
+    dataset_ids: list[str] = []             # scope of layers to resolve within
+    mode: str = "intersects"                # "intersects" | "within"
+    limit: int = 2000
+    offset: int = 0
+
+
 class EnrichRequest(BaseModel):
     name: str
     name_en: str | None = None
@@ -152,6 +182,30 @@ class DescribeColumnsRequest(BaseModel):
     columns: list[ColumnDescription]
 
 
+class ValidateAttributesRequest(BaseModel):
+    validation_id: str
+    required_fields: list[str] = []
+    numeric_fields: list[str] = []
+
+
+class ResolveRequest(BaseModel):
+    validation_id: str
+    kind: str
+    feature_index: int | None = None
+    field: str | None = None
+    resolution: dict = {}          # {action, value?, geometry?}
+
+
+class CommitRequest(BaseModel):
+    validation_id: str
+    display_name: str
+
+
+class ValidateDescribeAutoRequest(BaseModel):
+    validation_id: str
+    display_name: str | None = None
+
+
 # --------------------------------------------------------------------------- #
 # dataset (spatial) endpoints — unchanged behavior
 # --------------------------------------------------------------------------- #
@@ -167,6 +221,129 @@ async def upload_dataset(file: UploadFile = File(...), display_name: str = Form(
         raise HTTPException(status_code=500, detail=f"Unexpected error during ingestion: {e}")
     semantic_cache.invalidate("dataset uploaded")  # map answers may change
     return result
+
+
+# --------------------------------------------------------------------------- #
+# validated upload pipeline (Stage 1–4 + HITL, commit gated on resolution)
+# --------------------------------------------------------------------------- #
+
+# In-memory validation sessions: validation_id -> {result, filename, required, numeric}
+_validation_sessions: dict[str, dict] = {}
+
+
+@app.post("/datasets/validate")
+async def validate_dataset(file: UploadFile = File(...)):
+    """Stage 1–2 + 4 validation of an uploaded GeoJSON. Returns a report,
+    inferred columns, and any HITL items to resolve before commit."""
+    import uuid as _uuid
+    raw = await file.read()
+    logger.info("POST /datasets/validate — '%s' (%d bytes)", file.filename, len(raw))
+    try:
+        result = gjv.validate_upload(file.filename, raw)
+    except gjv.FileReject as e:
+        raise HTTPException(status_code=400, detail={"stage": 1, "error": str(e)})
+    except Exception as e:  # noqa: BLE001
+        logger.exception("validation crashed")
+        raise HTTPException(status_code=500, detail=f"Validation failed: {e}")
+    vid = _uuid.uuid4().hex[:12]
+    _validation_sessions[vid] = {"result": result, "filename": file.filename,
+                                 "required": [], "numeric": []}
+    return {"validation_id": vid, "report": result.report()}
+
+
+def _get_session(vid: str) -> dict:
+    s = _validation_sessions.get(vid)
+    if not s:
+        raise HTTPException(status_code=404, detail="Validation session not found (re-upload the file).")
+    return s
+
+
+@app.post("/datasets/validate/describe-auto")
+def validate_describe_auto(req: ValidateDescribeAutoRequest):
+    """Draft column descriptions from the uploaded features (no table exists yet)."""
+    s = _get_session(req.validation_id)
+    result = s["result"]
+    cols = [{"column_name": c["name"], "data_type": c["dtype"]} for c in result.columns]
+    if not cols:
+        return {"columns": []}
+    try:
+        out = column_describer.describe_from_features(
+            req.display_name or "dataset", result.accepted, cols)
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Could not auto-generate descriptions: {e}")
+    return {"columns": out}
+
+
+@app.post("/datasets/validate/attributes")
+def validate_attributes(req: ValidateAttributesRequest):
+    """Run Stage 3 attribute validation once the user picks required/numeric fields."""
+    s = _get_session(req.validation_id)
+    result = s["result"]
+    # drop previous attribute-stage issues/HITL so re-submitting is idempotent
+    result.issues = [i for i in result.issues if i.stage != 3]
+    result.hitl = [h for h in result.hitl if h.kind not in ("missing_attribute", "outlier")]
+    s["required"], s["numeric"] = req.required_fields, req.numeric_fields
+    gjv.stage3_attributes(result.accepted, req.required_fields, req.numeric_fields,
+                          result.issues, result.hitl)
+    return {"validation_id": req.validation_id, "report": result.report()}
+
+
+@app.post("/datasets/validate/resolve")
+def validate_resolve(req: ResolveRequest):
+    """Record a user's decision on one HITL item."""
+    s = _get_session(req.validation_id)
+    result = s["result"]
+    matched = None
+    for h in result.hitl:
+        if h.kind == req.kind and h.feature_index == req.feature_index and h.field == req.field:
+            matched = h
+            break
+    if matched is None:
+        raise HTTPException(status_code=404, detail="HITL item not found.")
+    matched.resolved = True
+    matched.resolution = req.resolution
+    # A CRS decision unblocks reprojection.
+    if matched.kind == "crs" and req.resolution.get("action") == "set_epsg":
+        epsg = int(req.resolution.get("epsg") or 4326)
+        if epsg != 4326:
+            try:
+                gjv._reproject([f for f in result.accepted], epsg)
+                result.reprojected = True
+            except Exception as e:  # noqa: BLE001
+                raise HTTPException(status_code=400, detail=f"Reprojection from EPSG:{epsg} failed: {e}")
+        result.crs_epsg = epsg
+    return {"validation_id": req.validation_id, "report": result.report(),
+            "all_resolved": gjv.all_hitl_resolved(result)}
+
+
+@app.post("/datasets/validate/commit")
+def validate_commit(req: CommitRequest):
+    """Commit the validated dataset — only when every HITL item is resolved."""
+    s = _get_session(req.validation_id)
+    result = s["result"]
+    if not gjv.all_hitl_resolved(result):
+        pending = [h.as_dict() for h in result.hitl if not h.resolved]
+        raise HTTPException(status_code=409,
+                            detail={"error": "hitl_pending", "pending": pending})
+    features = gjv.finalize(result)
+    if not features:
+        raise HTTPException(status_code=400, detail="No features left to import after your decisions.")
+    fc = {"type": "FeatureCollection", "features": features}
+    import json as _json
+    raw = _json.dumps(fc).encode("utf-8")
+    fname = s["filename"] if s["filename"].lower().endswith((".geojson", ".json")) else "validated.geojson"
+    try:
+        out = ingest.ingest_file(fname, raw, req.display_name)
+    except ingest.IngestError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Commit failed during ingestion: {e}")
+    invalidate_bm25_cache()
+    semantic_cache.invalidate("dataset committed")
+    _validation_sessions.pop(req.validation_id, None)
+    out["committed_features"] = len(features)
+    out["validation_summary"] = result.summary()
+    return out
 
 
 @app.post("/datasets/describe")
@@ -351,6 +528,11 @@ def query(req: QueryRequest):
             memory.add(req.message, _reply_for_memory(response))
             return response
 
+    # Routing/directions can't be answered with SQL — hand off to the routing
+    # engine (Valhalla) instead of the NL->SQL path.
+    if _looks_like_routing(effective_query):
+        return _handle_route(effective_query, req.dataset_ids)
+
     intent = classify_intent(effective_query)
     response: dict = {"intent": intent.as_dict()}
     if effective_query != req.message:
@@ -439,6 +621,57 @@ def _is_cacheable(response: dict) -> bool:
     return bool(has_map or has_knowledge)
 
 
+def _looks_like_routing(q: str) -> bool:
+    """Heuristic: is this a routing/directions request (needs the routing engine)?"""
+    ql = q or ""
+    if re.search(r"\b(route|directions|fastest route|shortest route|navigate)\b", ql, re.I):
+        return True
+    # "walk/drive from X to Y" style
+    return bool(re.search(r"\b(walk|drive|driving|walking|cycle|bike)\b.*\bto\b", ql, re.I)
+                and re.search(r"\bfrom\b", ql, re.I))
+
+
+_ROUTE_INTENT = {"intent": "ROUTE", "needs_map": True, "needs_rag": False}
+
+
+def _route_message(msg: str) -> dict:
+    """A ROUTE response that just carries a chat message (no map)."""
+    return {"intent": {**_ROUTE_INTENT, "needs_map": False}, "clarification": msg}
+
+
+def _handle_route(query: str, dataset_ids: list[str]) -> dict:
+    """Resolve a natural-language routing request and return a drawn route."""
+    if not settings.routing_enabled:
+        return _route_message("Routing is turned off (set ROUTING_ENABLED=true).")
+
+    frm, to, mode = routing.parse_route_request(query)
+    if not frm or not to:
+        return _route_message(
+            "Tell me the start and end, e.g. \"drive from Cairo University to City Mall\"."
+        )
+    if not routing.is_available():
+        return _route_message(
+            f"The routing engine (Valhalla) isn't reachable at {settings.valhalla_url}. "
+            "Check the container is running and the port is mapped, or set VALHALLA_URL."
+        )
+    origin = routing.geocode_place(frm, dataset_ids)
+    dest = routing.geocode_place(to, dataset_ids)
+    missing = [n for n, r in ((frm, origin), (to, dest)) if not r]
+    if missing:
+        return _route_message(
+            f"I couldn't find {' or '.join(repr(m) for m in missing)} in your selected "
+            "datasets. Make sure the layer containing those places is added and selected."
+        )
+    try:
+        rt = routing.route([(origin["lat"], origin["lon"]), (dest["lat"], dest["lon"])], mode)
+    except routing.RoutingError as e:
+        return _route_message(f"Couldn't plan that route: {e}")
+
+    logger.info("/query route %s -> %s (%s): %.0f m, %.0f s",
+                origin["name"], dest["name"], mode, rt["distance_m"], rt["duration_s"])
+    return {"intent": dict(_ROUTE_INTENT), "route": {**rt, "from": origin, "to": dest}}
+
+
 def _reply_for_memory(response: dict) -> str:
     """Best-effort assistant text to store for a turn (for follow-up context)."""
     kn = response.get("knowledge")
@@ -457,6 +690,62 @@ def memory_reset(req: ResetMemoryRequest):
     """Clear a session's conversation window (start a fresh conversation)."""
     reset_memory(req.session_id)
     return {"status": "ok"}
+
+
+# --------------------------------------------------------------------------- #
+# draw-a-search-area: spatial search within a user-drawn polygon
+# --------------------------------------------------------------------------- #
+
+@app.post("/route")
+def route_endpoint(req: RouteRequest):
+    """Plan a route between two places (by name) or two [lon, lat] points."""
+    if not settings.routing_enabled:
+        raise HTTPException(status_code=503, detail="Routing is disabled (ROUTING_ENABLED=false).")
+    if not routing.is_available():
+        raise HTTPException(status_code=503,
+                            detail=f"Routing engine not reachable at {settings.valhalla_url}.")
+
+    def _resolve(place, lonlat, which):
+        if lonlat and len(lonlat) == 2:
+            return {"name": which, "lon": float(lonlat[0]), "lat": float(lonlat[1])}
+        r = routing.geocode_place(place, req.dataset_ids) if place else None
+        if not r:
+            raise HTTPException(status_code=404, detail=f"Could not resolve {which} location {place!r}.")
+        return r
+
+    origin = _resolve(req.from_place, req.from_lonlat, "start")
+    dest = _resolve(req.to_place, req.to_lonlat, "end")
+    try:
+        rt = routing.route([(origin["lat"], origin["lon"]), (dest["lat"], dest["lon"])], req.mode)
+    except routing.RoutingError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    return {**rt, "from": origin, "to": dest}
+
+
+@app.post("/spatial/search-by-polygon")
+def search_by_polygon(req: PolygonSearchRequest):
+    """Find features of ``feature_type`` that fall inside the drawn ``geometry``.
+
+    Returns ``{count, bbox, features, ...}``. The polygon is passed to PostGIS as
+    a bound parameter (never string-interpolated) and validated/repaired there.
+    """
+    logger.info("POST /spatial/search-by-polygon — type=%s, mode=%s, datasets=%d",
+                req.feature_type, req.mode, len(req.dataset_ids))
+    try:
+        return spatial_search.search_by_polygon(
+            req.geometry,
+            feature_type=req.feature_type,
+            dataset_id=req.dataset_id,
+            dataset_ids=req.dataset_ids,
+            mode=req.mode,
+            limit=req.limit,
+            offset=req.offset,
+        )
+    except spatial_search.SpatialSearchError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:  # noqa: BLE001
+        logger.exception("polygon search failed")
+        raise HTTPException(status_code=500, detail=f"Polygon search failed: {e}")
 
 
 # --------------------------------------------------------------------------- #

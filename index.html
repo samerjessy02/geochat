@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Geo Chatbot</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -57,7 +58,7 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 .resize-handle:hover, .resize-handle.dragging { background: rgba(47,111,168,0.15); }
 
 #topbar {
-  padding: 18px 20px 14px;
+  padding: 18px 18px 8px 20px;
   border-bottom: 1px solid var(--rule);
   display: flex; flex-direction: column; gap: 2px;
 }
@@ -142,6 +143,11 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
   border-radius: var(--r-lg); box-shadow: 0 12px 40px rgba(0,0,0,0.2);
   padding: 18px 20px;
   display: flex; flex-direction: column; gap: 12px;
+  transition: width .18s ease;
+}
+/* Wider layout while the GeoJSON validation flow is active. */
+#upload-modal.wide {
+  width: 760px; max-width: 94vw; max-height: 90vh; padding: 24px 28px;
 }
 #upload-modal h2 {
   font-family: var(--ff-display); font-size: 17px; font-weight: 600; color: var(--ink);
@@ -173,6 +179,127 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 .um-btn.primary:disabled { opacity: .5; cursor: default; }
 .um-btn:hover:not(:disabled) { filter: brightness(0.97); }
 .um-status { font-size: 12.5px; color: var(--ink4); font-style: italic; }
+/* ── VALIDATION report / HITL ─────────────────────────────────────────── */
+.uv-summary { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.uv-chip { font-size: 12px; padding: 4px 9px; border-radius: 20px; background: var(--paper2); color: var(--ink3); font-family: 'Poppins', sans-serif; }
+.uv-chip b { color: var(--ink); font-weight: 600; }
+.uv-chip.warn { background: #fdf0e3; color: #a5641f; }
+.uv-chip.crit { background: #fbe9e9; color: #b03535; }
+.uv-chip.ok { background: var(--accent-light); color: var(--accent); }
+.uv-section { border-top: 1px solid var(--rule); padding-top: 10px; margin-top: 10px; }
+.uv-h { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink3); margin-bottom: 4px; font-family: 'Poppins', sans-serif; }
+.uv-hint { font-size: 12px; color: var(--ink4); margin-bottom: 8px; line-height: 1.4; }
+.uv-badge { display: inline-block; min-width: 18px; text-align: center; font-size: 11px; background: #fbe9e9; color: #b03535; border-radius: 10px; padding: 1px 6px; margin-left: 4px; }
+.uv-badge.zero { background: var(--accent-light); color: var(--accent); }
+.uv-col { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 3px 0; color: var(--ink2); }
+.uv-col input { accent-color: var(--accent); }
+.uv-col .uv-col-meta { color: var(--ink4); font-size: 11px; margin-left: auto; }
+/* per-column row: name + description input + not-null toggle */
+.uv-col2 { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--paper2); }
+.uv-col2-name { font-size: 12.5px; color: var(--ink2); min-width: 96px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
+.uv-col2-meta { display: block; font-size: 10px; color: var(--ink4); }
+.uv-desc { flex: 1; min-width: 70px; font-size: 12px; padding: 4px 7px; border: 1px solid var(--rule); border-radius: 5px; }
+.uv-desc:focus { border-color: var(--accent-mid); outline: none; }
+.uv-nn { display: flex; align-items: center; gap: 4px; font-size: 11.5px; color: var(--ink3); flex-shrink: 0; cursor: pointer; }
+.uv-nn input { accent-color: var(--accent); }
+/* ── Columns & rules editor (styled) ─────────────────────────────────── */
+.uvc-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 2px 0 12px; }
+.uvc-search { display: flex; align-items: center; gap: 8px; background: var(--paper); border: 1px solid var(--rule); border-radius: 9px; padding: 7px 11px; width: 210px; }
+.uvc-search svg { color: var(--ink4); flex-shrink: 0; }
+.uvc-search input { background: none; border: none; outline: none; color: var(--ink); font-family: inherit; font-size: 13px; width: 100%; }
+.uvc-search input::placeholder { color: var(--ink4); }
+.uvc-regen { display: flex; align-items: center; gap: 6px; background: var(--paper); border: 1px solid var(--accent); color: var(--accent); font-weight: 600; font-size: 13px; padding: 8px 14px; border-radius: 9px; cursor: pointer; transition: .15s; font-family: inherit; }
+.uvc-regen:hover { background: var(--accent-light); }
+.uvc-regen:disabled { opacity: .55; cursor: default; }
+#uvc-list { max-height: 46vh; overflow-y: auto; }
+.uvc-row { display: grid; grid-template-columns: 180px 1fr 108px; gap: 18px; align-items: start; padding: 16px 14px; border-radius: 12px; border-left: 3px solid transparent; transition: .15s; }
+.uvc-row:hover { background: var(--paper2); }
+.uvc-row + .uvc-row { border-top: 1px solid var(--rule); }
+.uvc-row.ok { border-left-color: #3D9A63; }
+.uvc-row.warn { border-left-color: #C7862A; }
+.uvc-field { display: flex; gap: 9px; min-width: 0; }
+.uvc-glyph { width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0; background: var(--paper2); border: 1px solid var(--rule); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--accent); }
+.uvc-field-meta { min-width: 0; }
+.uvc-field-name { font-size: 15px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.uvc-field-sub { display: flex; align-items: center; gap: 6px; margin-top: 5px; flex-wrap: wrap; }
+.uvc-type { font-size: 10.5px; color: var(--ink4); background: var(--paper2); border: 1px solid var(--rule); padding: 2px 6px; border-radius: 5px; }
+.uvc-empty { font-size: 10.5px; color: #C7862A; background: #FBF1E2; border: 1px solid rgba(199,134,42,.25); padding: 2px 6px; border-radius: 5px; font-weight: 600; }
+.uvc-desc { width: 100%; background: var(--paper); border: 1px solid var(--rule); border-radius: 9px; padding: 9px 12px; color: var(--ink); font-family: inherit; font-size: 13.5px; outline: none; transition: .15s; }
+.uvc-desc:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+.uvc-desc::placeholder { color: var(--ink4); }
+.uvc-null { display: flex; align-items: center; justify-content: flex-end; gap: 7px; padding-top: 9px; }
+.uvc-null span { font-size: 11.5px; color: var(--ink4); user-select: none; }
+.uvc-switch { width: 34px; height: 20px; border-radius: 99px; background: var(--paper2); border: 1px solid var(--rule); position: relative; cursor: pointer; flex-shrink: 0; transition: .15s; }
+.uvc-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: .15s; }
+.uvc-switch.on { background: var(--accent); border-color: var(--accent); }
+.uvc-switch.on::after { transform: translateX(14px); }
+.uvc-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--rule); }
+.uvc-foot-note { font-size: 12px; color: var(--ink4); }
+.uvc-foot-actions { display: flex; gap: 10px; }
+/* ── Validation REPORT panel (styled) ────────────────────────────────── */
+.uv-statbar { display: flex; border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; margin-bottom: 4px; }
+.uv-stat { flex: 1; padding: 12px 16px; display: flex; flex-direction: column; gap: 2px; border-right: 1px solid var(--rule); }
+.uv-stat:last-child { border-right: none; }
+.uv-stat-num { font-size: 19px; font-weight: 700; color: var(--ink); }
+.uv-stat-label { font-size: 11.5px; color: var(--ink4); }
+.uv-stat.accepted .uv-stat-num { color: var(--accent); }
+.uv-stat.autofixed .uv-stat-num { color: #C7862A; }
+.uv-stat.resolve { background: #FBEDEA; }
+.uv-stat.resolve .uv-stat-num { color: #B5473A; }
+.uv-stat.resolve .uv-stat-label { color: #B5473A; opacity: .75; }
+.uvr-section-title { display: flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--ink4); text-transform: uppercase; margin: 18px 0 12px; }
+.uvr-count-pill { background: #FBEDEA; color: #B5473A; font-weight: 700; font-size: 11.5px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.uvr-count-pill.zero { background: var(--accent-light); color: var(--accent); }
+.uvr-card { background: var(--paper); border: 1px solid var(--rule); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; border-left: 3px solid #B5473A; }
+.uvr-card.done { opacity: .62; border-left-color: #3D9A63; }
+.uvr-card-msg { font-size: 14px; line-height: 1.5; margin: 0 0 4px; color: var(--ink); }
+.uvr-card-msg code { background: var(--paper2); border: 1px solid var(--rule); padding: 1px 5px; border-radius: 4px; font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+.uvr-fx { color: var(--ink4); font-size: 12px; }
+.uvr-card-ref { font-size: 12px; color: var(--ink4); margin-bottom: 11px; font-family: ui-monospace, Consolas, monospace; }
+.uvr-card-ref b { color: var(--ink3); font-weight: 600; }
+.uvr-card-actions { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.uvr-input { background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 8px 12px; font-family: inherit; font-size: 13.5px; color: var(--ink); outline: none; width: 150px; transition: .15s; }
+.uvr-input.narrow { width: 78px; }
+.uvr-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+.uvr-input::placeholder { color: var(--ink4); }
+.pbtn { font-weight: 600; font-size: 13px; padding: 8px 14px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; transition: .15s; white-space: nowrap; font-family: inherit; }
+.pbtn-outline-accent { background: var(--paper); border-color: var(--accent); color: var(--accent); }
+.pbtn-outline-accent:hover { background: var(--accent-light); }
+.pbtn-solid-accent { background: var(--accent); color: #fff; }
+.pbtn-solid-accent:hover { background: var(--accent-mid); }
+.pbtn-outline-danger { background: var(--paper); border-color: var(--rule); color: #B5473A; }
+.pbtn-outline-danger:hover { background: #FBEDEA; border-color: #B5473A; }
+.uvr-log { border-top: 1px solid var(--rule); margin-top: 8px; padding-top: 12px; }
+.uvr-log-title { font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--ink4); text-transform: uppercase; margin-bottom: 6px; }
+#uv-issues { max-height: 30vh; overflow-y: auto; }
+.uvr-log-row { display: grid; grid-template-columns: 92px 1fr 150px; gap: 14px; align-items: center; padding: 9px 2px; border-top: 1px solid var(--rule); font-size: 13px; }
+.uvr-log-row:first-of-type { border-top: none; }
+.uvr-sev { font-size: 10px; font-weight: 700; letter-spacing: .03em; padding: 2px 7px; border-radius: 5px; width: fit-content; text-transform: uppercase; }
+.uvr-sev.important { background: #FBF1E2; color: #C7862A; }
+.uvr-sev.warning { background: var(--paper2); color: var(--ink4); }
+.uvr-sev.critical { background: #FBEDEA; color: #B5473A; }
+.uvr-log-desc { color: var(--ink2); }
+.uvr-log-desc .uvr-ref { color: var(--ink4); font-size: 12px; }
+.uvr-log-status { font-size: 12px; color: var(--ink4); text-align: right; }
+.uvr-log-status.fixed { color: #3D9A63; }
+.uvr-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--rule); }
+.uvr-foot-note { font-size: 12.5px; color: #B5473A; font-weight: 500; }
+.uvr-foot-note.ready { color: #3D9A63; }
+.um-btn.primary:disabled { background: var(--ink4); opacity: .6; cursor: default; }
+.uv-item { border: 1px solid var(--rule); border-radius: 8px; padding: 9px 11px; margin-bottom: 8px; background: var(--paper); }
+.uv-item.done { opacity: .6; border-style: dashed; }
+.uv-item-msg { font-size: 12.5px; color: var(--ink2); margin-bottom: 7px; }
+.uv-item-msg .uv-fx { color: var(--ink4); font-size: 11px; }
+.uv-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.uv-actions input { width: 90px; font-size: 12px; padding: 3px 6px; border: 1px solid var(--rule); border-radius: 5px; }
+.uv-mini { font-size: 12px; padding: 3px 9px; border-radius: 6px; border: 1px solid var(--accent-mid); background: none; color: var(--accent); cursor: pointer; }
+.uv-mini:hover { background: var(--accent-light); }
+.uv-mini.danger { border-color: #d59a9a; color: #b03535; }
+.uv-mini.danger:hover { background: #fbe9e9; }
+.uv-issues { max-height: 150px; overflow-y: auto; font-size: 12px; }
+.uv-issue-row { display: flex; gap: 8px; padding: 3px 0; border-bottom: 1px solid var(--paper2); color: var(--ink3); }
+.uv-sev { flex-shrink: 0; width: 62px; font-weight: 600; font-family: 'Poppins', sans-serif; font-size: 10.5px; text-transform: uppercase; }
+.uv-sev.critical { color: #b03535; } .uv-sev.important { color: #a5641f; } .uv-sev.warning { color: var(--ink4); }
 .um-status.error { color: #a34f22; }
 
 .col-desc-row {
@@ -620,10 +747,21 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 .topbar-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .info-btn {
   background: none; border: none; cursor: pointer; color: var(--ink4);
-  padding: 0; display: flex; flex-shrink: 0; margin-top: 3px; transition: color .15s;
+  padding: 0; display: flex; flex-shrink: 0; margin-top: 10px; transition: color .15s;
 }
 .info-btn:hover { color: var(--accent); }
 .info-btn svg { width: 16px; height: 16px; }
+/* master collapse arrow, sitting below the info button */
+.collapse-all-row { display: flex; justify-content: flex-end; margin-top: -6px; }
+.collapse-all-btn { padding: 0; }
+/* right-hand group in each section header: action button + chevron (chevron on
+   the far right, aligned with the master arrow above) */
+.sec-head-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+/* Select-all / Clear-all row under the Map layers header */
+.dp-selectall { display: flex; align-items: center; justify-content: space-between; padding: 0 2px 7px; }
+.dp-count { font-size: 11px; color: var(--ink4); font-family: 'Poppins', sans-serif; }
+.dp-selectall-btn { font-size: 11px; color: var(--accent); background: none; border: none; cursor: pointer; padding: 0; font-family: 'Poppins', sans-serif; }
+.dp-selectall-btn:hover { text-decoration: underline; }
 .info-popover {
   margin-top: 8px; background: white; border: 1px solid #ECE9E1;
   border-radius: var(--r); padding: 10px 12px;
@@ -715,18 +853,27 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
         map datasets, your uploaded documents, and official sources — then answers with citations
         and plots matching places on the map.
       </div>
+      <div class="collapse-all-row">
+        <button class="sec-toggle collapse-all-btn" id="collapse-all-btn" onclick="toggleAllSections()" aria-label="Hide map layers and documents" title="Hide map layers & documents">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
+      </div>
     </div>
 
     <!-- ── DATASETS PANEL ── -->
     <div id="datasets-panel">
       <div class="dp-header">
-        <span class="sec-head">
+        <span class="dp-title">Map layers</span>
+        <span class="sec-head-right">
+          <button class="dp-upload-btn" id="upload-open-btn" onclick="openUploadModal()">+ add</button>
           <button class="sec-toggle" id="sec-toggle-datasets" onclick="toggleSection('datasets')" aria-label="Collapse datasets">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
           </button>
-          <span class="dp-title">Map layers</span>
         </span>
-        <button class="dp-upload-btn" id="upload-open-btn" onclick="openUploadModal()">+ add</button>
+      </div>
+      <div id="dataset-selectall" class="dp-selectall" style="display:none">
+        <span class="dp-count" id="dataset-count"></span>
+        <button class="dp-selectall-btn" id="dataset-selectall-btn" onclick="toggleAllDatasets()">Select all</button>
       </div>
       <div id="dataset-list">
         <div class="dp-empty">No datasets yet — upload a GeoJSON or CSV to get started.</div>
@@ -736,13 +883,13 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
     <!-- ── DOCUMENTS PANEL ── -->
     <div id="documents-panel">
       <div class="dp-header">
-        <span class="sec-head">
+        <span class="dp-title">Documents</span>
+        <span class="sec-head-right">
+          <button class="dp-upload-btn" id="doc-upload-btn" onclick="document.getElementById('doc-file-input').click()">+ add</button>
           <button class="sec-toggle" id="sec-toggle-documents" onclick="toggleSection('documents')" aria-label="Collapse documents">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
           </button>
-          <span class="dp-title">Documents</span>
         </span>
-        <button class="dp-upload-btn" id="doc-upload-btn" onclick="document.getElementById('doc-file-input').click()">+ add</button>
       </div>
       <input type="file" id="doc-file-input" accept=".pdf,.docx,.txt,.md,.markdown,.html,.htm,.csv" style="display:none" onchange="uploadDocument(this.files[0])"/>
       <div id="document-list">
@@ -763,19 +910,19 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 
     <div id="layers-panel">
       <div class="lp-header">
-        <span class="sec-head">
+        <span class="lp-title">Plotted</span>
+        <span class="sec-head-right">
+          <button class="clear-btn" onclick="clearLayers()">clear all</button>
           <button class="sec-toggle" id="sec-toggle-layers" onclick="toggleSection('layers')" aria-label="Collapse map layers">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
           </button>
-          <span class="lp-title">Plotted</span>
         </span>
-        <button class="clear-btn" onclick="clearLayers()">clear all</button>
       </div>
       <div id="layer-list"></div>
     </div>
 
     <div id="input-area">
-      <textarea id="chat-input" rows="1" placeholder="Ask about the map or your documents…" disabled></textarea>
+      <textarea id="chat-input" rows="1" placeholder="Ask about your data…" disabled></textarea>
       <button id="send-btn" onclick="onComposerAction()" aria-label="Send" disabled>
         <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
@@ -857,6 +1004,53 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
         </div>
       </div>
     </div>
+
+    <!-- STEP V1: column descriptions + not-null rule (old-style editor) -->
+    <div id="um-step-vcols" style="display:none">
+      <div id="uvc-editor">
+        <p class="uv-hint" style="margin-bottom:10px">Descriptions are auto-drafted for every column. Edit the wording and switch on <b>not null</b> where a value must be present.</p>
+        <div class="uvc-toolbar">
+          <div class="uvc-search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input id="uvc-filter" type="text" placeholder="Filter columns…" oninput="filterCols(this.value)"/>
+          </div>
+          <button class="uvc-regen" id="uvc-regen" onclick="vcolsAuto()">✦ Regenerate all</button>
+        </div>
+        <div id="uvc-list"></div>
+        <div class="um-status" id="uvc-status"></div>
+        <div class="uvc-foot">
+          <span class="uvc-foot-note" id="uvc-foot-note"></span>
+          <span class="uvc-foot-actions">
+            <button class="um-btn" onclick="closeUploadModal()">Cancel</button>
+            <button class="um-btn primary" onclick="vcolsContinue()">Save &amp; check rows →</button>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP V2: validation report + missing-value handling -->
+    <div id="um-step-validate" style="display:none">
+      <div id="uv-statbar" class="uv-statbar"></div>
+
+      <div id="uv-hitl-section">
+        <div class="uvr-section-title">Needs your decision <span id="uv-hitl-count" class="uvr-count-pill">0</span></div>
+        <div id="uv-hitl"></div>
+      </div>
+
+      <div class="uvr-log">
+        <div class="uvr-log-title">Validation issues</div>
+        <div id="uv-issues"></div>
+      </div>
+
+      <div class="um-status" id="uv-status"></div>
+      <div class="uvr-foot">
+        <span class="uvr-foot-note" id="uv-foot-note"></span>
+        <span class="uvr-foot-actions">
+          <button class="um-btn" onclick="closeUploadModal()">Cancel</button>
+          <button class="um-btn primary" id="uv-commit-btn" onclick="commitValidation()" disabled>Import dataset</button>
+        </span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -873,6 +1067,8 @@ html, body { height: 100%; overflow: hidden; background: var(--paper); color: va
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <script>
 const API = 'http://localhost:8000';
 
@@ -883,6 +1079,9 @@ const GENERIC_SUGGESTIONS = [
 ];
 
 const COLORS = ['#b85c2a','#3a6b4a','#2a6bb8','#7a3a8a','#8a6a2a','#2a8a6a','#8a2a4a'];
+// Columns the spatial SQL adds for map overlays — kept out of the RAG/meta panel
+// and used by renderSpatialOverlays() instead.
+const SPATIAL_META_COLS = new Set(['reference_geometry','distance_m','search_radius_m']);
 let colorIndex = 0, layerGroups = {}, layers = [], map;
 
 // Conversation session id — new per page load, so a refresh starts a fresh
@@ -902,18 +1101,57 @@ let documents = [];                // full list from GET /documents
 // Track current RAG request to avoid stale results
 let ragRequestId = 0;
 
+// ── DRAW-A-SEARCH-AREA STATE ───────────────────────────────────────────────
+let drawnItems = null;             // FeatureGroup holding the user's drawn area
+let drawnPolygon = null;           // GeoJSON geometry of the current search area
+
 window.addEventListener('load', () => {
   map = L.map('map', { zoomControl: false }).setView([30.044, 31.235], 12);
   L.control.zoom({ position: 'bottomright' }).addTo(map);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     attribution: '© OpenStreetMap contributors © CARTO', maxZoom: 19
   }).addTo(map);
+  initDrawTools();
   buildSuggestions();
   autoResize();
   refreshDatasets();
   refreshDocuments();
   initSidebarResize();
 });
+
+// Set up the polygon/rectangle drawing toolbar. The drawn area stays on the map
+// until the user deletes it, and is used as the search geometry for "… in this
+// area" queries.
+function initDrawTools() {
+  if (typeof L.Control === 'undefined' || !L.Control.Draw) { console.warn('Leaflet.draw not loaded'); return; }
+  drawnItems = new L.FeatureGroup();
+  map.addLayer(drawnItems);
+
+  const drawControl = new L.Control.Draw({
+    position: 'topleft',
+    draw: {
+      polygon: { allowIntersection: false, showArea: true, shapeOptions: { color: '#2a6bb8', weight: 2, fillOpacity: 0.08 } },
+      rectangle: { shapeOptions: { color: '#2a6bb8', weight: 2, fillOpacity: 0.08 } },
+      polyline: false, circle: false, marker: false, circlemarker: false
+    },
+    edit: { featureGroup: drawnItems, remove: true }
+  });
+  map.addControl(drawControl);
+
+  map.on(L.Draw.Event.CREATED, (e) => {
+    drawnItems.clearLayers();                       // one search area at a time
+    drawnItems.addLayer(e.layer);
+    drawnPolygon = e.layer.toGeoJSON().geometry;
+    showBadge('Search area drawn — try "schools in this area"');
+  });
+  map.on(L.Draw.Event.EDITED, (e) => {
+    e.layers.eachLayer(l => { drawnPolygon = l.toGeoJSON().geometry; });
+    showBadge('Search area updated');
+  });
+  map.on(L.Draw.Event.DELETED, () => {
+    if (!drawnItems.getLayers().length) { drawnPolygon = null; showBadge('Search area cleared'); }
+  });
+}
 
 // ── INFO POPOVER (brief app description) ─────────────────────────────────────
 function toggleInfo(e) {
@@ -972,13 +1210,46 @@ function buildSuggestions() {
 // per-answer (handled by toggleQuality). Sidebar width never changes.
 const sectionExpanded = { datasets: true, documents: true, layers: true };
 const _sectionListId = { datasets: 'dataset-list', documents: 'document-list', layers: 'layer-list' };
-function toggleSection(name) {
-  sectionExpanded[name] = !sectionExpanded[name];
-  const collapsed = !sectionExpanded[name];
+
+function setSection(name, expanded) {
+  sectionExpanded[name] = expanded;
+  const collapsed = !expanded;
   const list = document.getElementById(_sectionListId[name]);
   const btn = document.getElementById('sec-toggle-' + name);
   if (list) list.classList.toggle('sec-collapsed', collapsed);
   if (btn) btn.classList.toggle('collapsed', collapsed);
+  // Hide the section's "+ add" button while collapsed — it reappears on expand,
+  // so a collapsed section shows only its arrow + title.
+  const addBtnId = { datasets: 'upload-open-btn', documents: 'doc-upload-btn' }[name];
+  if (addBtnId) {
+    const addBtn = document.getElementById(addBtnId);
+    if (addBtn) addBtn.style.display = collapsed ? 'none' : '';
+  }
+  // The Map layers "Select all" row shows only when that section is expanded.
+  if (name === 'datasets') updateSelectAll();
+}
+
+function toggleSection(name) { setSection(name, !sectionExpanded[name]); }
+
+// Master arrow (below the info button): hides the Map layers + Documents panels
+// entirely. Pressing it again brings them back but COLLAPSED (just their headers
+// with their own small arrows) — the user then opens each section individually.
+let panelsHidden = false;
+function toggleAllSections() {
+  panelsHidden = !panelsHidden;
+  const dp = document.getElementById('datasets-panel');
+  const dop = document.getElementById('documents-panel');
+  if (panelsHidden) {
+    if (dp) dp.style.display = 'none';
+    if (dop) dop.style.display = 'none';
+  } else {
+    if (dp) dp.style.display = '';
+    if (dop) dop.style.display = '';
+    setSection('datasets', false);      // reappear collapsed (headers only)
+    setSection('documents', false);
+  }
+  const mb = document.getElementById('collapse-all-btn');
+  if (mb) mb.classList.toggle('collapsed', panelsHidden);
 }
 
 // Collapse the "last answer quality" metric breakdown (expand on click).
@@ -1049,12 +1320,35 @@ function renderDatasetList() {
     list.appendChild(row);
   });
 
+  updateSelectAll();
   updateInputEnabled();
 }
 
 function toggleDataset(id, checked) {
   if (checked) selectedDatasetIds.add(id); else selectedDatasetIds.delete(id);
+  updateSelectAll();
   updateInputEnabled();
+}
+
+// "N of M active" + a Select all / Clear all toggle for the map layers.
+function updateSelectAll() {
+  const wrap = document.getElementById('dataset-selectall');
+  if (!wrap) return;
+  // Only when there are layers AND the Map layers section is expanded.
+  const show = datasets.length > 0 && sectionExpanded.datasets;
+  wrap.style.display = show ? 'flex' : 'none';
+  if (!show) return;
+  const active = datasets.filter(d => selectedDatasetIds.has(d.id)).length;
+  document.getElementById('dataset-count').textContent = `${active} of ${datasets.length} active`;
+  document.getElementById('dataset-selectall-btn').textContent =
+    active === datasets.length ? 'Clear all' : 'Select all';
+}
+
+function toggleAllDatasets() {
+  const allActive = datasets.length > 0 && datasets.every(d => selectedDatasetIds.has(d.id));
+  if (allActive) selectedDatasetIds.clear();
+  else datasets.forEach(d => selectedDatasetIds.add(d.id));
+  renderDatasetList();   // re-renders rows (checkboxes) + updates the count/label
 }
 
 function updateInputEnabled() {
@@ -1183,11 +1477,359 @@ function openUploadModal() {
   document.getElementById('um-title').textContent = 'Upload a dataset';
   document.getElementById('um-step-file').style.display = 'block';
   document.getElementById('um-step-describe').style.display = 'none';
+  document.getElementById('um-step-vcols').style.display = 'none';
+  document.getElementById('um-step-validate').style.display = 'none';
+  document.getElementById('upload-modal').classList.remove('wide');
   document.getElementById('upload-modal-backdrop').style.display = 'flex';
 }
 
 function closeUploadModal() {
   document.getElementById('upload-modal-backdrop').style.display = 'none';
+}
+
+// ── GEOJSON VALIDATION PIPELINE (Stage 1–4 + HITL) ──────────────────────────
+let validationId = null;
+let validationName = '';
+let _lastColumns = [];
+let _colState = {};   // { colName: { desc, required, dtype } }
+let _vReport = null;  // last validation report
+let _editingHitl = new Set();   // HITL items re-opened for editing after confirm
+
+// Row label for the report: the feature's id column if present, else 1-based row number.
+function rowLabel(x) {
+  if (x.feature_id) return `id ${x.feature_id}`;
+  if (x.feature_index != null) return `row ${x.feature_index + 1}`;
+  return '';
+}
+function hitlKey(h) { return `${h.kind}|${h.feature_index}|${h.field || ''}`; }
+
+async function startValidation(name) {
+  validationName = name;
+  _colState = {};
+  const statusEl = document.getElementById('um-status');
+  statusEl.classList.remove('error');
+  statusEl.textContent = 'Validating…';
+  document.getElementById('um-upload-btn').disabled = true;
+  const form = new FormData();
+  form.append('file', pendingUpload.file);
+  try {
+    const res = await fetch(`${API}/datasets/validate`, { method: 'POST', body: form });
+    const data = await res.json();
+    if (!res.ok) {
+      const d = data.detail || {};
+      statusEl.textContent = '✕ ' + (d.error || d || 'Validation rejected the file.');
+      statusEl.classList.add('error');
+      document.getElementById('um-upload-btn').disabled = false;
+      return;
+    }
+    validationId = data.validation_id;
+    _vReport = data.report;
+    document.getElementById('upload-modal').classList.add('wide');
+    document.getElementById('um-title').textContent = 'Columns & rules';
+    document.getElementById('um-step-file').style.display = 'none';
+    document.getElementById('um-step-describe').style.display = 'none';
+    document.getElementById('um-step-validate').style.display = 'none';
+    document.getElementById('um-step-vcols').style.display = 'block';
+    _colFilter = '';
+    const filt = document.getElementById('uvc-filter'); if (filt) filt.value = '';
+    renderVcolsEditor();   // show ALL columns + not-null switches first
+    vcolsAuto();           // auto-draft descriptions for all columns
+  } catch (e) {
+    statusEl.textContent = 'Could not reach the server.';
+    statusEl.classList.add('error');
+    document.getElementById('um-upload-btn').disabled = false;
+  }
+}
+
+// ---- Panel 1: column descriptions + not-null rule ----
+async function vcolsAuto() {
+  syncColState();   // keep the user's not-null ticks / manual edits
+  const btn = document.getElementById('uvc-regen'); if (btn) btn.disabled = true;
+  document.getElementById('uvc-status').textContent = 'Drafting descriptions for all columns…';
+  try {
+    const res = await fetch(`${API}/datasets/validate/describe-auto`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ validation_id: validationId, display_name: validationName })
+    });
+    const data = await res.json();
+    if (res.ok && data.columns) {
+      data.columns.forEach(c => {
+        _colState[c.column_name] = _colState[c.column_name] || { desc: '', required: false };
+        _colState[c.column_name].desc = c.description || _colState[c.column_name].desc || '';
+        _colState[c.column_name].dtype = c.data_type;
+      });
+    }
+  } catch (e) {}
+  document.getElementById('uvc-status').textContent = '';
+  if (btn) btn.disabled = false;
+  renderVcolsEditor();
+}
+
+function glyphFor(dt) {
+  if (dt === 'integer' || dt === 'number') return '#';
+  if (dt === 'boolean') return '01';
+  return 'Aa';
+}
+
+let _colFilter = '';
+function filterCols(q) {
+  _colFilter = q || '';
+  const t = _colFilter.trim().toLowerCase();
+  document.querySelectorAll('#uvc-list .uvc-row').forEach(r => {
+    const n = r.getAttribute('data-name') || '';
+    r.style.display = (!t || n.includes(t)) ? '' : 'none';
+  });
+}
+
+function renderVcolsEditor() {
+  const cols = (_vReport && _vReport.columns) || [];
+  cols.forEach(c => {
+    if (!_colState[c.name]) _colState[c.name] = { desc: '', required: false, dtype: c.dtype };
+    else _colState[c.name].dtype = c.dtype;
+  });
+  document.getElementById('uvc-list').innerHTML = cols.map(c => {
+    const st = _colState[c.name] || { desc: '', required: false };
+    const warn = (c.null_count || 0) > 0;
+    return `<div class="uvc-row ${warn ? 'warn' : 'ok'}" data-name="${esc(c.name.toLowerCase())}">
+      <div class="uvc-field">
+        <div class="uvc-glyph">${glyphFor(c.dtype)}</div>
+        <div class="uvc-field-meta">
+          <div class="uvc-field-name" title="${esc(c.name)}">${esc(c.name)}</div>
+          <div class="uvc-field-sub"><span class="uvc-type">${esc(c.dtype)}</span>${c.null_count ? `<span class="uvc-empty">${c.null_count} empty</span>` : ''}</div>
+        </div>
+      </div>
+      <input class="uvc-desc" data-col="${esc(c.name)}" placeholder="description" value="${esc(st.desc || '')}"/>
+      <div class="uvc-null"><span>not null</span><div class="uvc-switch ${st.required ? 'on' : ''}" data-col="${esc(c.name)}" onclick="this.classList.toggle('on')"></div></div>
+    </div>`;
+  }).join('') || '<div class="uv-hint">No attribute columns.</div>';
+
+  const acc = (_vReport && _vReport.summary && _vReport.summary.accepted) || 0;
+  const emptyCols = cols.filter(c => (c.null_count || 0) > 0).length;
+  const note = document.getElementById('uvc-foot-note');
+  if (note) note.textContent = `${cols.length} column${cols.length !== 1 ? 's' : ''} · ${acc} accepted · ${emptyCols} with empty values`;
+  document.getElementById('uvc-editor').style.display = 'block';
+  if (_colFilter) filterCols(_colFilter);
+}
+
+async function vcolsContinue() {
+  syncColState();
+  const required = Object.keys(_colState).filter(n => _colState[n].required);
+  const numeric = ((_vReport && _vReport.columns) || [])
+    .filter(c => ['integer', 'number', 'mixed'].includes(c.dtype)).map(c => c.name);
+  document.getElementById('uvc-status').textContent = 'Checking rows…';
+  const r = await postValidation(`${API}/datasets/validate/attributes`,
+    { validation_id: validationId, required_fields: required, numeric_fields: numeric });
+  document.getElementById('uvc-status').textContent = '';
+  if (!r) return;
+  _vReport = r.report;
+  document.getElementById('um-title').textContent = 'Validation report';
+  document.getElementById('um-step-vcols').style.display = 'none';
+  document.getElementById('um-step-validate').style.display = 'block';
+  renderReport(r.report);
+}
+
+// Row reference for a card: "id X" or "row N" (1-based), with a bold label.
+function rowRefHtml(x) {
+  if (x.feature_id) return `<b>id</b> ${esc(x.feature_id)}`;
+  if (x.feature_index != null) return `<b>row</b> ${x.feature_index + 1}`;
+  return '';
+}
+
+// ---- Panel 2: report + missing-value handling ----
+function renderReport(report) {
+  _vReport = report;
+  const s = report.summary;
+  document.getElementById('uv-statbar').innerHTML = `
+    <div class="uv-stat accepted"><div class="uv-stat-num">${s.accepted}</div><div class="uv-stat-label">accepted</div></div>
+    <div class="uv-stat"><div class="uv-stat-num">${s.total_features}</div><div class="uv-stat-label">total</div></div>
+    <div class="uv-stat autofixed"><div class="uv-stat-num">${s.auto_fixed}</div><div class="uv-stat-label">auto-fixed</div></div>
+    <div class="uv-stat resolve"><div class="uv-stat-num">${s.pending_hitl}</div><div class="uv-stat-label">to resolve</div></div>`;
+
+  const pending = (report.hitl || []).filter(h => !h.resolved);
+  const cnt = document.getElementById('uv-hitl-count');
+  cnt.textContent = pending.length;
+  cnt.classList.toggle('zero', pending.length === 0);
+  document.getElementById('uv-hitl').innerHTML =
+    (report.hitl || []).map((h, i) => hitlMarkup(h, i)).join('') ||
+    '<div class="uv-hint">Nothing needs a decision. 🎉</div>';
+
+  document.getElementById('uv-issues').innerHTML = (report.issues || []).map(it => {
+    const rl = rowRefHtml(it);
+    const col = it.field ? ` · col <b>${esc(it.field)}</b>` : '';
+    const fixed = /auto-fix|auto-correct/i.test(it.action);
+    return `<div class="uvr-log-row">
+      <span class="uvr-sev ${it.severity}">${esc(it.severity)}</span>
+      <span class="uvr-log-desc">${esc(it.check)} <span class="uvr-ref">${rl ? '· ' + rl : ''}${col}</span></span>
+      <span class="uvr-log-status ${fixed ? 'fixed' : ''}">${esc(it.action)}</span>
+    </div>`;
+  }).join('') || '<div class="uv-hint">No issues.</div>';
+
+  const note = document.getElementById('uv-foot-note');
+  if (note) {
+    note.textContent = pending.length
+      ? `${pending.length} row${pending.length !== 1 ? 's' : ''} still need a decision`
+      : 'All decisions made — ready to import.';
+    note.classList.toggle('ready', pending.length === 0);
+  }
+  document.getElementById('uv-commit-btn').disabled = pending.length > 0;
+}
+
+function hitlMarkup(h, i) {
+  const key = hitlKey(h);
+  const editing = _editingHitl.has(key);
+  const refHtml = rowRefHtml(h);
+  const refLine = refHtml ? `<div class="uvr-card-ref">${refHtml}</div>` : '';
+  const ref = `'${h.kind}',${h.feature_index === null ? 'null' : h.feature_index},${h.field ? `'${esc(h.field)}'` : 'null'}`;
+
+  // Resolved (and not re-editing): show the decision + an Edit button.
+  if (h.resolved && !editing) {
+    const rv = h.resolution || {};
+    const shown = rv.value != null ? `: ${esc(String(rv.value))}` : (rv.geometry ? ': location set' : '');
+    return `<div class="uvr-card done">
+      <p class="uvr-card-msg">✓ ${esc(h.message)} <span class="uvr-fx">→ ${esc(rv.action || 'resolved')}${shown}</span></p>
+      ${refLine}
+      <div class="uvr-card-actions"><button class="pbtn pbtn-outline-accent" onclick="editHitl(${ref})">Edit</button></div></div>`;
+  }
+
+  const id = 'uvin' + i;
+  const prevVal = (h.resolution && h.resolution.value != null) ? String(h.resolution.value) : '';
+  const g = (h.resolution && h.resolution.geometry) ? h.resolution.geometry.coordinates : null;
+  let actions = '';
+  if (h.kind === 'missing_geometry') {
+    actions = `<button class="pbtn pbtn-outline-accent" onclick="pickOnMapFor(${h.feature_index})">Pick on map</button>
+      <button class="pbtn pbtn-outline-accent" onclick="autofillGeom('${id}')">Auto-fill</button>
+      <input class="uvr-input narrow" id="${id}lon" placeholder="lon" value="${g ? g[0] : ''}"/>
+      <input class="uvr-input narrow" id="${id}lat" placeholder="lat" value="${g ? g[1] : ''}"/>
+      <button class="pbtn pbtn-solid-accent" onclick="resolveGeom(${h.feature_index},'${id}')">Confirm</button>
+      <button class="pbtn pbtn-outline-danger" onclick="resolveHitl(${ref},{action:'drop'})">Drop row</button>`;
+  } else if (h.kind === 'missing_attribute') {
+    actions = `<input class="uvr-input" id="${id}" placeholder="value" value="${esc(prevVal)}"/>
+      <button class="pbtn pbtn-solid-accent" onclick="resolveHitl(${ref},{action:'fix',value:document.getElementById('${id}').value})">Confirm</button>
+      <button class="pbtn pbtn-outline-accent" onclick="document.getElementById('${id}').value='Unknown'">Auto-fill</button>
+      <button class="pbtn pbtn-outline-danger" onclick="resolveHitl(${ref},{action:'drop'})">Drop row</button>`;
+  } else if (h.kind === 'latlong_swap') {
+    actions = `<button class="pbtn pbtn-solid-accent" onclick="resolveHitl(${ref},{action:'fix'})">Fix (swap)</button>
+      <button class="pbtn pbtn-outline-accent" onclick="resolveHitl(${ref},{action:'keep'})">Keep</button>
+      <button class="pbtn pbtn-outline-danger" onclick="resolveHitl(${ref},{action:'skip'})">Skip</button>`;
+  } else if (h.kind === 'invalid_geometry') {
+    actions = (h.options || ['drop']).map(o =>
+      o === 'keep' ? `<button class="pbtn pbtn-outline-accent" onclick="resolveHitl(${ref},{action:'keep'})">Keep as-is</button>`
+                   : `<button class="pbtn pbtn-outline-danger" onclick="resolveHitl(${ref},{action:'drop'})">Drop row</button>`
+    ).join(' ');
+  } else if (h.kind === 'outlier') {
+    actions = `<input class="uvr-input" id="${id}" placeholder="new value" value="${esc(prevVal)}"/>
+      <button class="pbtn pbtn-solid-accent" onclick="resolveHitl(${ref},{action:'fix',value:parseFloat(document.getElementById('${id}').value)})">Correct</button>
+      <button class="pbtn pbtn-outline-accent" onclick="resolveHitl(${ref},{action:'keep'})">Keep</button>
+      <button class="pbtn pbtn-outline-accent" onclick="resolveHitl(${ref},{action:'null'})">Set NULL</button>`;
+  } else if (h.kind === 'duplicate') {
+    actions = `<button class="pbtn pbtn-outline-accent" onclick="resolveHitl(${ref},{action:'keep'})">Keep all</button>
+      <button class="pbtn pbtn-outline-danger" onclick="resolveHitl(${ref},{action:'drop_duplicates'})">Drop duplicates</button>`;
+  } else if (h.kind === 'crs') {
+    actions = `<input class="uvr-input" id="${id}" placeholder="EPSG e.g. 32636"/>
+      <button class="pbtn pbtn-solid-accent" onclick="resolveHitl(${ref},{action:'set_epsg',epsg:parseInt(document.getElementById('${id}').value)})">Set CRS</button>`;
+  } else if (h.kind === 'feature_count') {
+    actions = `<button class="pbtn pbtn-solid-accent" onclick="resolveHitl(${ref},{action:'proceed'})">Proceed</button>`;
+  }
+  return `<div class="uvr-card"><p class="uvr-card-msg">${esc(h.message)}</p>${refLine}<div class="uvr-card-actions">${actions}</div></div>`;
+}
+
+// Suggest a location (map center) into the missing-geometry inputs to review/confirm.
+function autofillGeom(id) {
+  const c = map.getCenter();
+  document.getElementById(id + 'lon').value = c.lng.toFixed(6);
+  document.getElementById(id + 'lat').value = c.lat.toFixed(6);
+}
+
+// Re-open an already-resolved HITL item so its decision can be edited.
+function editHitl(kind, feature_index, field) {
+  _editingHitl.add(`${kind}|${feature_index}|${field || ''}`);
+  renderReport(_vReport);
+}
+
+function resolveGeom(idx, id) {
+  const lon = parseFloat(document.getElementById(id + 'lon').value);
+  const lat = parseFloat(document.getElementById(id + 'lat').value);
+  if (isNaN(lon) || isNaN(lat)) { document.getElementById('uv-status').textContent = 'Enter a valid lon and lat.'; return; }
+  resolveHitl('missing_geometry', idx, null, { action: 'fix', geometry: { type: 'Point', coordinates: [lon, lat] } });
+}
+
+// Let the user click the map to place a missing geometry.
+function pickOnMapFor(idx) {
+  document.getElementById('upload-modal-backdrop').style.display = 'none';
+  showBadge('Click on the map to set the location for feature #' + idx);
+  map.getContainer().style.cursor = 'crosshair';
+  map.once('click', (e) => {
+    map.getContainer().style.cursor = '';
+    document.getElementById('upload-modal-backdrop').style.display = 'flex';
+    resolveHitl('missing_geometry', idx, null, { action: 'fix', geometry: { type: 'Point', coordinates: [e.latlng.lng, e.latlng.lat] } });
+  });
+}
+
+// Read the description inputs + not-null checkboxes back into _colState so they
+// persist when the report re-renders after each decision.
+function syncColState() {
+  document.querySelectorAll('#uvc-list .uvc-desc').forEach(inp => {
+    const col = inp.getAttribute('data-col');
+    (_colState[col] = _colState[col] || { desc: '', required: false }).desc = inp.value;
+  });
+  document.querySelectorAll('#uvc-list .uvc-switch').forEach(sw => {
+    const col = sw.getAttribute('data-col');
+    (_colState[col] = _colState[col] || { desc: '', required: false }).required = sw.classList.contains('on');
+  });
+}
+
+async function resolveHitl(kind, feature_index, field, resolution) {
+  const r = await postValidation(`${API}/datasets/validate/resolve`,
+    { validation_id: validationId, kind, feature_index, field, resolution });
+  if (r) { _editingHitl.delete(`${kind}|${feature_index}|${field || ''}`); renderReport(r.report); }
+}
+
+async function commitValidation() {
+  const btn = document.getElementById('uv-commit-btn');
+  btn.disabled = true;
+  document.getElementById('uv-status').textContent = 'Importing…';
+  syncColState();   // capture descriptions before the modal closes
+  const descCols = Object.keys(_colState)
+    .filter(n => (_colState[n].desc || '').trim())
+    .map(n => ({ column_name: n, data_type: _colState[n].dtype || 'string', description: _colState[n].desc.trim() }));
+  try {
+    const res = await fetch(`${API}/datasets/validate/commit`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ validation_id: validationId, display_name: validationName })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      document.getElementById('uv-status').textContent = '✕ ' + ((data.detail && (data.detail.error || data.detail)) || 'Import failed.');
+      btn.disabled = false;
+      return;
+    }
+    // Save the column descriptions the user entered, now that the dataset exists.
+    if (data.dataset_id && descCols.length) {
+      fetch(`${API}/datasets/describe`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataset_id: data.dataset_id, columns: descCols }) }).catch(() => {});
+    }
+    closeUploadModal();
+    showBadge(`Imported ${data.committed_features} feature(s)`);
+    await refreshDatasets();
+    if (data.dataset_id) { selectedDatasetIds.add(data.dataset_id); renderDatasetList(); }
+  } catch (e) {
+    document.getElementById('uv-status').textContent = 'Could not reach the server.';
+    btn.disabled = false;
+  }
+}
+
+async function postValidation(url, body) {
+  document.getElementById('uv-status').textContent = '';
+  try {
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (!res.ok) { document.getElementById('uv-status').textContent = '✕ ' + ((data.detail && (data.detail.error || data.detail)) || 'Request failed.'); return null; }
+    if (data.report) _lastColumns = data.report.columns || _lastColumns;
+    return data;
+  } catch (e) {
+    document.getElementById('uv-status').textContent = 'Could not reach the server.';
+    return null;
+  }
 }
 
 function onFileChosen(file) {
@@ -1212,6 +1854,9 @@ function checkUploadReady() {
 async function doUpload() {
   const name = document.getElementById('um-name').value.trim();
   if (!name || !pendingUpload || !pendingUpload.file) return;
+
+  // GeoJSON files go through the validation pipeline; CSV keeps the direct path.
+  if (/\.(geojson|json)$/i.test(pendingUpload.file.name)) { await startValidation(name); return; }
 
   const statusEl = document.getElementById('um-status');
   statusEl.classList.remove('error');
@@ -1423,8 +2068,66 @@ async function sendQuery() {
   await submitQuery(q);
 }
 
+// References to a drawn search area, e.g. "schools in this area".
+const AREA_RE = /\b(this area|the selected area|selected area|selected region|drawn (polygon|area|boundary)|current selection|this polygon|this region|this boundary|my (selected )?area|(inside|within|in) the (drawn|selected) (area|region|polygon|boundary))\b/i;
+function isAreaQuery(m) { return AREA_RE.test(m || ''); }
+
+// Pick which layer to search from the message text, against the selected datasets.
+function detectFeatureType(message) {
+  const m = (message || '').toLowerCase();
+  const selected = datasets.filter(d => selectedDatasetIds.has(d.id));
+  for (const d of selected) {
+    const dn = (d.display_name || '').toLowerCase();
+    if (dn && (m.includes(dn) || m.includes(dn.replace(/s$/, '')))) return d;
+  }
+  return selected.length === 1 ? selected[0] : null;   // unambiguous single layer
+}
+
+// Search the drawn polygon via the backend and render the matches.
+async function searchDrawnArea(message) {
+  if (!drawnPolygon) {
+    appendMsg('ai', 'Please draw a search area first — use the ▰ polygon or rectangle tool at the top-left of the map, then ask again (e.g. "schools in this area").');
+    return;
+  }
+  const ds = detectFeatureType(message);
+  if (!ds) {
+    appendMsg('ai', 'Which layer should I search inside the area? Mention one (e.g. "hospitals", "restaurants") and make sure it\'s added and selected.');
+    return;
+  }
+  const thinkEl = appendThinking();
+  try {
+    const res = await fetch(`${API}/spatial/search-by-polygon`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        feature_type: ds.display_name,
+        dataset_ids: Array.from(selectedDatasetIds),
+        geometry: drawnPolygon,
+        mode: 'intersects'
+      })
+    });
+    const r = await readResponse(res);
+    if (thinkEl) thinkEl.remove();
+    if (!r.ok) { appendMsg('ai', `⚠ ${errorReason(r)}`); return; }
+    const data = r.data || {};
+    if (!data.features || !data.features.length) {
+      appendMsg('ai', `No ${ds.display_name} found inside the drawn area.`);
+      return;
+    }
+    const color = COLORS[colorIndex++ % COLORS.length];
+    plotResults(data.features, message, color);           // keeps the drawn polygon visible
+    appendMsg('ai', `Found ${data.count} ${ds.display_name} inside the drawn area${data.repaired ? ' (the area was auto-corrected)' : ''} — plotted on the map.`);
+  } catch (err) {
+    if (thinkEl) thinkEl.remove();
+    appendMsg('ai', '⚠ Could not reach the server for the area search.');
+    console.error('area search error', err);
+  }
+}
+
 // Core query call. opts: { web_confirmed, website } for the human-in-the-loop web step.
 async function submitQuery(message, opts = {}) {
+  // Drawn-area queries bypass the LLM SQL path and use the polygon endpoint.
+  if (!opts.silent && isAreaQuery(message)) { await searchDrawnArea(message); return; }
+
   const thinkEl = opts.silent ? null : appendThinking();
   const controller = new AbortController();
   queryController = controller;
@@ -1548,7 +2251,13 @@ function appendHitlCard(website) {
 async function handleQueryResponse(data, q) {
   const intent = (data.intent && data.intent.intent) || 'UNKNOWN';
 
-  // UNKNOWN → clarifying question, nothing else to do.
+  // ROUTE → draw the route line + endpoints.
+  if (data.route) {
+    renderRoute(data.route);
+    return;
+  }
+
+  // UNKNOWN / routing-without-engine → clarifying question, nothing else to do.
   if (data.clarification) {
     appendKnowledgeAnswer({ answer: data.clarification, found: false }, intent, true);
     return;
@@ -1564,10 +2273,25 @@ async function handleQueryResponse(data, q) {
       if (!hasKnowledge) appendMsg('ai', typeof data.map.error === 'string' ? data.map.error : 'Map query failed.');
     } else if (data.map.results && data.map.results.length) {
       const color = COLORS[colorIndex++ % COLORS.length];
-      plotResults(data.map.results, q, color);
-      appendAiResult(data.map.results.length, data.map.sql, intent);
-      const radiusInfo = parseRadiusFromSQL(data.map.sql);
-      if (radiusInfo) await drawRadiusCircles(radiusInfo.table, radiusInfo.meters, color);
+      if (isDensityQuery(q) && typeof L.heatLayer === 'function') {
+        // Density / heatmap request -> render a heat layer from the points
+        // instead of hundreds of individual pins. (Falls through to markers if
+        // the heat plugin didn't load.)
+        renderHeatmap(data.map.results, q);
+        appendAiResult(data.map.results.length, data.map.sql, intent);
+      } else {
+        const grp = plotResults(data.map.results, q, color);
+        appendAiResult(data.map.results.length, data.map.sql, intent);
+        // Prefer the structured overlay (reference_geometry/radius/distance returned
+        // by the spatial SQL). Fall back to the legacy SQL-parsing radius path only
+        // when the query didn't return a reference geometry.
+        if (data.map.results.some(r => r.reference_geometry)) {
+          renderSpatialOverlays(data.map.results, color, grp, q);
+        } else {
+          const radiusInfo = parseRadiusFromSQL(data.map.sql);
+          if (radiusInfo) await drawRadiusCircles(radiusInfo.table, radiusInfo.meters, color);
+        }
+      }
       plotted = true;
     } else if (!hasKnowledge) {
       // 0 results and no knowledge fallback — tell the user plainly.
@@ -1846,16 +2570,23 @@ function plotResults(results, label, color) {
     let geom;
     try { geom = typeof r.geometry === 'string' ? JSON.parse(r.geometry) : r.geometry; } catch { return; }
 
-    // Extract all non-geometry fields as metadata
+    // Extract all non-geometry fields as metadata (spatial overlay columns excluded)
     const meta = {};
-    Object.entries(r).forEach(([k, v]) => { if (v != null && k !== 'geometry') meta[k] = v; });
+    Object.entries(r).forEach(([k, v]) => { if (v != null && k !== 'geometry' && !SPATIAL_META_COLS.has(k)) meta[k] = v; });
 
     // Infer a display "type" from result fields, generically
     const placeType = inferPlaceType(meta);
+    // Hover label: what this result feature actually is, e.g. "Park: El Salam Park".
+    const dispName = meta.name || meta['name:en'] || meta.title || meta['name:ar'] || placeType;
+    const dispCat  = meta.category || placeType;
 
     if (geom.type === 'Point') {
       const [lng, lat] = geom.coordinates;
       const marker = L.marker([lat, lng], { icon: redPinIcon() }).addTo(group);
+
+      // Label the result (+ distance for radius/nearest).
+      const tip = r.distance_m != null ? `${dispCat}: ${dispName} — ${Math.round(r.distance_m)} m` : `${dispCat}: ${dispName}`;
+      marker.bindTooltip(tip, { direction: 'top' });
 
       // Hover: show RAG panel
       marker.on('mouseover', () => triggerRag(meta, placeType));
@@ -1863,11 +2594,13 @@ function plotResults(results, label, color) {
       marker.on('click', () => triggerRag(meta, placeType));
 
     } else if (geom.type.includes('Line')) {
-      L.geoJSON({type:'Feature',geometry:geom}, { style:{color,weight:3,opacity:.8} }).addTo(group);
+      L.geoJSON({type:'Feature',geometry:geom}, { style:{color,weight:3,opacity:.8} })
+        .bindTooltip(`${dispCat}: ${dispName}`, { sticky:true }).addTo(group);
     } else if (geom.type.includes('Polygon')) {
       const layer = L.geoJSON({type:'Feature',geometry:geom}, {
         style:{color,fillColor:color,fillOpacity:.15,weight:2}
       }).addTo(group);
+      layer.bindTooltip(`${dispCat}: ${dispName}`, { sticky:true });
       layer.on('mouseover', () => triggerRag(meta, placeType));
       layer.on('click',     () => triggerRag(meta, placeType));
     }
@@ -1879,6 +2612,203 @@ function plotResults(results, label, color) {
   try { map.fitBounds(group.getBounds(), { padding:[40,40], maxZoom:15 }); } catch {}
   showBadge(`${results.length} result${results.length!==1?'s':''} rendered`);
   updateLayersPanel();
+  return group;
+}
+
+/**
+ * Draw spatial-analysis overlays from the special columns the spatial SQL
+ * returns (reference_geometry, search_radius_m, distance_m):
+ *   - reference feature (point marker, or outline for a line/polygon reference)
+ *   - a search-radius circle (radius / buffer around a point reference)
+ *   - connecting lines from the reference to each result (nearest queries)
+ *   - fits the map to results + overlays.
+ * Purely additive: with none of those columns present it does nothing, so
+ * ordinary (non-spatial) queries render exactly as before.
+ */
+function renderSpatialOverlays(results, color, resultsGroup, query) {
+  const refRows = (results || []).filter(r => r.reference_geometry);
+  if (!refRows.length) return;
+
+  // Collect ALL distinct reference geometries (deduped). Several results may
+  // share one reference, or point to different ones (e.g. parks touching
+  // different flood zones) — draw every distinct one, not just the first.
+  const seen = new Set();
+  const refs = [];
+  refRows.forEach(r => {
+    const raw = typeof r.reference_geometry === 'string' ? r.reference_geometry : JSON.stringify(r.reference_geometry);
+    if (seen.has(raw)) return;
+    seen.add(raw);
+    let geom; try { geom = typeof r.reference_geometry === 'string' ? JSON.parse(r.reference_geometry) : r.reference_geometry; } catch { return; }
+    if (geom && geom.type) refs.push({ geom, row: r });
+  });
+  if (!refs.length) return;
+
+  const anyRow = refRows[0];
+  const radius = anyRow.search_radius_m != null ? parseFloat(anyRow.search_radius_m) : null;
+  const isNearest = radius == null && results.some(r => r.distance_m != null);
+  const REF_COLOR = '#2a6bb8';
+  const group = L.featureGroup();
+  const refPoints = [];
+  const topLabel = referenceLabel(refs[0].row, query);
+
+  // 1) every distinct reference feature (blue), each hover-labelled with what it is
+  refs.forEach(({ geom, row }) => {
+    const label = referenceLabel(row, query);
+    if (geom.type === 'Point') {
+      const [lng, lat] = geom.coordinates;
+      refPoints.push([lat, lng]);
+      L.circleMarker([lat, lng], { radius:7, color:REF_COLOR, fillColor:REF_COLOR, fillOpacity:.9, weight:2 })
+        .bindTooltip(label, { direction:'top' }).addTo(group);
+    } else {
+      L.geoJSON({ type:'Feature', geometry:geom }, {
+        style:{ color:REF_COLOR, weight:2.5, fillColor:REF_COLOR, fillOpacity:.12, dashArray:'6 4' }
+      }).bindTooltip(label, { sticky:true }).addTo(group);
+    }
+  });
+
+  // 2) search-radius circle(s) around each point reference (radius / buffer)
+  if (radius && refPoints.length) {
+    refPoints.forEach(pt => L.circle(pt, { radius, color, fillColor:color, fillOpacity:.07, weight:1.5, dashArray:'5 4', opacity:.6, interactive:false }).addTo(group));
+  }
+
+  // 3) nearest -> connect each result to ITS OWN reference (pairwise), not all
+  // to one point. For "parking near each hospital" every row carries its own
+  // hospital in reference_geometry, so this avoids the starburst-from-one-point.
+  if (isNearest) {
+    results.forEach(r => {
+      if (r.distance_m == null) return;
+      let g, ref;
+      try { g = typeof r.geometry === 'string' ? JSON.parse(r.geometry) : r.geometry; } catch { return; }
+      try { ref = typeof r.reference_geometry === 'string' ? JSON.parse(r.reference_geometry) : r.reference_geometry; } catch { ref = null; }
+      if (!g || g.type !== 'Point') return;
+      const dst = [g.coordinates[1], g.coordinates[0]];
+      let src = (ref && ref.type === 'Point') ? [ref.coordinates[1], ref.coordinates[0]] : null;
+      if (!src && refPoints.length) {
+        // No per-row reference point -> connect to the NEAREST reference point,
+        // so lines still pair sensibly instead of all radiating from one spot.
+        src = refPoints.reduce((best, p) => {
+          const d = (p[0]-dst[0])**2 + (p[1]-dst[1])**2;
+          return (best && best.d <= d) ? best : { p, d };
+        }, null).p;
+      }
+      if (!src) return;
+      L.polyline([src, dst], { color:REF_COLOR, weight:2, dashArray:'4 4', opacity:.85 })
+        .bindTooltip(`${Math.round(r.distance_m)} m`, { direction:'center' })
+        .addTo(group);
+    });
+  }
+
+  const layerId = 'spatial-' + Date.now();
+  group.addTo(map);
+  layerGroups[layerId] = group;
+  layers.push({ id:layerId, label:`${topLabel} (reference)`, color:REF_COLOR, visible:true });
+  updateLayersPanel();
+
+  // fit to results + overlays together
+  try {
+    const ob = group.getBounds();
+    const rb = resultsGroup && resultsGroup.getBounds && resultsGroup.getBounds();
+    const bounds = (rb && rb.isValid()) ? L.latLngBounds(rb.getSouthWest(), rb.getNorthEast()).extend(ob) : ob;
+    if (bounds && bounds.isValid()) map.fitBounds(bounds, { padding:[50,50], maxZoom:16 });
+  } catch {}
+}
+
+/**
+ * Human-readable label for the blue reference shape shown on hover.
+ * Prefers the reference feature's own name/category (if the spatial SQL
+ * returned them), otherwise infers from the query wording ("flood" -> "Flooded
+ * area"), otherwise a generic fallback.
+ */
+function referenceLabel(row, query) {
+  const cat = row.reference_category, nm = row.reference_name;
+  if (cat || nm) return [cat, nm].filter(Boolean).join(' — ');
+  const q = (query || '').toLowerCase();
+  if (q.includes('flood')) return 'Flooded area';
+  if (q.includes('river') || q.includes('nile')) return 'River (reference)';
+  if (q.includes('universit')) return 'University (reference)';
+  if (q.includes('hospital')) return 'Hospital (reference)';
+  if (q.includes('metro')) return 'Metro station (reference)';
+  if (q.includes('mall')) return 'Mall (reference)';
+  if (/\b(district|neighbou?rhood|city|area|zone|inside|within)\b/.test(q)) return 'Area / district (reference)';
+  return 'Reference area';
+}
+
+// Draw a route (LineString) with start/end markers and a distance/time popup.
+function renderRoute(route) {
+  const g = route.geometry;
+  if (!g || !g.coordinates || !g.coordinates.length) { appendMsg('ai', 'The routing engine returned an empty path.'); return; }
+  const group = L.featureGroup();
+  const line = L.geoJSON({ type: 'Feature', geometry: g }, { style: { color: '#2a6bb8', weight: 5, opacity: 0.85 } }).addTo(group);
+
+  const from = [route.from.lat, route.from.lon];
+  const to   = [route.to.lat, route.to.lon];
+  L.circleMarker(from, { radius: 8, color: '#fff', weight: 2, fillColor: '#2e7d32', fillOpacity: 1 })
+    .bindTooltip(`Start: ${route.from.name || ''}`, { direction: 'top' }).addTo(group);
+  L.circleMarker(to, { radius: 8, color: '#fff', weight: 2, fillColor: '#c62828', fillOpacity: 1 })
+    .bindTooltip(`End: ${route.to.name || ''}`, { direction: 'top' }).addTo(group);
+
+  const km = (route.distance_m / 1000).toFixed(2);
+  const min = Math.max(1, Math.round(route.duration_s / 60));
+  const modeLabel = route.mode === 'pedestrian' ? 'Walking' : route.mode === 'bicycle' ? 'Cycling' : 'Driving';
+  line.bindPopup(`<b>${modeLabel} route</b><br>${route.from.name || ''} → ${route.to.name || ''}<br>${km} km · ~${min} min`);
+
+  const layerId = 'route-' + Date.now();
+  group.addTo(map);
+  layerGroups[layerId] = group;
+  layers.push({ id: layerId, label: `Route: ${route.from.name || ''} → ${route.to.name || ''}`, color: '#2a6bb8', visible: true });
+  updateLayersPanel();
+  try { map.fitBounds(group.getBounds(), { padding: [60, 60] }); } catch (e) {}
+
+  appendMsg('ai', `${modeLabel} route from ${route.from.name || 'start'} to ${route.to.name || 'end'}: ${km} km, about ${min} min.`);
+}
+
+// True when the user is asking for a density / heatmap / concentration view.
+function isDensityQuery(q) {
+  return /\b(dens(e|ity|ities)|heat\s?maps?|concentrat\w*|hotspots?|clustered)\b/i.test(q || '');
+}
+
+// Render a Leaflet heat layer from result point geometries (Feature 4), with a
+// self-explanatory sparse->dense legend.
+function renderHeatmap(results, label) {
+  if (typeof L.heatLayer !== 'function') { showBadge('Heatmap plugin not loaded'); return; }
+  const pts = [];
+  results.forEach(r => {
+    let g; try { g = typeof r.geometry === 'string' ? JSON.parse(r.geometry) : r.geometry; } catch { return; }
+    if (g && g.type === 'Point') pts.push([g.coordinates[1], g.coordinates[0], 0.6]);
+  });
+  if (!pts.length) { showBadge('No points to build a heatmap'); return; }
+
+  // Explicit gradient so the on-map legend matches the colours exactly.
+  const GRADIENT = { 0.1:'#2b3fd6', 0.3:'#00c6d6', 0.5:'#37d13a', 0.7:'#f2e534', 0.85:'#f0871f', 1.0:'#e8261e' };
+  const heat = L.heatLayer(pts, { radius: 28, blur: 20, maxZoom: 16, minOpacity: 0.35, gradient: GRADIENT });
+  const layerId = 'heat-' + Date.now();
+
+  // Legend explaining what the colours mean. Bound to the layer's add/remove
+  // events so it shows/hides together with the heatmap (toggle + "clear all").
+  const title = (label || 'Density').replace(/\b(display|show|render)\b/ig, '').trim() || 'Density';
+  const legend = L.control({ position: 'bottomright' });
+  legend.onAdd = function () {
+    const div = L.DomUtil.create('div');
+    div.style.cssText = "background:rgba(255,255,255,.93);padding:9px 12px;border-radius:9px;font:11px/1.35 'Poppins',sans-serif;color:#333;box-shadow:0 1px 6px rgba(0,0,0,.25);max-width:200px";
+    div.innerHTML =
+      `<div style="font-weight:600;margin-bottom:6px;text-transform:capitalize">${title}</div>` +
+      `<div style="height:11px;border-radius:3px;background:linear-gradient(to right,#2b3fd6,#00c6d6,#37d13a,#f2e534,#f0871f,#e8261e)"></div>` +
+      `<div style="display:flex;justify-content:space-between;margin-top:3px;color:#666"><span>Sparse (few)</span><span>Dense (many)</span></div>` +
+      `<div style="margin-top:6px;color:#888;font-size:10px">Red/orange = highly concentrated here; blue = few, spread out.</div>`;
+    return div;
+  };
+  heat.on('add', () => legend.addTo(map));
+  heat.on('remove', () => { try { map.removeControl(legend); } catch (e) {} });
+
+  heat.addTo(map);   // fires 'add' -> legend appears
+  layerGroups[layerId] = heat;
+  layers.push({ id: layerId, label: (label.length > 30 ? label.slice(0, 30) + '…' : label) + ' (heatmap)', color: '#e8261e', visible: true });
+  updateLayersPanel();
+  try {
+    const b = L.latLngBounds(pts.map(p => [p[0], p[1]]));
+    if (b.isValid()) map.fitBounds(b, { padding: [50, 50], maxZoom: 15 });
+  } catch {}
+  showBadge(`Heatmap of ${pts.length} point${pts.length !== 1 ? 's' : ''} — blue = sparse, red = dense`);
 }
 
 // Guess a display "type" for a result row purely from its own fields —

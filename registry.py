@@ -41,6 +41,27 @@ def init_registry():
         conn.execute(text(DDL))
 
 
+def ensure_spatial_indexes() -> int:
+    """Backfill a GiST index on wkb_geometry for every registered table missing
+    one (tables ingested before spatial indexing was added). Idempotent; returns
+    the number of tables processed. Safe to call at startup."""
+    processed = 0
+    with engine.begin() as conn:
+        rows = conn.execute(text("SELECT table_name FROM datasets")).fetchall()
+        for (table_name,) in rows:
+            # table_name is machine-generated (new_table_name) -> safe to interpolate.
+            try:
+                conn.execute(text(
+                    f'CREATE INDEX IF NOT EXISTS "{table_name}_geom_gist" '
+                    f'ON "{table_name}" USING GIST (wkb_geometry)'
+                ))
+                processed += 1
+            except Exception:
+                # e.g. table dropped out-of-band or lacks wkb_geometry; skip it.
+                pass
+    return processed
+
+
 def new_table_name() -> str:
     return f"user_data_{uuid.uuid4().hex[:12]}"
 

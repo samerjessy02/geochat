@@ -11,9 +11,10 @@ import io
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Point
+from sqlalchemy import text
 
 from db import engine
-from registry import new_table_name, register_dataset
+from registry import new_table_name, register_dataset, set_column_descriptions
 
 LAT_NAMES = {"lat", "latitude", "y"}
 LON_NAMES = {"lon", "lng", "long", "longitude", "x"}
@@ -171,6 +172,21 @@ def ingest_file(filename: str, raw_bytes: bytes, display_name: str) -> dict:
             f"Failed to write dataset to database: {e}"
         )
 
+    # Spatial index: a GiST index on the geometry column makes ST_DWithin,
+    # ST_Contains, ST_Intersects and KNN (<->) nearest-neighbour queries use an
+    # index scan instead of a full-table sequential scan — essential once tables
+    # grow. table_name is machine-generated (see new_table_name), so it is safe
+    # to interpolate. ANALYZE refreshes planner statistics for the new table.
+    try:
+        with engine.begin() as conn:
+            conn.execute(text(
+                f'CREATE INDEX IF NOT EXISTS "{table_name}_geom_gist" '
+                f'ON "{table_name}" USING GIST (wkb_geometry)'
+            ))
+            conn.execute(text(f'ANALYZE "{table_name}"'))
+    except Exception as e:  # index failure shouldn't abort a successful ingest
+        print(f"[ingest] warning: could not create spatial index on {table_name}: {e}")
+
     dataset_id = register_dataset(
         table_name=table_name,
         display_name=display_name,
@@ -186,6 +202,14 @@ def ingest_file(filename: str, raw_bytes: bytes, display_name: str) -> dict:
         for c in gdf.columns
         if c != "wkb_geometry"
     ]
+
+    # Register every column immediately (empty description) so the dataset's
+    # column count is correct right away, independent of whether the user later
+    # saves descriptions. Descriptions update these rows in place.
+    try:
+        set_column_descriptions(dataset_id, [{**c, "description": ""} for c in columns])
+    except Exception as e:  # noqa: BLE001 — non-fatal
+        print(f"[ingest] warning: could not register columns for {table_name}: {e}")
 
     return {
         "dataset_id": dataset_id,

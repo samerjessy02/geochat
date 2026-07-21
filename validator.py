@@ -38,8 +38,13 @@ def validate_sql(sql: str, allowed_tables: set[str] | None = None) -> tuple[bool
     if stmt is None:
         return False, "Could not parse SQL."
 
-    if not isinstance(stmt, exp.Select):
-        return False, "Only SELECT queries are allowed."
+    # Accept any read-only root: a plain SELECT, a CTE (WITH ... SELECT parses as
+    # a Select carrying a `with` arg), or set operations (UNION/INTERSECT/EXCEPT).
+    # Write/DDL statements are still rejected by the DISALLOWED_STATEMENTS walk
+    # below, so broadening the root stays safe.
+    READ_ROOTS = (exp.Select, exp.Union, exp.Intersect, exp.Except, exp.Subquery)
+    if not isinstance(stmt, READ_ROOTS):
+        return False, "Only read-only SELECT queries are allowed."
 
     for node in stmt.walk():
         n = node[0] if isinstance(node, tuple) else node

@@ -51,6 +51,74 @@ def _sample_values(table_name: str, columns: list[str], limit: int = 5) -> dict[
     return {c: v[:3] for c, v in samples.items()}
 
 
+def _sample_from_features(features: list[dict], columns: list[str], limit: int = 20) -> dict[str, list[str]]:
+    """Collect example values per column from in-memory GeoJSON features (used by
+    the validation flow, before any table exists)."""
+    samples: dict[str, list[str]] = {c: [] for c in columns}
+    for f in features[:limit]:
+        props = f.get("properties") or {}
+        for c in columns:
+            val = props.get(c)
+            if val is None:
+                continue
+            text = str(val).strip()
+            if text and text not in samples[c]:
+                samples[c].append(text[:60])
+    return {c: v[:3] for c, v in samples.items()}
+
+
+def _fallback_desc(name: str, dtype: str, samples: list[str]) -> str:
+    """Deterministic description for a column the LLM left blank / failed on, so
+    EVERY column ends up with a non-empty description."""
+    label = name.replace("_", " ").replace(":", " ").strip() or name
+    if samples:
+        return f"{label} (e.g. {', '.join(samples[:2])})"
+    return f"{label} — {dtype} value for each feature"
+
+
+def _generate_from_samples(display_name: str, geometry_type: str,
+                           columns: list[dict], samples: dict[str, list[str]]) -> list[dict]:
+    """Core LLM call shared by the DB-backed and feature-backed generators.
+
+    Guarantees a non-empty description for every column: the LLM draft is used
+    when present, otherwise a deterministic fallback built from the name, type
+    and example values.
+    """
+    lines = []
+    for c in columns:
+        ex = samples.get(c["column_name"], [])
+        ex_str = ", ".join(ex) if ex else "n/a"
+        lines.append(f'- {c["column_name"]} (type: {c["data_type"]}; examples: {ex_str})')
+    user_prompt = (
+        f'Dataset: "{display_name}" (geometry: {geometry_type}).\n'
+        f"Columns:\n" + "\n".join(lines)
+    )
+    try:
+        out = get_llm().complete_json(
+            [{"role": "system", "content": _SYSTEM}, {"role": "user", "content": user_prompt}]
+        )
+        descs = out.get("descriptions", {}) or {}
+    except (LLMError, Exception) as e:  # noqa: BLE001
+        log.warning("auto-description generation failed: %s", e)
+        descs = {}
+    result = []
+    for c in columns:
+        name = c["column_name"]
+        desc = str(descs.get(name, "")).strip()
+        if not desc:
+            desc = _fallback_desc(name, c["data_type"], samples.get(name, []))
+        result.append({"column_name": name, "data_type": c["data_type"], "description": desc})
+    return result
+
+
+def describe_from_features(display_name: str, features: list[dict], columns: list[dict]) -> list[dict]:
+    """Draft descriptions from in-memory features (validation flow — no table yet)."""
+    col_names = [c["column_name"] for c in columns]
+    samples = _sample_from_features(features, col_names)
+    log.info("auto-generating descriptions for %d column(s) from %d feature(s)", len(columns), len(features))
+    return _generate_from_samples(display_name, "?", columns, samples)
+
+
 def generate_descriptions(dataset_id: str, columns: list[dict]) -> list[dict]:
     """Draft a description for each column of ``dataset_id``.
 
