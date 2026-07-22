@@ -24,6 +24,7 @@ Performance:
 from __future__ import annotations
 
 import json
+import re
 
 from sqlalchemy import text
 
@@ -39,6 +40,176 @@ _PREDICATES = {"intersects": "ST_Intersects", "within": "ST_Within"}
 
 class SpatialSearchError(Exception):
     """Raised for an invalid request (bad geometry, unknown feature type, …)."""
+
+
+# --------------------------------------------------------------------------- #
+# manual polygon input: parse pasted coordinates into a validated GeoJSON polygon
+# --------------------------------------------------------------------------- #
+
+def _close_ring(ring: list) -> list:
+    """Ensure a linear ring is closed (first point == last point)."""
+    if len(ring) >= 3 and ring[0] != ring[-1]:
+        ring = ring + [ring[0]]
+    return ring
+
+
+def _coords_to_polygon(coords) -> dict:
+    """Turn a raw coordinate array into a GeoJSON Polygon.
+
+    Accepts a flat ring ``[[lon,lat], ...]`` or an already-nested polygon
+    ``[[[lon,lat], ...]]``. Rings are auto-closed.
+    """
+    if not isinstance(coords, list) or not coords:
+        raise SpatialSearchError("No coordinates found to build a polygon.")
+    # nested: [[[lon,lat], ...], ...] (polygon with rings)
+    if isinstance(coords[0], list) and coords[0] and isinstance(coords[0][0], list):
+        rings = [_close_ring([list(p) for p in ring]) for ring in coords]
+        return {"type": "Polygon", "coordinates": rings}
+    # flat ring: [[lon,lat], ...]
+    if isinstance(coords[0], list) and coords[0] and isinstance(coords[0][0], (int, float)):
+        return {"type": "Polygon", "coordinates": [_close_ring([list(p) for p in coords])]}
+    raise SpatialSearchError("Coordinates must be a list of [lon, lat] pairs.")
+
+
+def _parse_wkt_via_postgis(wkt: str) -> dict:
+    """Convert a WKT POLYGON/MULTIPOLYGON string to GeoJSON using PostGIS."""
+    try:
+        with engine.connect() as conn:
+            row = conn.execute(
+                text("SELECT ST_AsGeoJSON(ST_SetSRID(ST_GeomFromText(:w), 4326)) AS g"),
+                {"w": wkt},
+            ).mappings().first()
+    except Exception as e:  # noqa: BLE001
+        raise SpatialSearchError(f"Could not parse WKT: {e}") from e
+    if not row or not row["g"]:
+        raise SpatialSearchError("Could not parse the WKT geometry.")
+    return json.loads(row["g"])
+
+
+def _parse_text_pairs(raw: str) -> dict:
+    """Parse newline/semicolon-separated ``lon, lat`` (or ``lon lat``) pairs."""
+    pts = []
+    for line in re.split(r"[;\n]+", raw.strip()):
+        line = line.strip().strip("[]()")
+        if not line:
+            continue
+        parts = re.split(r"[,\s]+", line)
+        try:
+            nums = [float(p) for p in parts if p != ""]
+        except ValueError:
+            raise SpatialSearchError(f"Could not read a coordinate pair from: {line!r}")
+        if len(nums) < 2:
+            raise SpatialSearchError(f"Each line needs a lon and a lat — got: {line!r}")
+        pts.append([nums[0], nums[1]])
+    if len(pts) < 3:
+        raise SpatialSearchError("A polygon needs at least 3 coordinate pairs.")
+    return _coords_to_polygon(pts)
+
+
+def parse_polygon_text(raw: str) -> dict:
+    """Parse pasted polygon input into a normalized, validated GeoJSON Polygon.
+
+    Accepts three shapes:
+      * a GeoJSON ``Polygon`` / ``MultiPolygon`` object (or a ``Feature`` /
+        ``FeatureCollection`` wrapping one);
+      * a raw coordinate array (``[[lon,lat], ...]`` or ``[[[lon,lat], ...]]``),
+        as JSON;
+      * WKT (``POLYGON((lon lat, ...))`` / ``MULTIPOLYGON(...)``);
+      * or plain ``lon, lat`` pairs, one per line.
+
+    The result is validated to be a non-empty polygon in WGS84 lon/lat range and
+    repaired with ``ST_MakeValid`` if the ring self-intersects. Returns
+    ``{geometry, bbox, repaired, num_points}``.
+    """
+    if not raw or not raw.strip():
+        raise SpatialSearchError("Paste some polygon coordinates first.")
+    s = raw.strip()
+
+    geometry: dict | None = None
+    # 1) JSON: GeoJSON object or a coordinate array
+    try:
+        obj = json.loads(s)
+    except (ValueError, TypeError):
+        obj = None
+    if obj is not None:
+        if isinstance(obj, dict):
+            t = obj.get("type")
+            if t in ("Polygon", "MultiPolygon"):
+                geometry = obj
+            elif t == "Feature":
+                geometry = obj.get("geometry")
+            elif t == "FeatureCollection":
+                feats = obj.get("features") or []
+                for f in feats:
+                    g = (f or {}).get("geometry") or {}
+                    if g.get("type") in ("Polygon", "MultiPolygon"):
+                        geometry = g
+                        break
+                if geometry is None:
+                    raise SpatialSearchError("No Polygon feature found in the FeatureCollection.")
+            elif "coordinates" in obj:
+                geometry = _coords_to_polygon(obj["coordinates"])
+            else:
+                raise SpatialSearchError(
+                    f"Unsupported GeoJSON type {t!r} — paste a Polygon or MultiPolygon.")
+        elif isinstance(obj, list):
+            geometry = _coords_to_polygon(obj)
+    # 2) WKT
+    if geometry is None and re.match(r"^\s*(MULTI)?POLYGON\s*\(", s, re.I):
+        geometry = _parse_wkt_via_postgis(s)
+    # 3) plain "lon, lat" lines
+    if geometry is None:
+        geometry = _parse_text_pairs(s)
+
+    if not isinstance(geometry, dict) or geometry.get("type") not in _ALLOWED_GEOM_TYPES:
+        raise SpatialSearchError("Could not read a polygon from the pasted text.")
+
+    _validate_geometry(geometry)
+    normalized, repaired = _normalize_geometry(geometry)
+    num_points = sum(1 for _ in _iter_coords(normalized.get("coordinates", [])))
+    return {
+        "geometry": normalized,
+        "bbox": _bbox_from_geometry(normalized),
+        "repaired": repaired,
+        "num_points": num_points,
+    }
+
+
+def _normalize_geometry(geometry: dict) -> tuple[dict, bool]:
+    """Round-trip through PostGIS: validate/repair and return canonical GeoJSON."""
+    geom_json = json.dumps(geometry)
+    try:
+        with engine.connect() as conn:
+            row = conn.execute(
+                text("SELECT ST_IsValid(g0) AS valid, ST_IsEmpty(g0) AS empty, "
+                     "ST_AsGeoJSON(ST_MakeValid(g0)) AS fixed "
+                     "FROM (SELECT ST_SetSRID(ST_GeomFromGeoJSON(:g), 4326) AS g0) s"),
+                {"g": geom_json},
+            ).mappings().first()
+    except Exception as e:  # noqa: BLE001
+        raise SpatialSearchError(f"Could not parse the geometry: {e}") from e
+    if row is None:
+        raise SpatialSearchError("Could not parse the geometry.")
+    if row["empty"]:
+        raise SpatialSearchError("The polygon is empty.")
+    repaired = not row["valid"]
+    fixed = json.loads(row["fixed"]) if row["fixed"] else geometry
+    # ST_MakeValid can turn a bad polygon into a collection/multipolygon; keep it
+    # only if it's still an area type, else fall back to the original.
+    if fixed.get("type") not in _ALLOWED_GEOM_TYPES:
+        fixed = geometry
+    return fixed, repaired
+
+
+def _bbox_from_geometry(geometry: dict) -> list[float] | None:
+    minx = miny = float("inf")
+    maxx = maxy = float("-inf")
+    seen = False
+    for lon, lat in _iter_coords(geometry.get("coordinates", [])):
+        seen = True
+        minx, miny = min(minx, lon), min(miny, lat)
+        maxx, maxy = max(maxx, lon), max(maxy, lat)
+    return [minx, miny, maxx, maxy] if seen else None
 
 
 # --------------------------------------------------------------------------- #
@@ -195,6 +366,75 @@ def search_by_polygon(
         "offset": offset,
         "bbox": bbox,
         "features": features,
+    }
+
+
+def search_area(
+    geometry: dict,
+    *,
+    dataset_ids: list[str],
+    feature_types: list[str] | None = None,
+    mode: str = "intersects",
+    limit_per_layer: int = 2000,
+) -> dict:
+    """Search several layers inside one polygon — one entry per layer.
+
+    ``feature_types`` optionally restricts to layers named in the query; when
+    omitted, every dataset in ``dataset_ids`` is searched. Each layer is resolved
+    to a distinct dataset (so "pharmacies and schools" returns BOTH, not one).
+    Returns ``{layers: [...], bbox, total}``.
+    """
+    _validate_geometry(geometry)
+    pool = get_datasets_by_ids(dataset_ids) if dataset_ids else list_datasets()
+    if not pool:
+        raise SpatialSearchError("Select at least one layer to search inside the area.")
+
+    # Resolve which datasets to search.
+    targets: list[dict] = []
+    seen_ids: set = set()
+    if feature_types:
+        for ft in feature_types:
+            try:
+                ds = _resolve_dataset(ft, None, dataset_ids)
+            except SpatialSearchError:
+                continue
+            if ds["id"] not in seen_ids:
+                targets.append(ds)
+                seen_ids.add(ds["id"])
+        if not targets:
+            avail = ", ".join(sorted({d.get("display_name", "") for d in pool})) or "none"
+            raise SpatialSearchError(
+                f"Could not match {feature_types!r} to a selected layer. Available: {avail}.")
+    else:
+        targets = pool
+
+    layers = []
+    all_features = []
+    for ds in targets:
+        try:
+            res = search_by_polygon(
+                geometry, dataset_id=str(ds["id"]),
+                dataset_ids=dataset_ids, mode=mode, limit=limit_per_layer)
+        except SpatialSearchError as e:
+            layers.append({"dataset_id": str(ds["id"]),
+                           "feature_type": ds.get("display_name"),
+                           "count": 0, "features": [], "error": str(e)})
+            continue
+        layers.append({
+            "dataset_id": str(ds["id"]),
+            "feature_type": res["feature_type"],
+            "count": res["count"],
+            "returned": res["returned"],
+            "repaired": res["repaired"],
+            "bbox": res["bbox"],
+            "features": res["features"],
+        })
+        all_features.extend(res["features"])
+
+    return {
+        "layers": layers,
+        "total": sum(l["count"] for l in layers),
+        "bbox": _bbox_from_features(all_features),
     }
 
 

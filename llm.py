@@ -9,7 +9,7 @@ load_dotenv()
 
 client = Groq(api_key=os.getenv("API_KEY"))
 
-MODEL = "llama-3.3-70b-versatile"
+MODEL = "openai/gpt-oss-20b"
 
 # Added a dedicated section for Semantic Mapping to guide the LLM's query generation
 RULES = """
@@ -244,7 +244,11 @@ def build_schema_text(dataset_ids: list[str]) -> str:
     for ds in datasets:
         cols = ds.get("columns") or []
         col_desc = ", ".join(
-            f"{c['column_name']} ({c['data_type']}" + (f" — {c['description']}" if c.get("description") else "") + ")"
+            f"{c['column_name']} ({c['data_type']}"
+            + (f" — {c['description']}" if c.get("description") else "")
+            + (" [PRIMARY KEY]" if c.get("is_primary_key") else "")
+            + (f" [references {c['foreign_key']}]" if c.get("foreign_key") else "")
+            + ")"
             for c in cols
         ) or "(no additional columns)"
         

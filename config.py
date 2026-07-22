@@ -69,7 +69,7 @@ class Settings:
     # --- LLM provider ----------------------------------------------------
     # Modular interface — one of: groq | anthropic | openai | gemini.
     llm_provider: str = field(default_factory=lambda: os.getenv("LLM_PROVIDER", "groq").lower())
-    llm_model: str = field(default_factory=lambda: os.getenv("LLM_MODEL", "llama-3.3-70b-versatile"))
+    llm_model: str = field(default_factory=lambda: os.getenv("LLM_MODEL", "openai/gpt-oss-20b"))
     # Kept as API_KEY for backwards-compat with the existing Groq setup.
     llm_api_key: str | None = field(default_factory=lambda: os.getenv("API_KEY") or os.getenv("LLM_API_KEY") or None)
     llm_temperature: float = field(default_factory=lambda: _get_float("LLM_TEMPERATURE", 0.1))
@@ -181,6 +181,27 @@ class Settings:
     # Rewrite a follow-up ("does it deliver?") into a standalone question using
     # the window, so retrieval + intent classification see a self-contained query.
     memory_condense: bool = field(default_factory=lambda: _get_bool("MEMORY_CONDENSE", True))
+
+    # --- Adaptive hybrid memory (recent window + summarized long-term) ---
+    # Instead of dropping old turns, summarize them into a single running
+    # structured summary once the conversation grows, and keep the newest turns in
+    # full. Bounds history by BOTH turn count and token budget.
+    memory_summary_enabled: bool = field(default_factory=lambda: _get_bool("MEMORY_SUMMARY_ENABLED", True))
+    # Recent Memory: how many of the newest interactions (user+assistant = 1 turn)
+    # to always keep verbatim. Defaults to the window size.
+    memory_recent_k: int = field(default_factory=lambda: _get_int("MEMORY_RECENT_K", _get_int("MEMORY_WINDOW_K", 5)))
+    # Summarize the older turns once EITHER threshold is crossed:
+    #   X — total interactions kept in full exceeds this count, or
+    #   Y — the running summary + full turns exceed this many (estimated) tokens.
+    memory_summary_trigger_turns: int = field(default_factory=lambda: _get_int("MEMORY_SUMMARY_TRIGGER_TURNS", 12))
+    memory_summary_trigger_tokens: int = field(default_factory=lambda: _get_int("MEMORY_SUMMARY_TRIGGER_TOKENS", 1500))
+    # Hard budget (estimated tokens) for the summary + recent turns that memory is
+    # allowed to contribute to a prompt. Checked before each LLM call that uses the
+    # history; summarization (then, as a last resort, dropping the oldest turns) is
+    # triggered to stay under it.
+    memory_context_budget_tokens: int = field(default_factory=lambda: _get_int("MEMORY_CONTEXT_BUDGET_TOKENS", 2000))
+    # Cap on the size of the generated summary itself (output max_tokens).
+    memory_summary_max_tokens: int = field(default_factory=lambda: _get_int("MEMORY_SUMMARY_MAX_TOKENS", 512))
 
     # --- Semantic response cache ----------------------------------------
     # Cache full /query responses keyed on the query's EMBEDDING (semantic

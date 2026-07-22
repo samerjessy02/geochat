@@ -42,7 +42,7 @@ from agents import vector_store
 load_dotenv()
 
 groq = Groq(api_key=os.getenv("API_KEY"))
-MODEL = "llama-3.3-70b-versatile"
+MODEL = "openai/gpt-oss-20b"
 
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 TAVILY_URL = "https://api.tavily.com/search"

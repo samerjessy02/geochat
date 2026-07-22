@@ -84,6 +84,14 @@ def setup_logging() -> None:
         file_handler.setFormatter(fmt)
         logger.addHandler(file_handler)
 
+    # Mirror every record into the queryable SQLite store for the Activity Logs UI.
+    try:
+        from agents.log_store import SQLiteLogHandler, init_log_db
+        init_log_db()
+        logger.addHandler(SQLiteLogHandler())
+    except Exception as e:  # noqa: BLE001 — never block startup on the log store
+        logging.getLogger(_ROOT_NAME).warning("log store unavailable: %s", e)
+
     _configured = True
 
 
@@ -103,16 +111,18 @@ def log_step(logger: logging.Logger, message: str, level: int = logging.INFO):
             hits = hybrid_search(query)
     """
     start = time.perf_counter()
-    logger.log(level, "▶ %s", message)
+    logger.log(level, "▶ %s", message, extra={"ctx_target": message})
     try:
         yield
     except Exception:
         elapsed = (time.perf_counter() - start) * 1000
-        logger.exception("✗ %s — failed after %.0fms", message, elapsed)
+        logger.exception("✗ %s — failed after %.0fms", message, elapsed,
+                         extra={"ctx_target": message, "ctx_duration_ms": round(elapsed, 1)})
         raise
     else:
         elapsed = (time.perf_counter() - start) * 1000
-        logger.log(level, "✓ %s — %.0fms", message, elapsed)
+        logger.log(level, "✓ %s — %.0fms", message, elapsed,
+                   extra={"ctx_target": message, "ctx_duration_ms": round(elapsed, 1)})
 
 
 def snippet(text: str, length: int = 80) -> str:

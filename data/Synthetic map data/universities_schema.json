@@ -1,0 +1,67 @@
+{
+  "dataset_name": "Universities",
+  "geometry_type": "Point",
+  "fields": [
+    {
+      "name": "id",
+      "type": "string",
+      "description": "Unique identifier for each university record (e.g. 'university_001').",
+      "required": true,
+      "primary_key": true
+    },
+    {
+      "name": "name",
+      "type": "string",
+      "description": "Official name of the university (e.g. 'Cairo University').",
+      "required": true
+    },
+    {
+      "name": "category",
+      "type": "string",
+      "description": "Type of institution the record represents (e.g. 'University').",
+      "required": false
+    },
+    {
+      "name": "address",
+      "type": "string",
+      "description": "Street address of the university (e.g. '164 El Nil Street').",
+      "required": false
+    },
+    {
+      "name": "district",
+      "type": "string",
+      "description": "District or neighborhood where the university is located (e.g. 'University District').",
+      "required": false
+    },
+    {
+      "name": "opening_hours",
+      "type": "string",
+      "description": "Daily opening and closing times in 'HH:MM-HH:MM' format (e.g. '08:00-18:00').",
+      "required": false
+    },
+    {
+      "name": "phone",
+      "type": "string",
+      "description": "Main contact phone number, including country code (e.g. '+20-2-2204-5506').",
+      "required": false
+    },
+    {
+      "name": "website",
+      "type": "url",
+      "description": "Official website URL of the university.",
+      "required": false
+    },
+    {
+      "name": "longitude",
+      "type": "float",
+      "description": "Longitude coordinate of the university location (WGS84), the first value of the Point geometry.",
+      "required": true
+    },
+    {
+      "name": "latitude",
+      "type": "float",
+      "description": "Latitude coordinate of the university location (WGS84), the second value of the Point geometry.",
+      "required": true
+    }
+  ]
+}

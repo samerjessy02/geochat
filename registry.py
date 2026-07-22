@@ -31,14 +31,27 @@ CREATE TABLE IF NOT EXISTS dataset_columns (
     column_name TEXT NOT NULL,
     data_type TEXT NOT NULL,
     description TEXT DEFAULT '',
+    is_primary_key BOOLEAN NOT NULL DEFAULT FALSE,
+    foreign_key TEXT,
     UNIQUE(dataset_id, column_name)
 );
 """
+
+# Migration for databases created before the key columns existed.
+_MIGRATIONS = [
+    "ALTER TABLE dataset_columns ADD COLUMN IF NOT EXISTS is_primary_key BOOLEAN NOT NULL DEFAULT FALSE",
+    "ALTER TABLE dataset_columns ADD COLUMN IF NOT EXISTS foreign_key TEXT",
+]
 
 
 def init_registry():
     with engine.begin() as conn:
         conn.execute(text(DDL))
+        for stmt in _MIGRATIONS:
+            try:
+                conn.execute(text(stmt))
+            except Exception:
+                pass
 
 
 def ensure_spatial_indexes() -> int:
@@ -79,15 +92,27 @@ def register_dataset(table_name: str, display_name: str, geometry_type: str, sri
 
 
 def set_column_descriptions(dataset_id: str, columns: list[dict]):
-    """columns: [{"column_name": str, "data_type": str, "description": str}, ...]"""
+    """columns: [{column_name, data_type, description, is_primary_key?, foreign_key?}, ...]"""
     with engine.begin() as conn:
         for col in columns:
+            params = {
+                "dataset_id": dataset_id,
+                "column_name": col["column_name"],
+                "data_type": col.get("data_type", ""),
+                "description": col.get("description", ""),
+                "is_primary_key": bool(col.get("is_primary_key", False)),
+                "foreign_key": (col.get("foreign_key") or None),
+            }
             conn.execute(
-                text("""INSERT INTO dataset_columns (dataset_id, column_name, data_type, description)
-                        VALUES (:dataset_id, :column_name, :data_type, :description)
+                text("""INSERT INTO dataset_columns
+                          (dataset_id, column_name, data_type, description, is_primary_key, foreign_key)
+                        VALUES (:dataset_id, :column_name, :data_type, :description, :is_primary_key, :foreign_key)
                         ON CONFLICT (dataset_id, column_name)
-                        DO UPDATE SET description = EXCLUDED.description, data_type = EXCLUDED.data_type"""),
-                {"dataset_id": dataset_id, **col},
+                        DO UPDATE SET description = EXCLUDED.description,
+                                      data_type = EXCLUDED.data_type,
+                                      is_primary_key = EXCLUDED.is_primary_key,
+                                      foreign_key = EXCLUDED.foreign_key"""),
+                params,
             )
 
 
@@ -98,7 +123,9 @@ def list_datasets() -> list[dict]:
                    COALESCE(json_agg(json_build_object(
                        'column_name', c.column_name,
                        'data_type', c.data_type,
-                       'description', c.description
+                       'description', c.description,
+                       'is_primary_key', c.is_primary_key,
+                       'foreign_key', c.foreign_key
                    )) FILTER (WHERE c.id IS NOT NULL), '[]') AS columns
             FROM datasets d
             LEFT JOIN dataset_columns c ON c.dataset_id = d.id

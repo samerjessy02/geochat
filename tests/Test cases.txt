@@ -1,0 +1,44 @@
+Test cases :
+MAP
+
+Find pharmacies within 500 meters of Cairo
+University
+
+Which parks intersect flood zones?
+
+Show all schools within Downtown.
+
+Show all schools within this area (polygon)
+
+Drive from Cairo University to City Mall
+
+
+RAG
+Which café is wheelchair accessible?
+Where can I get hot chocolate?
+List every café that offers Wi-Fi
+How many cafés are in the document?
+How much is the frappe powder from cilantro?
+
+
+Conversational Memory
+Caching
+
+
+
+Which universities have more than 40,000 students?
+Cairo University + Al Azhar (facts from doc) + plotted
+
+Which hospitals are teaching hospitals?
+Al Razi General (doc) + map
+
+Which neighborhoods carry high flood risk, and show them?
+Nile Riverside, Zamalek Isle, Old Town + map
+
+Show the largest hospital and tell me about it.
+Om Kolthoum General (720 beds) + marker
+
+upload coordinates 
+show me all pharmacies and schools in this area 
+
+Cleaning and validation dataset

@@ -1,0 +1,38 @@
+{
+  "tables": {
+    "categories": {
+      "primary_key": "category_id",
+      "columns": {
+        "category_id": "INTEGER",
+        "category_name": "VARCHAR(100)"
+      }
+    },
+    "districts": {
+      "primary_key": "district_id",
+      "columns": {
+        "district_id": "INTEGER",
+        "district_name": "VARCHAR(150)"
+      }
+    },
+    "universities": {
+      "primary_key": "university_id",
+      "foreign_keys": {
+        "category_id": "categories.category_id",
+        "district_id": "districts.district_id"
+      },
+      "columns": {
+        "university_id": "VARCHAR(20)",
+        "name": "VARCHAR(200)",
+        "category_id": "INTEGER",
+        "address": "VARCHAR(255)",
+        "district_id": "INTEGER",
+        "opening_hours": "VARCHAR(50)",
+        "phone": "VARCHAR(30)",
+        "website": "VARCHAR(255)",
+        "geometry_type": "VARCHAR(20)",
+        "longitude": "DECIMAL(9,6)",
+        "latitude": "DECIMAL(9,6)"
+      }
+    }
+  }
+}

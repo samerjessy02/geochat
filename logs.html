@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>GeoChat — Activity Logs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --paper:#FAFAF7; --paper2:#F2F2ED; --page:#E9E9E4;
+    --rule:#E2E2DB; --rule-soft:#EAEAE4;
+    --ink:#2B2B28; --ink2:#4A4A45; --ink3:#4B4B45; --ink4:#5A5A53; --faint:#75756E;
+    --accent:#2F6FA8; --accent-mid:#4A85BC; --accent-light:#E7F0F8;
+    --good:#3D9A63; --good-dim:#EAF5EE; --warn:#C7862A; --warn-dim:#FBF1E2;
+    --danger:#B5473A; --danger-dim:#FBEDEA;
+    --mono:ui-monospace,'SF Mono',Consolas,monospace;
+    --font:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--page);color:var(--ink);font-family:var(--font);font-size:16px;}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 60px;}
+  /* header */
+  .head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:18px;}
+  .head h1{font-size:28px;font-weight:700;margin:0 0 4px;letter-spacing:-.01em;}
+  .head p{margin:0;color:var(--ink4);font-size:15.5px;}
+  .head-actions{display:flex;gap:8px;flex-shrink:0;}
+  .hbtn{font:600 15px var(--font);padding:8px 14px;border-radius:9px;cursor:pointer;border:1px solid var(--rule);background:var(--paper);color:var(--ink3);transition:.15s;}
+  .hbtn:hover{color:var(--ink);border-color:var(--faint);}
+  .hbtn.danger:hover{color:var(--danger);border-color:var(--danger);background:var(--danger-dim);}
+  /* toolbar */
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--paper);border:1px solid var(--rule);border-radius:14px;padding:12px 14px;margin-bottom:14px;}
+  .search{display:flex;align-items:center;gap:8px;background:var(--paper2);border:1px solid var(--rule);border-radius:9px;padding:8px 12px;flex:1;min-width:200px;}
+  .search svg{color:var(--ink4);flex-shrink:0;}
+  .search input{background:none;border:none;outline:none;font:16px var(--font);color:var(--ink);width:100%;}
+  .search input::placeholder{color:var(--faint);}
+  select.ctl{font:15px var(--font);color:var(--ink2);background:var(--paper);border:1px solid var(--rule);border-radius:9px;padding:8px 10px;cursor:pointer;outline:none;}
+  .dd{position:relative;}
+  .dd-btn{font:15px var(--font);color:var(--ink2);background:var(--paper);border:1px solid var(--rule);border-radius:9px;padding:8px 12px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+  .dd-btn .cnt{background:var(--accent-light);color:var(--accent);font-weight:600;font-size:13px;border-radius:10px;padding:0 6px;}
+  .dd-menu{position:absolute;top:calc(100% + 6px);left:0;z-index:20;background:var(--paper);border:1px solid var(--rule);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.12);padding:6px;min-width:180px;max-height:260px;overflow:auto;display:none;}
+  .dd-menu.open{display:block;}
+  .dd-opt{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;font-size:15px;color:var(--ink2);cursor:pointer;}
+  .dd-opt:hover{background:var(--paper2);}
+  .dd-opt input{accent-color:var(--accent);}
+  .lvchips{display:flex;gap:6px;}
+  .lvchip{font:600 13.5px var(--font);padding:6px 11px;border-radius:8px;border:1px solid var(--rule);background:var(--paper);color:var(--ink4);cursor:pointer;transition:.12s;}
+  .lvchip.on.info{background:var(--good-dim);color:var(--good);border-color:var(--good);}
+  .lvchip.on.warning{background:var(--warn-dim);color:var(--warn);border-color:var(--warn);}
+  .lvchip.on.error{background:var(--danger-dim);color:var(--danger);border-color:var(--danger);}
+  .lvchip.on.debug{background:var(--paper2);color:var(--ink3);border-color:var(--faint);}
+  .date-custom{display:none;gap:6px;align-items:center;}
+  .date-custom.show{display:flex;}
+  .date-custom input{font:15px var(--font);border:1px solid var(--rule);border-radius:8px;padding:7px 9px;color:var(--ink2);outline:none;}
+  .spacer{flex:1;}
+  /* list */
+  .meta{font-size:14px;color:var(--ink4);margin:4px 2px 10px;}
+  .list{display:flex;flex-direction:column;gap:8px;}
+  .row{background:var(--paper);border:1px solid var(--rule);border-radius:12px;border-left:3px solid var(--rule);overflow:hidden;transition:.12s;}
+  .row.info{border-left-color:var(--good);} .row.warning{border-left-color:var(--warn);}
+  .row.error{border-left-color:var(--danger);} .row.debug{border-left-color:var(--faint);}
+  .row-main{display:grid;grid-template-columns:150px 1fr 150px 28px;gap:14px;align-items:center;padding:13px 15px;cursor:pointer;}
+  .row-main:hover{background:var(--paper2);}
+  .mod{font:600 13px var(--mono);color:var(--accent);background:var(--accent-light);padding:3px 8px;border-radius:6px;width:fit-content;white-space:nowrap;}
+  .row-msg{min-width:0;}
+  .row-target{font-size:16px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .row-sub{font-size:14px;color:var(--ink4);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .row-status{text-align:right;}
+  .status{font:600 13px var(--font);padding:3px 9px;border-radius:20px;display:inline-block;}
+  .status.info{background:var(--good-dim);color:var(--good);}
+  .status.warning{background:var(--warn-dim);color:var(--warn);}
+  .status.error{background:var(--danger-dim);color:var(--danger);}
+  .status.debug{background:var(--paper2);color:var(--ink3);}
+  .row-time{font-size:13.5px;color:var(--faint);margin-top:4px;}
+  .row-menu{background:none;border:none;color:var(--faint);cursor:pointer;font-size:21px;line-height:1;padding:2px 4px;border-radius:6px;}
+  .row-menu:hover{color:var(--ink3);background:var(--paper2);}
+  .row-detail{display:none;padding:0 15px 14px;border-top:1px solid var(--rule-soft);}
+  .row.open .row-detail{display:block;}
+  .kv{display:grid;grid-template-columns:120px 1fr;gap:4px 14px;font-size:14.5px;margin:12px 0 0;}
+  .kv .k{color:var(--ink4);}
+  .kv .v{color:var(--ink2);font-family:var(--mono);word-break:break-word;}
+  .trace{margin-top:10px;background:var(--paper2);border:1px solid var(--rule);border-radius:8px;padding:10px 12px;font:14px/1.5 var(--mono);color:var(--danger);white-space:pre-wrap;max-height:240px;overflow:auto;}
+  .empty{text-align:center;color:var(--ink4);padding:50px 20px;font-size:16px;}
+  .empty .big{font-size:17.5px;color:var(--ink3);margin-bottom:4px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div>
+      <h1>Activity Logs</h1>
+      <p>Structured trace of every request, retrieval, query and model call in GeoChat.</p>
+    </div>
+    <div class="head-actions">
+      <button class="hbtn" onclick="refresh()">↻ Refresh</button>
+      <button class="hbtn" onclick="exportLogs('csv')">Export CSV</button>
+      <button class="hbtn" onclick="exportLogs('json')">Export JSON</button>
+      <button class="hbtn danger" onclick="clearLogs()">Clear</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="search" type="text" placeholder="Search message or target…"/>
+    </div>
+    <select class="ctl" id="date-mode" onchange="onDateMode()">
+      <option value="all">All time</option>
+      <option value="today">Today</option>
+      <option value="7d">Last 7 days</option>
+      <option value="custom">Custom…</option>
+    </select>
+    <div class="date-custom" id="date-custom">
+      <input type="date" id="date-start"/><span style="color:var(--ink4)">→</span><input type="date" id="date-end"/>
+    </div>
+    <div class="dd" id="mod-dd">
+      <button class="dd-btn" onclick="toggleDD(event)">Modules <span class="cnt" id="mod-cnt" style="display:none">0</span> ▾</button>
+      <div class="dd-menu" id="mod-menu"></div>
+    </div>
+    <div class="lvchips" id="lvchips">
+      <button class="lvchip info" data-lv="INFO" onclick="toggleLevel(this)">Completed</button>
+      <button class="lvchip warning" data-lv="WARNING" onclick="toggleLevel(this)">Warning</button>
+      <button class="lvchip error" data-lv="ERROR" onclick="toggleLevel(this)">Error</button>
+      <button class="lvchip debug" data-lv="DEBUG" onclick="toggleLevel(this)">Debug</button>
+    </div>
+  </div>
+
+  <div class="meta" id="meta"></div>
+  <div class="list" id="list"></div>
+</div>
+
+<script>
+const API = 'http://localhost:8000';
+const state = { search:'', modules:new Set(), levels:new Set(), dateMode:'all', start:'', end:'' };
+let _t = null;
+
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+document.getElementById('search').addEventListener('input', e=>{
+  state.search = e.target.value.trim();
+  clearTimeout(_t); _t = setTimeout(refresh, 250);
+});
+
+function onDateMode(){
+  state.dateMode = document.getElementById('date-mode').value;
+  document.getElementById('date-custom').classList.toggle('show', state.dateMode==='custom');
+  if(state.dateMode!=='custom') refresh();
+}
+document.getElementById('date-start').addEventListener('change', refresh);
+document.getElementById('date-end').addEventListener('change', refresh);
+
+function dateRange(){
+  const now = Date.now()/1000;
+  if(state.dateMode==='today'){ const d=new Date(); d.setHours(0,0,0,0); return [d.getTime()/1000, null]; }
+  if(state.dateMode==='7d') return [now - 7*86400, null];
+  if(state.dateMode==='custom'){
+    const s=document.getElementById('date-start').value, e=document.getElementById('date-end').value;
+    const st = s ? new Date(s+'T00:00:00').getTime()/1000 : null;
+    const en = e ? new Date(e+'T23:59:59').getTime()/1000 : null;
+    return [st, en];
+  }
+  return [null, null];
+}
+
+function toggleLevel(btn){
+  const lv = btn.getAttribute('data-lv');
+  if(state.levels.has(lv)){ state.levels.delete(lv); btn.classList.remove('on'); }
+  else { state.levels.add(lv); btn.classList.add('on'); }
+  refresh();
+}
+function toggleDD(e){ e.stopPropagation(); document.getElementById('mod-menu').classList.toggle('open'); }
+document.addEventListener('click', ()=> document.getElementById('mod-menu').classList.remove('open'));
+
+async function loadModules(){
+  try{
+    const r = await fetch(`${API}/logs/modules`); const d = await r.json();
+    const mods = d.modules || [];
+    // Drop any selected module that no longer appears in the logs.
+    [...state.modules].forEach(m=>{ if(!mods.includes(m)) state.modules.delete(m); });
+    const menu = document.getElementById('mod-menu');
+    menu.innerHTML = mods.map(m=>`
+      <label class="dd-opt" onclick="event.stopPropagation()">
+        <input type="checkbox" value="${esc(m)}" ${state.modules.has(m)?'checked':''} onchange="toggleModule(this)"/> <span>${esc(m)}</span>
+      </label>`).join('') || '<div class="dd-opt" style="color:var(--faint)">no modules in the logs yet</div>';
+    const c=document.getElementById('mod-cnt'); c.textContent=state.modules.size; c.style.display=state.modules.size?'inline-block':'none';
+  }catch(e){}
+}
+function toggleModule(cb){
+  if(cb.checked) state.modules.add(cb.value); else state.modules.delete(cb.value);
+  const c=document.getElementById('mod-cnt'); c.textContent=state.modules.size; c.style.display=state.modules.size?'inline-block':'none';
+  refresh();
+}
+
+function params(){
+  const [s,e]=dateRange();
+  const p=new URLSearchParams();
+  if(state.search) p.set('search', state.search);
+  if(state.modules.size) p.set('modules', [...state.modules].join(','));
+  if(state.levels.size) p.set('levels', [...state.levels].join(','));
+  if(s!=null) p.set('start', s);
+  if(e!=null) p.set('end', e);
+  return p;
+}
+
+async function refresh(){
+  loadModules();   // keep the module filter options in sync with the logs
+  const p=params(); p.set('limit','500');
+  let data;
+  try{ const r=await fetch(`${API}/logs?${p}`); data=await r.json(); }
+  catch(err){ document.getElementById('list').innerHTML=`<div class="empty"><div class="big">Can't reach the server</div>Is the API running at ${API}?</div>`; return; }
+  render(data);
+}
+
+function levelClass(lv){ return (lv||'').toLowerCase()==='info'?'info':(lv||'').toLowerCase()==='warning'?'warning':(lv||'').toLowerCase()==='error'?'error':'debug'; }
+function statusText(lv){ const l=(lv||'').toUpperCase(); return l==='INFO'?'completed':l==='WARNING'?'warning':l==='ERROR'?'error':'debug'; }
+function fmtTime(iso){ try{ const d=new Date(iso); return d.toLocaleString(undefined,{month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}); }catch(e){ return iso; } }
+
+function render(data){
+  const logs=data.logs||[];
+  document.getElementById('meta').textContent = `${logs.length} shown${data.total>logs.length?` of ${data.total}`:''}`;
+  if(!logs.length){ document.getElementById('list').innerHTML=`<div class="empty"><div class="big">No logs match your filters</div>Try widening the date range or clearing filters.</div>`; return; }
+  document.getElementById('list').innerHTML = logs.map(x=>{
+    const lc=levelClass(x.level);
+    const dur = x.duration_ms!=null ? ` · ${Math.round(x.duration_ms)} ms` : '';
+    const kv = `<div class="kv">
+      <span class="k">logger</span><span class="v">${esc(x.logger)}</span>
+      <span class="k">target</span><span class="v">${esc(x.target||'—')}</span>
+      <span class="k">duration</span><span class="v">${x.duration_ms!=null?Math.round(x.duration_ms)+' ms':'—'}</span>
+      ${x.error_type?`<span class="k">error type</span><span class="v" style="color:var(--danger)">${esc(x.error_type)}</span>`:''}
+      <span class="k">time</span><span class="v">${esc(x.iso)}</span></div>
+      ${x.trace?`<div class="trace">${esc(x.trace)}</div>`:''}`;
+    return `<div class="row ${lc}" id="row${x.id}">
+      <div class="row-main" onclick="toggleRow(${x.id})">
+        <span class="mod">${esc(x.module)}</span>
+        <div class="row-msg"><div class="row-target">${esc(x.message)}</div>${x.target && x.target!==x.message?`<div class="row-sub">${esc(x.target)}</div>`:''}</div>
+        <div class="row-status"><span class="status ${lc}">${statusText(x.level)}${dur}</span><div class="row-time">${fmtTime(x.iso)}</div></div>
+        <button class="row-menu" title="Copy trace / details" onclick="event.stopPropagation();copyRow(${x.id})">···</button>
+      </div>
+      <div class="row-detail">${kv}</div>
+    </div>`;
+  }).join('');
+  window._logs = Object.fromEntries(logs.map(x=>[x.id,x]));
+}
+
+function toggleRow(id){ document.getElementById('row'+id).classList.toggle('open'); }
+function copyRow(id){
+  const x=(window._logs||{})[id]; if(!x) return;
+  const txt = x.trace || `${x.iso} [${x.level}] ${x.module} — ${x.message}${x.target?` (target: ${x.target})`:''}`;
+  navigator.clipboard && navigator.clipboard.writeText(txt);
+  document.getElementById('row'+id).classList.add('open');
+}
+
+function exportLogs(fmt){ const p=params(); p.set('format',fmt); window.open(`${API}/logs/export?${p}`,'_blank'); }
+async function clearLogs(){
+  if(!confirm('Clear all activity logs? This cannot be undone.')) return;
+  try{ await fetch(`${API}/logs`,{method:'DELETE'}); loadModules(); refresh(); }catch(e){}
+}
+
+loadModules();
+refresh();
+setInterval(refresh, 15000);   // light auto-refresh
+</script>
+</body>
+</html>

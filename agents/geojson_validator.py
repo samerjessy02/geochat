@@ -631,8 +631,286 @@ def _infer_columns(features: list[dict]) -> list[dict]:
     for k in names:
         ds = dtypes[k]
         dtype = "mixed" if len(ds) > 1 else (next(iter(ds)) if ds else "null")
-        cols.append({"name": k, "dtype": dtype, "null_count": nulls[k]})
+        # Unified FieldMetadata — the same shape whether the description later
+        # comes from a schema file ("schema") or the LLM ("llm") or is edited.
+        cols.append({
+            "name": k, "dtype": dtype, "type": dtype, "null_count": nulls[k],
+            "description": "", "required": False, "source": "",
+            "is_primary_key": False, "foreign_key": None,
+        })
     return cols
+
+
+# --------------------------------------------------------------------------- #
+# optional schema file: the source of truth for column metadata (no LLM)
+# --------------------------------------------------------------------------- #
+
+_SCHEMA_CONTAINERS = ("fields", "columns", "tables")
+
+
+def validate_schema(data) -> None:
+    """Validate that ``data`` (parsed JSON) is a well-formed dataset schema.
+
+    A valid schema is a JSON object that declares its columns through one of the
+    recognized containers — ``fields`` (list), ``columns`` (list or object), or a
+    database-DDL ``tables`` object — or a flat ``{column: spec}`` mapping. Each
+    column's ``type``/``description`` must be strings and ``required`` a boolean
+    when present. Raises :class:`FileReject` listing every problem found.
+    """
+    errors: list[str] = []
+
+    def _check_col(spec, where: str, name_required: bool) -> None:
+        if isinstance(spec, str):
+            return  # shorthand: value is a type or description string
+        if not isinstance(spec, dict):
+            errors.append(f"{where}: must be an object or string, got {type(spec).__name__}.")
+            return
+        if name_required:
+            nm = spec.get("name") or spec.get("column_name") or spec.get("column")
+            if not (isinstance(nm, str) and nm.strip()):
+                errors.append(f"{where}: missing a non-empty string 'name'.")
+        t = spec.get("type", spec.get("data_type"))
+        if t is not None and not isinstance(t, str):
+            errors.append(f"{where}: 'type' must be a string.")
+        d = spec.get("description", spec.get("desc"))
+        if d is not None and not isinstance(d, str):
+            errors.append(f"{where}: 'description' must be a string.")
+        r = spec.get("required", spec.get("not_null", spec.get("notNull")))
+        if r is not None and not isinstance(r, bool):
+            errors.append(f"{where}: 'required' must be true or false.")
+
+    if not isinstance(data, dict):
+        raise FileReject('Schema must be a JSON object, e.g. {"fields": [ {"name": "...", '
+                         '"type": "...", "description": "..."} ]} or {"tables": {...}}.')
+
+    if isinstance(data.get("tables"), dict) or "tables" in data:
+        tables = data.get("tables")
+        if not isinstance(tables, dict) or not tables:
+            errors.append("'tables' must be a non-empty object of table definitions.")
+        else:
+            for tname, tdef in tables.items():
+                if not isinstance(tdef, dict):
+                    errors.append(f"tables.{tname}: must be an object.")
+                    continue
+                cols = tdef.get("columns")
+                if cols is None:
+                    errors.append(f"tables.{tname}: missing 'columns'.")
+                elif isinstance(cols, dict):
+                    if not cols:
+                        errors.append(f"tables.{tname}.columns: is empty.")
+                    for cn, cv in cols.items():
+                        _check_col(cv, f"tables.{tname}.columns.{cn}", name_required=False)
+                elif isinstance(cols, list):
+                    for i, cv in enumerate(cols):
+                        _check_col(cv, f"tables.{tname}.columns[{i}]", name_required=True)
+                else:
+                    errors.append(f"tables.{tname}.columns: must be an object or list.")
+                pk = tdef.get("primary_key")
+                if pk is not None and not isinstance(pk, str):
+                    errors.append(f"tables.{tname}.primary_key: must be a column-name string.")
+                fks = tdef.get("foreign_keys")
+                if fks is not None and not isinstance(fks, dict):
+                    errors.append(f"tables.{tname}.foreign_keys: must be an object of column → reference.")
+    else:
+        fields = data.get("fields")
+        if fields is not None:
+            if not isinstance(fields, list):
+                errors.append("'fields' must be a list of column objects.")
+            elif not fields:
+                errors.append("'fields' is empty — declare at least one column.")
+            else:
+                for i, f in enumerate(fields):
+                    _check_col(f, f"fields[{i}]", name_required=True)
+        elif "columns" in data:
+            cols = data["columns"]
+            if isinstance(cols, list):
+                if not cols:
+                    errors.append("'columns' is empty — declare at least one column.")
+                for i, cv in enumerate(cols):
+                    _check_col(cv, f"columns[{i}]", name_required=True)
+            elif isinstance(cols, dict):
+                if not cols:
+                    errors.append("'columns' is empty — declare at least one column.")
+                for cn, cv in cols.items():
+                    _check_col(cv, f"columns.{cn}", name_required=False)
+            else:
+                errors.append("'columns' must be a list or object.")
+        else:
+            # flat {column: spec} mapping fallback
+            if not data:
+                errors.append('Schema is empty — provide "fields", "columns", or "tables".')
+            else:
+                for cn, cv in data.items():
+                    if not (isinstance(cn, str) and cn.strip()):
+                        errors.append("Top-level column names must be non-empty strings.")
+                    _check_col(cv, str(cn), name_required=False)
+
+    if errors:
+        shown = errors[:8]
+        more = "" if len(errors) <= 8 else f"\n… and {len(errors) - 8} more issue(s)."
+        raise FileReject("Schema file is not a valid dataset schema:\n- "
+                         + "\n- ".join(shown) + more)
+
+
+def parse_schema(raw: bytes) -> dict[str, dict]:
+    """Parse an optional schema file into ``{lower_column_name: metadata}``.
+
+    The file is validated first (see :func:`validate_schema`) and rejected with a
+    clear message if it is not a well-formed dataset schema.
+
+    Supports three shapes, all of which may carry ``description`` text:
+      * the documented ``{"fields": [{name,type,description,required}, ...]}`` form;
+      * a ``{"columns": [...]}`` / ``{"columns": {...}}`` form;
+      * a database-DDL form ``{"tables": {"<t>": {"primary_key", "foreign_keys",
+        "columns": {"<col>": "<TYPE>"}, "descriptions": {...}}}}`` — every table's
+        columns are flattened into one map, with primary/foreign keys attached.
+
+    Flexible key aliases are honoured throughout (pk/primary_key,
+    references/foreign_key/fk, not_null/required, desc/description).
+    """
+    try:
+        data = json.loads(raw.decode("utf-8"))
+    except Exception as e:  # noqa: BLE001
+        raise FileReject(f"Schema file is not valid JSON: {e}")
+
+    validate_schema(data)
+
+    out: dict[str, dict] = {}
+
+    def _add(name, spec) -> None:
+        if not name:
+            return
+        if not isinstance(spec, dict):
+            spec = {"description": str(spec)}
+        fk = spec.get("foreign_key") or spec.get("references") or spec.get("fk")
+        if isinstance(fk, dict):
+            fk = (fk.get("table", "") + ("." + fk["column"] if fk.get("column") else "")) or None
+        pk = bool(spec.get("primary_key") or spec.get("pk") or spec.get("primaryKey"))
+        key = str(name).strip().lower()
+        meta = {
+            "type": spec.get("type") or spec.get("data_type"),
+            "description": str(spec.get("description") or spec.get("desc") or "").strip(),
+            "required": bool(spec.get("required") or spec.get("not_null") or spec.get("notNull") or pk),
+            "is_primary_key": pk,
+            "foreign_key": fk or None,
+        }
+        # If the same column name appears in several tables, keep the richest entry
+        # (prefer one that carries a description / primary key).
+        prev = out.get(key)
+        if prev and not meta["description"] and not meta["is_primary_key"]:
+            if prev.get("description") or prev.get("is_primary_key"):
+                return
+        out[key] = meta
+
+    # --- database-DDL form: {"tables": {tname: {columns, primary_key, foreign_keys}}} ---
+    tables = data.get("tables")
+    if isinstance(tables, dict):
+        for tdef in tables.values():
+            if not isinstance(tdef, dict):
+                continue
+            pk = tdef.get("primary_key")
+            fks = tdef.get("foreign_keys") or {}
+            descs = tdef.get("descriptions") or {}
+            tcols = tdef.get("columns") or {}
+            if isinstance(tcols, dict):
+                col_items = list(tcols.items())
+            elif isinstance(tcols, list):
+                col_items = [(c.get("name") or c.get("column"), c)
+                             for c in tcols if isinstance(c, dict)]
+            else:
+                col_items = []
+            for cname, cval in col_items:
+                if not cname:
+                    continue
+                spec = dict(cval) if isinstance(cval, dict) else {"type": str(cval)}
+                spec.setdefault("type", None)
+                if cname == pk:
+                    spec["primary_key"] = True
+                if cname in fks:
+                    spec["foreign_key"] = fks[cname]
+                if not spec.get("description") and isinstance(descs, dict) and descs.get(cname):
+                    spec["description"] = descs[cname]
+                _add(cname, spec)
+        if not out:
+            raise FileReject("Schema defines no usable columns — check the 'tables' definitions.")
+        return out
+
+    # --- {"fields": [...]} / {"columns": [...]|{...}} / flat {col: spec} forms ---
+    fields = data.get("fields")
+    if fields is None:
+        fields = data.get("columns", data)
+
+    if isinstance(fields, list):
+        for f in fields:
+            if isinstance(f, dict):
+                _add(f.get("name") or f.get("column_name") or f.get("column"), f)
+    elif isinstance(fields, dict):
+        for name, spec in fields.items():
+            _add(name, spec)
+    if not out:
+        raise FileReject("Schema defines no usable columns — declare them under "
+                         '"fields", "columns", or "tables".')
+    return out
+
+
+# Column-name aliases for the two axes of a Point geometry, so a schema that
+# documents coordinates (which live in ``geometry``, not ``properties``) can still
+# surface them as editable columns.
+_LON_KEYS = {"longitude", "lon", "lng", "long", "x"}
+_LAT_KEYS = {"latitude", "lat", "y"}
+
+
+def coordinate_columns_from_schema(schema: dict, features: list[dict]) -> list[dict]:
+    """Synthesize longitude/latitude columns that the schema declares but that live
+    in the Point ``geometry`` rather than in ``properties``.
+
+    Returns unified-shape column dicts (dtype ``float``) with a real ``null_count``
+    computed from the features, so their schema descriptions can be displayed and
+    edited like any attribute column. Fields the schema does not mention are not
+    added — the no-schema flow is unaffected.
+    """
+    def _coord(f, axis):
+        g = f.get("geometry") or {}
+        if g.get("type") != "Point":
+            return None
+        c = g.get("coordinates")
+        if isinstance(c, (list, tuple)) and len(c) > axis and isinstance(c[axis], (int, float)):
+            return c[axis]
+        return None
+
+    out: list[dict] = []
+    for key in schema:
+        axis = 0 if key in _LON_KEYS else (1 if key in _LAT_KEYS else None)
+        if axis is None:
+            continue
+        nulls = sum(1 for f in features if _coord(f, axis) is None)
+        out.append({
+            "name": key, "dtype": "float", "type": "float", "null_count": nulls,
+            "description": "", "required": False, "source": "",
+            "is_primary_key": False, "foreign_key": None,
+        })
+    return out
+
+
+def enrich_columns_with_schema(columns: list[dict], schema: dict) -> None:
+    """Overlay schema metadata onto the inferred columns (in place).
+
+    Columns present in the schema inherit its type/required/keys. ``source`` is
+    set to ``"schema"`` only when the schema actually supplies description text —
+    so a DDL schema (types + keys, no prose) leaves ``description``/``source``
+    empty and those columns can still be auto-described by the LLM.
+    """
+    for c in columns:
+        s = schema.get(c["name"].strip().lower())
+        if not s:
+            continue
+        c["required"] = s["required"]
+        c["type"] = s["type"] or c["dtype"]
+        c["is_primary_key"] = s["is_primary_key"]
+        c["foreign_key"] = s["foreign_key"]
+        if s["description"]:
+            c["description"] = s["description"]
+            c["source"] = "schema"
 
 
 def _pytype(v) -> str:

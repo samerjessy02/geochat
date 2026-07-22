@@ -19,7 +19,7 @@ load_dotenv()
 
 groq = AsyncGroq(api_key=os.getenv("API_KEY"))
 GOOGLE_PLACES_KEY = os.getenv("GOOGLE_PLACES_API_KEY") # Add this to your .env file
-MODEL = "llama-3.3-70b-versatile"
+MODEL = "openai/gpt-oss-20b"
 
 _cache: dict[str, dict] = {}
 

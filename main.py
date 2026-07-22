@@ -27,11 +27,12 @@ results in one response.
 
 from __future__ import annotations
 
+import json
 import re
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 
 import registry
@@ -48,6 +49,7 @@ from agents import column_describer
 from agents import spatial_search
 from agents import routing
 from agents import geojson_validator as gjv
+from agents import log_store
 from agents.hybrid_retriever import invalidate_bm25_cache
 from agents.intent_router import classify_intent, MAP, KNOWLEDGE, HYBRID, UNKNOWN
 from agents.knowledge_pipeline import answer_knowledge_query
@@ -137,6 +139,7 @@ class QueryRequest(BaseModel):
     allow_web: bool = True
     web_confirmed: bool = False            # user approved scraping the official site
     session_id: str | None = None          # conversation window key (memory)
+    filter_polygon: dict | None = None     # active spatial filter — restrict all map SQL to it
 
 
 class ResetMemoryRequest(BaseModel):
@@ -163,6 +166,18 @@ class PolygonSearchRequest(BaseModel):
     offset: int = 0
 
 
+class ParsePolygonRequest(BaseModel):
+    text: str                               # pasted GeoJSON / coords / WKT
+
+
+class SearchAreaRequest(BaseModel):
+    geometry: dict                          # active GeoJSON Polygon / MultiPolygon
+    dataset_ids: list[str] = []             # layers to search (or all if empty)
+    feature_types: list[str] | None = None  # optional: only these named layers
+    mode: str = "intersects"                # "intersects" | "within"
+    limit_per_layer: int = 2000
+
+
 class EnrichRequest(BaseModel):
     name: str
     name_en: str | None = None
@@ -175,6 +190,8 @@ class ColumnDescription(BaseModel):
     column_name: str
     data_type: str
     description: str = ""
+    is_primary_key: bool = False
+    foreign_key: str | None = None
 
 
 class DescribeColumnsRequest(BaseModel):
@@ -232,12 +249,17 @@ _validation_sessions: dict[str, dict] = {}
 
 
 @app.post("/datasets/validate")
-async def validate_dataset(file: UploadFile = File(...)):
+async def validate_dataset(file: UploadFile = File(...), schema: UploadFile | None = File(None)):
     """Stage 1–2 + 4 validation of an uploaded GeoJSON. Returns a report,
-    inferred columns, and any HITL items to resolve before commit."""
+    inferred columns, and any HITL items to resolve before commit.
+
+    If an optional ``schema`` JSON is provided, its column metadata (description,
+    type, required, keys) is the source of truth — the LLM is never called to
+    describe columns (see /datasets/validate/describe-auto)."""
     import uuid as _uuid
     raw = await file.read()
-    logger.info("POST /datasets/validate — '%s' (%d bytes)", file.filename, len(raw))
+    logger.info("POST /datasets/validate — '%s' (%d bytes, schema=%s)",
+                file.filename, len(raw), bool(schema))
     try:
         result = gjv.validate_upload(file.filename, raw)
     except gjv.FileReject as e:
@@ -245,10 +267,33 @@ async def validate_dataset(file: UploadFile = File(...)):
     except Exception as e:  # noqa: BLE001
         logger.exception("validation crashed")
         raise HTTPException(status_code=500, detail=f"Validation failed: {e}")
+
+    has_schema = False
+    if schema is not None:
+        sraw = await schema.read()
+        if sraw and sraw.strip():
+            sname = (schema.filename or "").lower()
+            if sname and not sname.endswith(".json"):
+                raise HTTPException(status_code=400, detail={"stage": 0,
+                    "error": f"Schema must be a JSON file (.json) — got '{schema.filename}'."})
+            try:
+                schema_map = gjv.parse_schema(sraw)
+            except gjv.FileReject as e:
+                raise HTTPException(status_code=400, detail={"stage": 0, "error": str(e)})
+            # Surface any coordinate columns the schema documents that live in the
+            # Point geometry rather than in properties (e.g. longitude/latitude).
+            existing = {c["name"].strip().lower() for c in result.columns}
+            for extra in gjv.coordinate_columns_from_schema(schema_map, result.accepted):
+                if extra["name"].strip().lower() not in existing:
+                    result.columns.append(extra)
+            gjv.enrich_columns_with_schema(result.columns, schema_map)
+            has_schema = True
+            logger.info("schema applied: %d field(s) — LLM description skipped", len(schema_map))
+
     vid = _uuid.uuid4().hex[:12]
     _validation_sessions[vid] = {"result": result, "filename": file.filename,
-                                 "required": [], "numeric": []}
-    return {"validation_id": vid, "report": result.report()}
+                                 "required": [], "numeric": [], "has_schema": has_schema}
+    return {"validation_id": vid, "has_schema": has_schema, "report": result.report()}
 
 
 def _get_session(vid: str) -> dict:
@@ -260,18 +305,55 @@ def _get_session(vid: str) -> dict:
 
 @app.post("/datasets/validate/describe-auto")
 def validate_describe_auto(req: ValidateDescribeAutoRequest):
-    """Draft column descriptions from the uploaded features (no table exists yet)."""
+    """Draft column descriptions from the uploaded features (no table exists yet).
+
+    Unified metadata rule: a column that the schema already describes keeps that
+    description (``source="schema"``) and the LLM is NOT invoked for it. Columns
+    the schema does not describe — whether no schema was uploaded, or the schema
+    only carried types/keys — are auto-generated by the LLM (``source="llm"``).
+    So the LLM is called only for the columns that actually need it, and skipped
+    entirely when the schema documents every column."""
     s = _get_session(req.validation_id)
     result = s["result"]
-    cols = [{"column_name": c["name"], "data_type": c["dtype"]} for c in result.columns]
+    cols = result.columns
     if not cols:
-        return {"columns": []}
-    try:
-        out = column_describer.describe_from_features(
-            req.display_name or "dataset", result.accepted, cols)
-    except Exception as e:  # noqa: BLE001
-        raise HTTPException(status_code=500, detail=f"Could not auto-generate descriptions: {e}")
-    return {"columns": out}
+        return {"source": "schema" if s.get("has_schema") else "llm", "columns": []}
+
+    # Columns the schema already documents — kept verbatim, never sent to the LLM.
+    from_schema = {c["name"] for c in cols
+                   if c.get("source") == "schema" and (c.get("description") or "").strip()}
+    todo = [c for c in cols if c["name"] not in from_schema]
+
+    by_name: dict[str, dict] = {}
+    for c in cols:
+        if c["name"] in from_schema:
+            by_name[c["name"]] = {"column_name": c["name"], "data_type": c["dtype"],
+                                  "description": c.get("description", ""), "source": "schema"}
+
+    if todo:
+        payload = [{"column_name": c["name"], "data_type": c["dtype"]} for c in todo]
+        try:
+            gen = column_describer.describe_from_features(
+                req.display_name or "dataset", result.accepted, payload)
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(status_code=500, detail=f"Could not auto-generate descriptions: {e}")
+        for g in gen:
+            g["source"] = "llm"
+            by_name[g["column_name"]] = g
+        logger.info("describe-auto: %d column(s) from schema, %d generated by LLM",
+                    len(from_schema), len(todo))
+    else:
+        logger.info("describe-auto skipped LLM — schema documents all %d column(s)", len(cols))
+
+    # Preserve original column order.
+    columns = [by_name[c["name"]] for c in cols if c["name"] in by_name]
+    if not todo:
+        src = "schema"
+    elif from_schema:
+        src = "mixed"
+    else:
+        src = "llm"
+    return {"source": src, "columns": columns}
 
 
 @app.post("/datasets/validate/attributes")
@@ -444,8 +526,29 @@ def purge_orphans():
 # spatial helper (shared by /chat and /query)
 # --------------------------------------------------------------------------- #
 
-def _run_spatial(message: str, dataset_ids: list[str]) -> dict:
-    """Generate, validate and execute a spatial SQL query. Returns {sql, results}."""
+def _clip_sql_to_polygon(sql: str, geometry: dict) -> str:
+    """Wrap a validated SELECT so only rows whose ``geometry`` (the GeoJSON text
+    every generated query emits as ``AS geometry``) intersect the active polygon
+    are returned. The polygon is embedded as a JSON literal — safe because it is
+    validated to contain only numbers/brackets (no quotes to break out of).
+    """
+    geom_json = json.dumps(geometry).replace("'", "")  # validated numeric GeoJSON
+    inner = sql.strip().rstrip(";")
+    return (
+        "WITH __clip AS (SELECT ST_MakeValid(ST_SetSRID("
+        f"ST_GeomFromGeoJSON('{geom_json}'), 4326)) AS g)\n"
+        "SELECT __base.* FROM (\n" + inner + "\n) __base, __clip\n"
+        "WHERE __base.geometry IS NOT NULL\n"
+        "  AND ST_Intersects(ST_SetSRID(ST_GeomFromGeoJSON(__base.geometry), 4326), __clip.g)"
+    )
+
+
+def _run_spatial(message: str, dataset_ids: list[str],
+                 filter_polygon: dict | None = None) -> dict:
+    """Generate, validate and execute a spatial SQL query. Returns {sql, results}.
+
+    When ``filter_polygon`` is set (an active spatial filter), the validated query
+    is clipped so every returned feature falls inside that polygon."""
     if not dataset_ids:
         raise HTTPException(status_code=400, detail="Select at least one dataset to query on the map.")
     try:
@@ -462,13 +565,35 @@ def _run_spatial(message: str, dataset_ids: list[str]) -> dict:
     if not valid:
         logger.warning("spatial: SQL validator rejected query — %s", reason)
         raise HTTPException(status_code=400, detail=reason)
+
+    exec_sql = sql
+    clipped = False
+    if filter_polygon:
+        try:
+            spatial_search._validate_geometry(filter_polygon)
+            exec_sql = _clip_sql_to_polygon(sql, filter_polygon)
+            clipped = True
+            logger.info("spatial: clipping results to active filter polygon")
+        except spatial_search.SpatialSearchError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid filter polygon: {e}")
+
     try:
-        rows = run_query(sql)
+        rows = run_query(exec_sql)
     except Exception as e:  # noqa: BLE001
+        # If the clip wrapper failed (e.g. the query didn't expose a geometry
+        # column), retry unclipped so the user still gets an answer.
+        if clipped:
+            logger.warning("spatial: clipped query failed (%s) — retrying unclipped", e)
+            try:
+                rows = run_query(sql)
+                return {"sql": sql, "results": rows, "clipped": False,
+                        "clip_error": "query could not be restricted to the area"}
+            except Exception:  # noqa: BLE001
+                pass
         logger.exception("spatial: query execution failed")
         raise HTTPException(status_code=500, detail=str(e))
-    logger.info("spatial: %d row(s) returned", len(rows))
-    return {"sql": sql, "results": rows}
+    logger.info("spatial: %d row(s) returned%s", len(rows), " (clipped)" if clipped else "")
+    return {"sql": sql, "results": rows, "clipped": clipped}
 
 
 @app.post("/chat")
@@ -558,7 +683,7 @@ def query(req: QueryRequest):
     map_empty = False
     if intent.needs_map:
         try:
-            map_result = _run_spatial(effective_query, req.dataset_ids)
+            map_result = _run_spatial(effective_query, req.dataset_ids, req.filter_polygon)
             response["map"] = map_result
             map_empty = not map_result.get("results")
         except HTTPException as e:
@@ -568,8 +693,19 @@ def query(req: QueryRequest):
 
     ran_knowledge = False
     if intent.needs_rag:
-        response["knowledge"] = _run_knowledge().as_dict()
+        kn = _run_knowledge()
+        response["knowledge"] = kn.as_dict()
         ran_knowledge = True
+        # HYBRID: the spatial query couldn't apply a document-only filter (e.g.
+        # ">40,000 students", "teaching hospital") so it plotted nothing. Show the
+        # places the answer names by matching them against the selected map layers.
+        if intent.needs_map and map_empty and kn.found:
+            feats = _entities_from_answer(kn.answer, req.dataset_ids)
+            if feats:
+                logger.info("/query HYBRID: plotting %d entity(ies) named in the answer", len(feats))
+                response["map"] = {"sql": "-- features matched from the knowledge answer",
+                                   "results": feats, "from_answer": True}
+                map_empty = False
 
     # Fallback: a MAP query that plotted nothing (or failed) often means the
     # asked-for attribute lives in documents, not the dataset columns. Try the
@@ -672,6 +808,43 @@ def _handle_route(query: str, dataset_ids: list[str]) -> dict:
     return {"intent": dict(_ROUTE_INTENT), "route": {**rt, "from": origin, "to": dest}}
 
 
+def _entities_from_answer(answer: str, dataset_ids: list[str]) -> list[dict]:
+    """Return features of the selected layers whose name appears in ``answer``.
+
+    Used for HYBRID queries where the qualifying attribute lives in a document
+    (not a map column): the RAG answer names the matching places, and we plot
+    exactly those by matching their name value inside the answer text.
+    """
+    text = (answer or "").lower()
+    if not text:
+        return []
+    results: list[dict] = []
+    seen: set = set()
+    for ds in registry.get_datasets_by_ids(dataset_ids):
+        table = ds["table_name"]  # machine name -> safe to interpolate
+        cols = [c["column_name"] for c in (ds.get("columns") or [])]
+        name_cols = [c for c in cols if c == "name" or "name" in c.lower()
+                     or c in ("title", "label", "display_name")]
+        if not name_cols:
+            continue
+        sel = ", ".join(f'"{c}"' for c in name_cols)
+        try:
+            rows = run_query(f'SELECT {sel}, ST_AsGeoJSON(wkb_geometry) AS geometry '
+                             f'FROM "{table}" LIMIT 5000')
+        except Exception:  # noqa: BLE001
+            continue
+        for r in rows:
+            for nc in name_cols:
+                val = r.get(nc)
+                if val and len(str(val)) >= 5 and str(val).lower() in text:
+                    key = (table, str(val))
+                    if key not in seen:
+                        seen.add(key)
+                        results.append(r)
+                    break
+    return results
+
+
 def _reply_for_memory(response: dict) -> str:
     """Best-effort assistant text to store for a turn (for follow-up context)."""
     kn = response.get("knowledge")
@@ -748,6 +921,43 @@ def search_by_polygon(req: PolygonSearchRequest):
         raise HTTPException(status_code=500, detail=f"Polygon search failed: {e}")
 
 
+@app.post("/spatial/parse-polygon")
+def parse_polygon(req: ParsePolygonRequest):
+    """Validate pasted polygon coordinates (GeoJSON, coordinate list, or WKT) and
+    return a normalized WGS84 GeoJSON polygon + bbox for the frontend to draw and
+    set as the active spatial filter."""
+    logger.info("POST /spatial/parse-polygon — %d chars", len(req.text or ""))
+    try:
+        return spatial_search.parse_polygon_text(req.text)
+    except spatial_search.SpatialSearchError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:  # noqa: BLE001
+        logger.exception("polygon parse failed")
+        raise HTTPException(status_code=500, detail=f"Could not parse polygon: {e}")
+
+
+@app.post("/spatial/search-area")
+def search_area(req: SearchAreaRequest):
+    """Search several layers inside the active polygon at once. Returns one entry
+    per layer (count + features) so the frontend can color each distinctly and
+    build a legend. "pharmacies and schools in this area" returns BOTH layers."""
+    logger.info("POST /spatial/search-area — datasets=%d, types=%s, mode=%s",
+                len(req.dataset_ids), req.feature_types, req.mode)
+    try:
+        return spatial_search.search_area(
+            req.geometry,
+            dataset_ids=req.dataset_ids,
+            feature_types=req.feature_types,
+            mode=req.mode,
+            limit_per_layer=req.limit_per_layer,
+        )
+    except spatial_search.SpatialSearchError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:  # noqa: BLE001
+        logger.exception("area search failed")
+        raise HTTPException(status_code=500, detail=f"Area search failed: {e}")
+
+
 # --------------------------------------------------------------------------- #
 # enrichment / misc
 # --------------------------------------------------------------------------- #
@@ -769,6 +979,59 @@ async def enrich(req: EnrichRequest):
 @app.get("/layers")
 def get_layers():
     return run_query("SELECT * FROM layer_metadata")
+
+
+# --------------------------------------------------------------------------- #
+# activity logs (queryable structured log store)
+# --------------------------------------------------------------------------- #
+
+def _csv_list(v: str | None) -> list[str] | None:
+    return [x for x in v.split(",") if x] if v else None
+
+
+@app.get("/logs")
+def get_logs(search: str | None = None, modules: str | None = None,
+             levels: str | None = None, start: float | None = None,
+             end: float | None = None, limit: int = 200, offset: int = 0):
+    """Filtered activity logs (filters AND together; newest first)."""
+    return log_store.query_logs(
+        search=search, modules=_csv_list(modules), levels=_csv_list(levels),
+        start=start, end=end, limit=limit, offset=offset,
+    )
+
+
+@app.get("/logs/modules")
+def get_log_modules():
+    return {"modules": log_store.distinct_modules()}
+
+
+@app.get("/logs/export")
+def export_logs(format: str = "json", search: str | None = None, modules: str | None = None,
+                levels: str | None = None, start: float | None = None, end: float | None = None):
+    """Download the filtered logs as JSON or CSV."""
+    result = log_store.query_logs(
+        search=search, modules=_csv_list(modules), levels=_csv_list(levels),
+        start=start, end=end, limit=100000,
+    )
+    rows = result["logs"]
+    if format == "csv":
+        import csv
+        import io
+        buf = io.StringIO()
+        cols = ["iso", "module", "level", "message", "target", "duration_ms", "error_type", "logger"]
+        w = csv.DictWriter(buf, fieldnames=cols, extrasaction="ignore")
+        w.writeheader()
+        for r in rows:
+            w.writerow(r)
+        return Response(content=buf.getvalue(), media_type="text/csv",
+                        headers={"Content-Disposition": "attachment; filename=geochat_logs.csv"})
+    return JSONResponse(content=rows,
+                        headers={"Content-Disposition": "attachment; filename=geochat_logs.json"})
+
+
+@app.delete("/logs")
+def clear_logs():
+    return {"cleared": log_store.clear_logs()}
 
 
 @app.get("/health")
