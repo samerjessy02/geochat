@@ -41,6 +41,9 @@ log = get_logger("knowledge_pipeline")
 _GEN_SYSTEM = (
     "You are a factual assistant. Answer the user's question using ONLY the provided context. "
     "Do not use outside knowledge.\n"
+    "The context may start with a 'Conversation so far:' section (the recent dialogue). You may "
+    "use it to resolve references and to answer questions about what the user previously asked, "
+    "requested, was shown, or discussed.\n"
     "STRICT RULES FOR NUMBERS, DATES, AND STATISTICS:\n"
     "- Only state a number/date/statistic if it appears VERBATIM in the context AND clearly "
     "refers to exactly what the question asks. Do not infer, estimate, convert, or sum.\n"
@@ -118,6 +121,15 @@ def _citations_from_hits(hits: list[dict]) -> list[dict]:
             }
         )
     return cites
+
+
+def _with_history(context: str, history: str | None) -> str:
+    """Prepend the conversation memory (summary + recent turns) to the context, so
+    the answer prompt always sees the dialogue."""
+    if not history:
+        return context
+    hist = f"Conversation so far:\n{history[:4000]}"
+    return hist if not context else f"{hist}\n\n---\n{context}"
 
 
 def _generate(question: str, context: str, *, max_chars: int = 7000,
@@ -241,6 +253,7 @@ def answer_knowledge_query(
     allow_web: bool = True,
     dataset_ids: list[str] | None = None,
     web_confirmed: bool = False,
+    history: str | None = None,
 ) -> KnowledgeAnswer:
     """Answer a knowledge query, trying sources in priority order.
 
@@ -281,12 +294,13 @@ def answer_knowledge_query(
             if website is None and match.website:
                 website = match.website  # remember the official site for the web tier
                 log.info("captured feature website from dataset: %s", website)
-            answer, found = _generate(query, match.context)
+            ds_context = _with_history(match.context, history)
+            answer, found = _generate(query, ds_context)
             log.info("dataset generation found=%s (website=%s)", found, website or "-")
             if found:
-                ds_val = validate(query, [{"text": match.context, "dense_score": 1.0, "score": 1.0}])
+                ds_val = validate(query, [{"text": ds_context, "dense_score": 1.0, "score": 1.0}])
                 return _finalize(
-                    query, answer, match.context,
+                    query, answer, ds_context,
                     sources=match.sources, citations=[{"source": s} for s in match.sources],
                     source_tier="dataset", validation=ds_val,
                 )
@@ -349,17 +363,34 @@ def answer_knowledge_query(
                 log.info("exhaustive query but document has %d chunks (> %d cap) -> normal top-k",
                          len(payloads), settings.exhaustive_max_chunks)
 
-    if validation.is_sufficient:
-        context = "\n\n".join(h.get("text", "") for h in hits)
-        sources = sorted({h.get("source", "") for h in hits if h.get("source")})
+    # Generate when retrieval is sufficient OR we have conversation memory to draw
+    # on (so questions about the conversation, or follow-ups, still get answered).
+    if validation.is_sufficient or history:
+        # Only include retrieved documents when they are actually relevant. When we
+        # are generating solely because there is conversation memory (retrieval was
+        # insufficient), use the conversation ALONE — otherwise irrelevant chunks
+        # leak into the answer (e.g. a "summarize the conversation" summary picking
+        # up unrelated documents).
+        if validation.is_sufficient:
+            retrieved = "\n\n".join(h.get("text", "") for h in hits)
+            sources = sorted({h.get("source", "") for h in hits if h.get("source")})
+            citations = _citations_from_hits(hits)
+        else:
+            retrieved, sources, citations = "", [], []
+        context = _with_history(retrieved, history)
         with log_step(log, "grounded generation from local context"):
             answer, found = _generate(query, context)
         log.info("local generation found=%s", found)
         if found:
             return _finalize(
                 query, answer, context,
-                sources=sources, citations=_citations_from_hits(hits),
-                source_tier="local_index", validation=validation,
+                sources=sources or ["conversation history"],
+                citations=citations or [{"source": "conversation history"}],
+                source_tier="local_index" if sources else "conversation",
+                validation=validation,
+                # A pure-conversation answer (no retrieved docs) is derived from the
+                # dialogue, so skip the doc-faithfulness gate for it.
+                faithfulness_gate=bool(sources),
             )
 
     # ---- Human-in-the-loop gate before the web tier ---------------------

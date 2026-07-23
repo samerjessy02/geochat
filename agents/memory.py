@@ -1,42 +1,33 @@
 """
-agents/memory.py — adaptive hybrid conversational memory.
+agents/memory.py — adaptive hybrid conversational memory (LangChain-backed).
 
-Rather than retaining only the last *N* messages, this keeps context in two tiers
-so long conversations stay useful without overflowing the model's context window:
+Uses LangChain's **ConversationSummaryBufferMemory**: keep the most recent
+messages verbatim in a token-bounded buffer, and as the buffer overflows the
+token limit, fold the oldest messages into ONE running summary (LangChain
+re-summarizes the existing summary together with the newly-pruned messages, so it
+stays a single updated summary — never nested). The summary prompt is customized
+(:data:`_SUMMARY_PROMPT`) to preserve goals, preferences/constraints, key facts &
+entities, decisions, open questions, reasoning/conclusions, and any commitments/
+plans/instructions.
 
-* **Recent memory** — the newest ``recent_k`` interactions (a user turn + the
-  assistant reply) are kept verbatim.
-* **Summarized memory** — once the conversation grows past a turn count *X* OR a
-  token budget *Y*, the older turns are folded into ONE running, structured
-  summary. Further growth re-summarizes *the existing summary together with the
-  newly-aged-out turns*, always producing a single updated summary (never nested
-  summaries). The summary preserves goals, preferences/constraints, key facts and
-  entities, decisions, open questions, reasoning/conclusions, and any
-  commitments/plans/instructions.
+The LangChain memory is driven by the app's own LLM (not an OpenAI key) via a
+small :class:`_AppLLM` adapter, and token counting uses a lightweight estimator so
+no tokenizer/transformers dependency is required.
 
-Token usage is monitored before each LLM call that consumes the history
-(:meth:`HybridConversationMemory.ensure_within_budget`): if the summary + recent
-turns would exceed the configured budget, summarization is triggered first (and,
-only as a last resort if the summarizer is unavailable, the oldest turns are
-dropped) so the request always fits.
+Everything is wrapped by :class:`HybridConversationMemory`, which preserves the
+public surface the rest of the app relies on (``add``, ``as_text``, ``messages``,
+``has_context``, ``summary``, ``ensure_within_budget``, ``clear``), plus a
+per-session registry (:func:`get_memory`) and the follow-up
+:func:`condense_query`.
 
-Exposed:
-
-* :class:`HybridConversationMemory` — the two-tier buffer, plus a per-session
-  registry (:func:`get_memory`) keyed by an opaque ``session_id``.
-* :func:`condense_query` — rewrite a follow-up ("does it deliver?", "show that
-  one on the map") into a standalone question using the history (summary + recent
-  turns), so retrieval and intent classification get a self-contained query.
-
-Dependency-free: the classic LangChain memory classes are deprecated, so this is
-a small implementation wired to the app's own LLM client.
+If LangChain isn't installed, a minimal built-in recent-window buffer is used as a
+fallback (summarization disabled) so the app keeps working.
 """
 
 from __future__ import annotations
 
 import threading
 from collections import deque
-from dataclasses import dataclass
 
 from config import settings
 from agents.logging_config import get_logger, snippet
@@ -45,278 +36,243 @@ log = get_logger("memory")
 
 
 def estimate_tokens(text: str) -> int:
-    """Cheap, dependency-free token estimate.
-
-    Uses ~4 characters/token (a good English heuristic) with a word-count floor,
-    so short-but-wordy text is never under-counted. Good enough to drive budget
-    decisions without pulling in a tokenizer.
-    """
+    """Cheap, dependency-free token estimate (~4 chars/token, word-count floor)."""
     if not text:
         return 0
     return max(len(text) // 4, len(text.split()))
 
 
-@dataclass
-class Turn:
-    """One interaction: the user's message and the assistant's reply."""
+# --------------------------------------------------------------------------- #
+# LangChain wiring: an LLM adapter + a customized structured-summary prompt
+# --------------------------------------------------------------------------- #
 
-    user: str
-    assistant: str
+_LANGCHAIN_OK = True
+try:
+    from langchain.memory import (
+        ConversationSummaryBufferMemory,
+        ConversationBufferWindowMemory as _LCWindowMemory,
+    )
+    from langchain_core.language_models.llms import LLM
+    from langchain_core.prompts import PromptTemplate
+except Exception as _e:  # noqa: BLE001 — degrade gracefully if LangChain is absent
+    _LANGCHAIN_OK = False
+    log.warning("LangChain not available (%s) — memory summarization disabled, using a plain window", _e)
 
-    def tokens(self) -> int:
-        return estimate_tokens(self.user) + estimate_tokens(self.assistant)
+
+# Structured progressive-summary prompt (LangChain calls this with the current
+# ``summary`` and the ``new_lines`` being pruned, and expects the updated summary).
+_SUMMARY_INSTRUCTIONS = (
+    "Progressively update the running MEMORY SUMMARY of a conversation between a user and an "
+    "assistant in a geospatial data app. Merge the new lines into the current summary and return "
+    "a SINGLE consolidated summary that supersedes the old one — never nested or multiple summaries.\n"
+    "Be concise and strictly factual: include only what was actually said; do not invent. Never omit "
+    "anything that could affect future answers; on conflict prefer the most recent statement.\n"
+    "Organize under these headings (omit a heading only when it has no content):\n"
+    "Goals & objectives; Preferences & constraints; Key facts & entities; Decisions made; "
+    "Open questions / unresolved tasks; Reasoning & conclusions; Commitments, plans & instructions.\n\n"
+    "Current summary:\n{summary}\n\nNew lines of conversation:\n{new_lines}\n\nUpdated summary:"
+)
+
+if _LANGCHAIN_OK:
+    _SUMMARY_PROMPT = PromptTemplate(
+        input_variables=["summary", "new_lines"], template=_SUMMARY_INSTRUCTIONS
+    )
+
+    class _AppLLM(LLM):
+        """Adapter so LangChain memory can summarize via the app's own LLM client.
+
+        Only text completion is needed (LangChain formats the summary prompt to a
+        string). Token counting is overridden with the local estimator so no
+        tokenizer/transformers dependency is pulled in.
+        """
+
+        max_tokens: int = 512
+
+        @property
+        def _llm_type(self) -> str:
+            return "geochat-app-llm"
+
+        def _call(self, prompt: str, stop=None, run_manager=None, **kwargs) -> str:  # noqa: ANN001
+            from agents.llm_client import get_llm  # lazy: avoid import cycle
+            try:
+                return get_llm().complete(
+                    [{"role": "user", "content": prompt}],
+                    temperature=0.0,
+                    max_tokens=self.max_tokens,
+                ) or ""
+            except Exception as e:  # noqa: BLE001 — memory must never break a request
+                log.warning("memory: summary LLM call failed (%s)", e)
+                return ""
+
+        def get_num_tokens(self, text: str) -> int:
+            return estimate_tokens(text)
 
 
-class ConversationBufferWindowMemory:
-    """Keep the last ``k`` interactions, dropping anything older.
+# --------------------------------------------------------------------------- #
+# minimal fallback used only when LangChain is unavailable
+# --------------------------------------------------------------------------- #
+class _WindowFallback:
+    """Recent-window buffer with the same surface (no summarization)."""
 
-    Backed by a ``deque(maxlen=k)`` so appending the (k+1)-th interaction evicts
-    the oldest automatically — O(1) and inherently bounded.
-    """
-
-    def __init__(self, k: int = 5) -> None:
-        self.k = max(1, int(k))
-        self._turns: deque[Turn] = deque(maxlen=self.k)
+    def __init__(self, k: int) -> None:
+        self._turns: deque[tuple[str, str]] = deque(maxlen=max(1, int(k)))
 
     def add(self, user: str, assistant: str) -> None:
-        """Record one interaction (no-op if both sides are empty)."""
-        u, a = (user or "").strip(), (assistant or "").strip()
-        if not u and not a:
-            return
-        self._turns.append(Turn(user=u, assistant=a))
+        self._turns.append((user, assistant))
 
     @property
-    def turns(self) -> list[Turn]:
-        return list(self._turns)
-
-    def messages(self) -> list[dict]:
-        """History as chat messages (oldest first), for prompting."""
-        msgs: list[dict] = []
-        for t in self._turns:
-            if t.user:
-                msgs.append({"role": "user", "content": t.user})
-            if t.assistant:
-                msgs.append({"role": "assistant", "content": t.assistant})
-        return msgs
+    def summary(self) -> str:
+        return ""
 
     def as_text(self) -> str:
-        """History as a plain transcript (oldest first)."""
-        lines: list[str] = []
-        for t in self._turns:
-            if t.user:
-                lines.append(f"User: {t.user}")
-            if t.assistant:
-                lines.append(f"Assistant: {t.assistant}")
+        lines = []
+        for u, a in self._turns:
+            if u:
+                lines.append(f"Human: {u}")
+            if a:
+                lines.append(f"AI: {a}")
         return "\n".join(lines)
+
+    def messages(self) -> list[dict]:
+        out = []
+        for u, a in self._turns:
+            if u:
+                out.append({"role": "user", "content": u})
+            if a:
+                out.append({"role": "assistant", "content": a})
+        return out
 
     def clear(self) -> None:
         self._turns.clear()
+
+    def prune(self) -> None:
+        pass
 
     def __len__(self) -> int:
         return len(self._turns)
 
 
 # --------------------------------------------------------------------------- #
-# structured summarizer — folds old turns (+ any prior summary) into ONE summary
+# public facade
 # --------------------------------------------------------------------------- #
-
-_SUMMARY_SYSTEM = (
-    "You maintain a single running MEMORY SUMMARY of a conversation between a user "
-    "and an assistant in a geospatial data application. You are given the PRIOR "
-    "SUMMARY (may be empty) and the OLDER MESSAGES that are about to age out of the "
-    "recent window. Merge them into ONE updated summary. Do NOT create nested or "
-    "multiple summaries — return a single consolidated summary that supersedes the "
-    "prior one.\n\n"
-    "Rules:\n"
-    "- Be concise, factual, and strictly grounded in what was actually said. Never "
-    "invent, guess, or add information not present in the messages.\n"
-    "- Never omit anything that could affect future responses. When the prior "
-    "summary and new messages conflict, prefer the most recent statement.\n"
-    "- Use these headings; omit a heading only when it has no content:\n"
-    "  Goals & objectives\n  Preferences & constraints\n  Key facts & entities\n"
-    "  Decisions made\n  Open questions / unresolved tasks\n"
-    "  Reasoning & conclusions\n  Commitments, plans & instructions\n"
-    "- Use short bullet points under each heading. No preamble or closing remarks."
-)
-
-
-def _summarize(prior_summary: str, old_turns: list[Turn], max_tokens: int) -> str | None:
-    """Produce one consolidated summary from ``prior_summary`` + ``old_turns``.
-
-    Returns the new summary text, or ``None`` on any LLM failure (so the caller can
-    keep the raw turns instead of losing information).
-    """
-    from agents.llm_client import get_llm, LLMError  # lazy: avoid import cycle
-
-    transcript = "\n".join(
-        line for t in old_turns for line in
-        ((f"User: {t.user}",) if t.user else ()) + ((f"Assistant: {t.assistant}",) if t.assistant else ())
-    )
-    user_prompt = (
-        f"PRIOR SUMMARY:\n{prior_summary or '(none)'}\n\n"
-        f"OLDER MESSAGES (oldest first):\n{transcript}\n\n"
-        "Return the single updated MEMORY SUMMARY:"
-    )
-    try:
-        out = get_llm().complete(
-            [{"role": "system", "content": _SUMMARY_SYSTEM},
-             {"role": "user", "content": user_prompt}],
-            temperature=0.0,
-            max_tokens=max_tokens,
-        )
-    except (LLMError, Exception):  # noqa: BLE001 — never crash a request on summarization
-        log.warning("memory: summarization failed — keeping raw turns for now")
-        return None
-    text = (out or "").strip()
-    return text or None
-
-
-# --------------------------------------------------------------------------- #
-# adaptive hybrid memory: recent window + one running structured summary
-# --------------------------------------------------------------------------- #
-
 class HybridConversationMemory:
-    """Two-tier memory: the newest ``recent_k`` turns verbatim, older turns folded
-    into a single running structured summary.
+    """Recent buffer + running summary, backed by LangChain's
+    ``ConversationSummaryBufferMemory`` (or a plain window if LangChain is absent).
 
-    Summarization triggers when the full turns exceed ``trigger_turns`` (X) OR the
-    summary + turns exceed ``trigger_tokens`` (Y). :meth:`ensure_within_budget`
-    additionally enforces a hard token budget before an LLM call.
+    The token budget (``context_budget``) is LangChain's ``max_token_limit`` — the
+    buffer is kept under it and the overflow is summarized. ``ensure_within_budget``
+    additionally prunes before an LLM call, accounting for the incoming query.
     """
 
     def __init__(self, *, recent_k: int = 5, trigger_turns: int = 12,
                  trigger_tokens: int = 1500, context_budget: int = 2000,
                  summary_max_tokens: int = 512, summary_enabled: bool = True) -> None:
         self.recent_k = max(1, int(recent_k))
-        self.trigger_turns = max(self.recent_k, int(trigger_turns))
-        self.trigger_tokens = max(1, int(trigger_tokens))
         self.context_budget = max(1, int(context_budget))
-        self.summary_max_tokens = max(64, int(summary_max_tokens))
-        self.summary_enabled = bool(summary_enabled)
-        self.summary: str = ""            # single running structured summary
-        self._turns: list[Turn] = []      # recent turns kept in full
+        self.summary_enabled = bool(summary_enabled) and _LANGCHAIN_OK
         self._lock = threading.RLock()
+
+        if self.summary_enabled:
+            self._mem = ConversationSummaryBufferMemory(
+                llm=_AppLLM(max_tokens=int(summary_max_tokens)),
+                max_token_limit=self.context_budget,
+                prompt=_SUMMARY_PROMPT,
+                memory_key="history",
+                return_messages=False,
+            )
+        elif _LANGCHAIN_OK:
+            self._mem = _LCWindowMemory(k=self.recent_k, memory_key="history", return_messages=False)
+        else:
+            self._mem = _WindowFallback(self.recent_k)
 
     # -- writes ------------------------------------------------------------- #
     def add(self, user: str, assistant: str) -> None:
-        """Record one interaction, then summarize/trim if thresholds are crossed."""
         u, a = (user or "").strip(), (assistant or "").strip()
         if not u and not a:
             return
         with self._lock:
-            self._turns.append(Turn(user=u, assistant=a))
-            self._maybe_summarize()
+            try:
+                if isinstance(self._mem, _WindowFallback):
+                    self._mem.add(u, a)
+                else:
+                    # LangChain prunes to max_token_limit here, summarizing overflow.
+                    self._mem.save_context({"input": u}, {"output": a})
+            except Exception as e:  # noqa: BLE001 — never break the request on memory
+                log.warning("memory: add failed (%s)", e)
 
-    # -- token accounting --------------------------------------------------- #
-    def _turns_tokens(self) -> int:
-        return sum(t.tokens() for t in self._turns)
-
+    # -- token budgeting ---------------------------------------------------- #
     def accumulated_tokens(self) -> int:
-        """Estimated tokens of everything memory would contribute (summary + turns)."""
-        with self._lock:
-            return estimate_tokens(self.summary) + self._turns_tokens()
-
-    def _over_threshold(self) -> bool:
-        return (len(self._turns) > self.trigger_turns
-                or estimate_tokens(self.summary) + self._turns_tokens() > self.trigger_tokens)
-
-    # -- summarization ------------------------------------------------------ #
-    def _maybe_summarize(self) -> None:
-        """Trigger summarization of older turns when a threshold is crossed."""
-        if not self.summary_enabled:
-            # Degrade to a pure recent window when summarization is off.
-            if len(self._turns) > self.trigger_turns:
-                self._turns = self._turns[-self.trigger_turns:]
-            return
-        if self._over_threshold():
-            self._summarize_older(keep=self.recent_k)
-
-    def _summarize_older(self, keep: int) -> bool:
-        """Fold every turn except the last ``keep`` into the running summary.
-
-        Returns True if the summary was updated (turns were compacted). On LLM
-        failure the raw turns are retained (no data loss) and False is returned.
-        """
-        keep = max(0, keep)
-        if len(self._turns) <= keep:
-            return False
-        old = self._turns[:len(self._turns) - keep]
-        recent = self._turns[len(self._turns) - keep:]
-        new_summary = _summarize(self.summary, old, self.summary_max_tokens)
-        if new_summary is None:
-            return False
-        self.summary = new_summary
-        self._turns = recent
-        log.info("memory: summarized %d old turn(s) -> summary now ~%d tokens, %d recent turn(s) kept",
-                 len(old), estimate_tokens(self.summary), len(self._turns))
-        return True
+        return estimate_tokens(self.as_text())
 
     def ensure_within_budget(self, extra_tokens: int = 0) -> None:
-        """Guarantee summary + recent turns (+ ``extra_tokens``) fit the budget.
-
-        Called before an LLM call that consumes the history. Prefers summarization;
-        falls back to dropping the oldest turns only if the summarizer can't run, so
-        the request never exceeds the budget.
-        """
+        """Prune/summarize before an LLM call so history (+ the incoming query) fits."""
+        if not self.summary_enabled:
+            return
         with self._lock:
-            if self.accumulated_tokens() + extra_tokens <= self.context_budget:
-                return
-            # 1) Summarize progressively down to fewer recent turns.
-            if self.summary_enabled:
-                keep = self.recent_k
-                while (self.accumulated_tokens() + extra_tokens > self.context_budget
-                       and len(self._turns) > 1):
-                    keep = min(keep, len(self._turns) - 1)
-                    if not self._summarize_older(keep=keep):
-                        break                      # summarizer unavailable / no-op
-                    keep = max(1, keep - 1)         # be more aggressive next pass
-            # 2) Hard fallback: drop oldest full turns to force a fit.
-            while self.accumulated_tokens() + extra_tokens > self.context_budget and len(self._turns) > 1:
-                dropped = self._turns.pop(0)
-                log.warning("memory: budget still exceeded — dropped oldest turn (%s)",
-                            snippet(dropped.user or dropped.assistant))
+            try:
+                extra = max(0, int(extra_tokens))
+                if extra:
+                    orig = self._mem.max_token_limit
+                    self._mem.max_token_limit = max(1, orig - extra)
+                    try:
+                        self._mem.prune()
+                    finally:
+                        self._mem.max_token_limit = orig
+                else:
+                    self._mem.prune()
+            except Exception as e:  # noqa: BLE001
+                log.warning("memory: prune failed (%s)", e)
 
     # -- reads -------------------------------------------------------------- #
     @property
-    def turns(self) -> list[Turn]:
-        return list(self._turns)
+    def summary(self) -> str:
+        return getattr(self._mem, "moving_summary_buffer", "") or ""
+
+    def as_text(self) -> str:
+        with self._lock:
+            try:
+                if isinstance(self._mem, _WindowFallback):
+                    return self._mem.as_text()
+                return self._mem.load_memory_variables({}).get("history", "") or ""
+            except Exception as e:  # noqa: BLE001
+                log.warning("memory: as_text failed (%s)", e)
+                return self.summary
 
     @property
     def has_context(self) -> bool:
-        return bool(self.summary) or bool(self._turns)
+        return bool(self.as_text().strip())
 
     def messages(self) -> list[dict]:
-        """History as chat messages: the summary (as a system note) then recent turns."""
-        msgs: list[dict] = []
+        if isinstance(self._mem, _WindowFallback):
+            return self._mem.messages()
+        out: list[dict] = []
         if self.summary:
-            msgs.append({"role": "system",
-                         "content": "Summary of earlier conversation:\n" + self.summary})
-        for t in self._turns:
-            if t.user:
-                msgs.append({"role": "user", "content": t.user})
-            if t.assistant:
-                msgs.append({"role": "assistant", "content": t.assistant})
-        return msgs
-
-    def as_text(self) -> str:
-        """History as a plain transcript: summary first, then recent turns."""
-        lines: list[str] = []
-        if self.summary:
-            lines.append("[Summary of earlier conversation]\n" + self.summary + "\n[Recent messages]")
-        for t in self._turns:
-            if t.user:
-                lines.append(f"User: {t.user}")
-            if t.assistant:
-                lines.append(f"Assistant: {t.assistant}")
-        return "\n".join(lines)
+            out.append({"role": "system", "content": "Summary of earlier conversation:\n" + self.summary})
+        try:
+            for m in self._mem.chat_memory.messages:
+                role = {"human": "user", "ai": "assistant"}.get(getattr(m, "type", ""), "system")
+                out.append({"role": role, "content": m.content})
+        except Exception:  # noqa: BLE001
+            pass
+        return out
 
     def clear(self) -> None:
         with self._lock:
-            self._turns.clear()
-            self.summary = ""
+            try:
+                self._mem.clear()
+                # Some LangChain versions don't reset the summary on clear().
+                if hasattr(self._mem, "moving_summary_buffer"):
+                    self._mem.moving_summary_buffer = ""
+            except Exception:  # noqa: BLE001
+                pass
 
     def __len__(self) -> int:
-        return len(self._turns)
+        try:
+            if isinstance(self._mem, _WindowFallback):
+                return len(self._mem)
+            return len(self._mem.chat_memory.messages) // 2
+        except Exception:  # noqa: BLE001
+            return 0
 
 
 # --------------------------------------------------------------------------- #
@@ -332,12 +288,7 @@ def _norm(session_id: str | None) -> str:
 
 
 def get_memory(session_id: str | None) -> HybridConversationMemory:
-    """Return the (lazily created) hybrid memory for ``session_id``.
-
-    A single default session is used when the client doesn't supply one, which
-    is the right behaviour for the local single-user app: consecutive queries
-    share one memory so follow-ups work out of the box.
-    """
+    """Return the (lazily created) hybrid memory for ``session_id``."""
     sid = _norm(session_id)
     with _lock:
         mem = _sessions.get(sid)
@@ -382,22 +333,18 @@ def condense_query(memory: HybridConversationMemory, query: str) -> str:
     """Rewrite ``query`` into a standalone question using ``memory``.
 
     Returns ``query`` unchanged when memory/condensing is disabled, there is no
-    history, or the rewrite looks unreliable (empty or implausibly long). Any
-    LLM failure falls back to the original query — condensing must never break a
-    request.
-
-    Before building the prompt, memory is trimmed to the configured token budget
-    (summarizing the older turns first) so the history + incoming query fit.
+    history, or the rewrite looks unreliable. Any LLM failure falls back to the
+    original query. Before the call, memory is pruned to the token budget.
     """
     if not settings.memory_enabled or not settings.memory_condense:
         return query
-    if not getattr(memory, "has_context", len(memory) > 0):
+    if not getattr(memory, "has_context", False):
         return query
 
     # Dynamically monitor token usage: make room for this query before the call.
     try:
         memory.ensure_within_budget(extra_tokens=estimate_tokens(query))
-    except Exception:  # noqa: BLE001 — budgeting must never break a request
+    except Exception:  # noqa: BLE001
         log.warning("memory: budget enforcement failed — proceeding with current history")
 
     from agents.llm_client import get_llm, LLMError  # lazy: avoid import cycle
@@ -422,7 +369,6 @@ def condense_query(memory: HybridConversationMemory, query: str) -> str:
 
     rewritten = (out or "").strip().strip('"').strip()
     original = (query or "").strip()
-    # Reject junk: empty, or a runaway that ballooned far beyond the question.
     if not rewritten or len(rewritten) > 4 * len(original) + 200:
         return original
     if rewritten.lower() != original.lower():

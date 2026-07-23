@@ -47,6 +47,7 @@ from agents import doc_ingest
 from agents import vector_store
 from agents import column_describer
 from agents import spatial_search
+from agents import analytics_agent
 from agents import routing
 from agents import geojson_validator as gjv
 from agents import log_store
@@ -176,6 +177,12 @@ class SearchAreaRequest(BaseModel):
     feature_types: list[str] | None = None  # optional: only these named layers
     mode: str = "intersects"                # "intersects" | "within"
     limit_per_layer: int = 2000
+
+
+class AnalyticsRequest(BaseModel):
+    message: str
+    dataset_ids: list[str] = []
+    session_id: str | None = None
 
 
 class EnrichRequest(BaseModel):
@@ -678,6 +685,11 @@ def query(req: QueryRequest):
             allow_web=req.allow_web,
             dataset_ids=req.dataset_ids,
             web_confirmed=req.web_confirmed,
+            # Conversation history (recent turns + running summary) so the RAG
+            # answerer can use prior context and answer questions ABOUT the
+            # conversation ("which universities have I asked about"). Captured
+            # before this turn is added, so it reflects the prior dialogue.
+            history=memory.as_text() if memory.has_context else None,
         )
 
     map_empty = False
@@ -854,7 +866,21 @@ def _reply_for_memory(response: dict) -> str:
         return str(response["clarification"])
     mp = response.get("map")
     if isinstance(mp, dict) and mp.get("results") is not None:
-        return f"(mapped {len(mp.get('results') or [])} feature(s))"
+        rows = mp.get("results") or []
+        # Record the actual place names so the history is informative — this lets
+        # follow-ups resolve pronouns ("tell me more about it" -> the named place)
+        # and lets summaries reflect what was actually shown.
+        names = []
+        for r in rows:
+            nm = r.get("name") or r.get("name:en") or r.get("title")
+            if nm and str(nm) not in names:
+                names.append(str(nm))
+            if len(names) >= 5:
+                break
+        if names:
+            more = "" if len(rows) <= len(names) else f", and {len(rows) - len(names)} more"
+            return f"(showed on the map: {', '.join(names)}{more})"
+        return f"(mapped {len(rows)} feature(s))"
     return ""
 
 
@@ -956,6 +982,34 @@ def search_area(req: SearchAreaRequest):
     except Exception as e:  # noqa: BLE001
         logger.exception("area search failed")
         raise HTTPException(status_code=500, detail=f"Area search failed: {e}")
+
+
+# --------------------------------------------------------------------------- #
+# analytics agent — charts + comparison tables over dataset properties
+# --------------------------------------------------------------------------- #
+
+@app.post("/analytics/query")
+def analytics_query(req: AnalyticsRequest):
+    """Answer an analytical question about the selected datasets' properties.
+
+    Returns structured output — ``{summary, plan, chart, table, dataset_scope}`` —
+    that drives the Analytics tab's charts and comparison tables. Numbers are
+    computed deterministically in the backend (the LLM only picks the analysis
+    plan). Keeps its own conversation memory namespace, separate from the map chat."""
+    logger.info("POST /analytics/query — '%s' (datasets=%d)", snippet(req.message), len(req.dataset_ids))
+    memory = get_memory(f"analytics:{req.session_id or 'default'}")
+    question = condense_query(memory, req.message)
+    try:
+        result = analytics_agent.analyze(question, req.dataset_ids)
+    except analytics_agent.AnalyticsError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:  # noqa: BLE001
+        logger.exception("analytics failed")
+        raise HTTPException(status_code=500, detail=f"Analytics failed: {e}")
+    memory.add(req.message, result.get("summary", ""))
+    if question != req.message:
+        result["resolved_query"] = question
+    return result
 
 
 # --------------------------------------------------------------------------- #

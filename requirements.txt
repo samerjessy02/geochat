@@ -31,6 +31,7 @@ qdrant-client>=1.11.0
 rank-bm25>=0.2.2
 
 # ---- Document ingestion + chunking (LangChain) ----
+langchain>=0.3.0                # ConversationSummaryBufferMemory (conversational memory)
 langchain-community>=0.3.0
 langchain-text-splitters>=0.3.0
 pypdf>=5.0.0            # PyPDFLoader (default PDF extractor)
