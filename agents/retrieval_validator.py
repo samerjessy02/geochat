@@ -63,6 +63,20 @@ def _content_tokens(text: str) -> set[str]:
     return {t for t in tokenize(text) if t not in _STOPWORDS and len(t) > 1}
 
 
+def _dominant_script(text: str) -> str:
+    """'arabic', 'latin', or 'other' — the script most of the letters are in."""
+    ar = lat = 0
+    for ch in text or "":
+        o = ord(ch)
+        if 0x0600 <= o <= 0x06FF or 0x0750 <= o <= 0x077F or 0x08A0 <= o <= 0x08FF or 0xFB50 <= o <= 0xFEFF:
+            ar += 1
+        elif "a" <= ch.lower() <= "z":
+            lat += 1
+    if ar == 0 and lat == 0:
+        return "other"
+    return "arabic" if ar >= lat else "latin"
+
+
 def keyword_overlap(query: str, context: str) -> float:
     """Fraction of the query's content-word set that appears in ``context``."""
     q = _content_tokens(query)
@@ -112,16 +126,32 @@ def validate(query: str, hits: list[dict]) -> ValidationResult:
     # Blend: retrieval confidence (top dense score) + lexical grounding (overlap).
     context_score = 0.6 * top_score + 0.4 * overlap
 
-    is_sufficient = (
-        context_score >= settings.min_context_score
-        and overlap >= settings.min_keyword_overlap
-    )
-    log.info(
-        "retrieval validation: context_score=%.2f (min %.2f), overlap=%.2f (min %.2f), "
-        "top=%.2f, %d chunk(s) -> %s",
-        context_score, settings.min_context_score, overlap, settings.min_keyword_overlap,
-        top_score, len(hits), "SUFFICIENT" if is_sufficient else "INSUFFICIENT",
-    )
+    # Cross-lingual retrieval (e.g. an Arabic question over English documents via a
+    # multilingual embedding): the query and context share almost no surface tokens,
+    # so keyword overlap is ~0 and NOT meaningful. Requiring it would wrongly reject
+    # a good semantic match. In that case, gate on the vector score alone.
+    q_script, c_script = _dominant_script(query), _dominant_script(context)
+    cross_lingual = q_script != "other" and c_script != "other" and q_script != c_script
+
+    if cross_lingual:
+        is_sufficient = top_score >= settings.min_context_score
+        log.info(
+            "retrieval validation: cross-lingual (%s query / %s context) -> gating on "
+            "vector score top=%.2f (min %.2f), %d chunk(s) -> %s",
+            q_script, c_script, top_score, settings.min_context_score, len(hits),
+            "SUFFICIENT" if is_sufficient else "INSUFFICIENT",
+        )
+    else:
+        is_sufficient = (
+            context_score >= settings.min_context_score
+            and overlap >= settings.min_keyword_overlap
+        )
+        log.info(
+            "retrieval validation: context_score=%.2f (min %.2f), overlap=%.2f (min %.2f), "
+            "top=%.2f, %d chunk(s) -> %s",
+            context_score, settings.min_context_score, overlap, settings.min_keyword_overlap,
+            top_score, len(hits), "SUFFICIENT" if is_sufficient else "INSUFFICIENT",
+        )
     return ValidationResult(
         context_score=context_score,
         keyword_overlap=overlap,

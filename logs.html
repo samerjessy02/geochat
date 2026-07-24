@@ -76,10 +76,11 @@
   .row-menu:hover{color:var(--ink3);background:var(--paper2);}
   .row-detail{display:none;padding:0 15px 14px;border-top:1px solid var(--rule-soft);}
   .row.open .row-detail{display:block;}
+  .full-msg{margin-top:12px;font-size:15.5px;line-height:1.5;color:var(--ink);white-space:pre-wrap;word-break:break-word;}
   .kv{display:grid;grid-template-columns:120px 1fr;gap:4px 14px;font-size:14.5px;margin:12px 0 0;}
   .kv .k{color:var(--ink4);}
   .kv .v{color:var(--ink2);font-family:var(--mono);word-break:break-word;}
-  .trace{margin-top:10px;background:var(--paper2);border:1px solid var(--rule);border-radius:8px;padding:10px 12px;font:14px/1.5 var(--mono);color:var(--danger);white-space:pre-wrap;max-height:240px;overflow:auto;}
+  .trace{margin-top:10px;background:var(--paper2);border:1px solid var(--rule);border-radius:8px;padding:10px 12px;font:14px/1.5 var(--mono);color:var(--danger);white-space:pre-wrap;word-break:break-word;}
   .empty{text-align:center;color:var(--ink4);padding:50px 20px;font-size:16px;}
   .empty .big{font-size:17.5px;color:var(--ink3);margin-bottom:4px;}
 </style>
@@ -222,7 +223,8 @@ function render(data){
   document.getElementById('list').innerHTML = logs.map(x=>{
     const lc=levelClass(x.level);
     const dur = x.duration_ms!=null ? ` · ${Math.round(x.duration_ms)} ms` : '';
-    const kv = `<div class="kv">
+    const kv = `<div class="full-msg">${esc(x.message)}</div>
+      <div class="kv">
       <span class="k">logger</span><span class="v">${esc(x.logger)}</span>
       <span class="k">target</span><span class="v">${esc(x.target||'—')}</span>
       <span class="k">duration</span><span class="v">${x.duration_ms!=null?Math.round(x.duration_ms)+' ms':'—'}</span>

@@ -27,8 +27,9 @@ log = get_logger("intent_router")
 MAP = "MAP"
 KNOWLEDGE = "KNOWLEDGE"
 HYBRID = "HYBRID"
+ANALYTICS = "ANALYTICS"     # aggregated statistics / analytical insight (Analytics panel)
 UNKNOWN = "UNKNOWN"
-VALID_INTENTS = {MAP, KNOWLEDGE, HYBRID, UNKNOWN}
+VALID_INTENTS = {MAP, KNOWLEDGE, HYBRID, ANALYTICS, UNKNOWN}
 
 # Verbs/nouns that signal a request to place things on the map.
 _MAP_CUES = [
@@ -46,6 +47,40 @@ _KNOWLEDGE_CUES = [
 
 _MAP_RE = [re.compile(p, re.IGNORECASE) for p in _MAP_CUES]
 _KNOWLEDGE_RE = [re.compile(p, re.IGNORECASE) for p in _KNOWLEDGE_CUES]
+
+# --- ANALYTICS cues: aggregated statistics / analytical insight -------------
+# Proximity / "near me" / "within N meters" must stay MAP, never analytics.
+_PROXIMITY_RE = re.compile(
+    r"\b(within\s+\d+\s*(m|meters?|metres?|km|kilomet(?:er|re)s?)|near\s+me|nearest|closest|"
+    r"radius|walking\s+distance|next\s+to|around\s+me)\b", re.IGNORECASE)
+_AGG_RE = re.compile(
+    r"\b(count|number\s+of|how\s+many|sum|total|average|avg|mean|median|percentage|percent|"
+    r"proportion|share|distribution|breakdown|statistics|stats)\b", re.IGNORECASE)
+_GROUP_RE = re.compile(
+    r"\b(per|by|in\s+each|for\s+each|across|grouped?\s+by)\s+"
+    r"(district|governorate|category|categories|area|region|zone|neighbou?rhood|city|type|"
+    r"group|layer|dataset|[a-z]+)\b", re.IGNORECASE)
+_TOPN_RE = re.compile(r"\b(top|bottom)\s+\d+\b", re.IGNORECASE)
+_RANK_RE = re.compile(r"\b(most|least|fewest|highest|lowest|maximum|minimum)\b", re.IGNORECASE)
+_COMPARE_RE = re.compile(r"\b(compare|comparison|versus|vs\.?)\b", re.IGNORECASE)
+_DISTRIB_RE = re.compile(r"\bdistribution\b", re.IGNORECASE)
+
+
+def _looks_analytics(text: str) -> bool:
+    """True for aggregation/grouping/ranking requests, but NOT proximity searches."""
+    if not text or _PROXIMITY_RE.search(text):
+        return False
+    grouped = bool(_GROUP_RE.search(text))
+    # Unambiguous analytics signals.
+    if _DISTRIB_RE.search(text) or _COMPARE_RE.search(text) or _TOPN_RE.search(text):
+        return True
+    # Aggregation or ranking combined with a group-by ("count per district").
+    if grouped and (_AGG_RE.search(text) or _RANK_RE.search(text)):
+        return True
+    # "which district has the most parks" (ranking a group).
+    if re.search(r"\bwhich\b.*\b(most|least|highest|lowest|fewest|top|bottom)\b", text, re.IGNORECASE):
+        return True
+    return False
 
 
 @dataclass
@@ -66,6 +101,10 @@ class IntentResult:
     def needs_rag(self) -> bool:
         return self.intent in (KNOWLEDGE, HYBRID)
 
+    @property
+    def needs_analytics(self) -> bool:
+        return self.intent == ANALYTICS
+
     def as_dict(self) -> dict:
         return {
             "intent": self.intent,
@@ -75,6 +114,7 @@ class IntentResult:
             "clarifying_question": self.clarifying_question,
             "needs_map": self.needs_map,
             "needs_rag": self.needs_rag,
+            "needs_analytics": self.needs_analytics,
         }
 
 
@@ -85,6 +125,11 @@ def heuristic_intent(query: str) -> IntentResult:
     confidence when the signal is too weak to be trusted.
     """
     text = query or ""
+    # Analytics (aggregation) takes precedence over map/knowledge cues, but only
+    # when it's not a proximity search.
+    if _looks_analytics(text):
+        return IntentResult(intent=ANALYTICS, confidence=0.7,
+                            reasoning="aggregation / grouping / ranking cues")
     map_hits = sum(1 for r in _MAP_RE if r.search(text))
     knowledge_hits = sum(1 for r in _KNOWLEDGE_RE if r.search(text))
 
@@ -107,15 +152,25 @@ _SYSTEM = (
     "- MAP: wants places shown/found/plotted on a map (spatial only), e.g. 'show cafes on X street'.\n"
     "- KNOWLEDGE: wants facts/explanation about a place or topic (no map needed), e.g. 'when was X built'.\n"
     "- HYBRID: wants BOTH a map AND textual facts.\n"
+    "- ANALYTICS: wants AGGREGATED statistics or analytical insight ACROSS groups rather than "
+    "individual features on the map. Triggers: count / sum / average / min / max / percentage / "
+    "distribution / ranking (top or bottom N) / group-by / comparisons between groups — especially "
+    "phrased as 'per <group>', 'by <group>', 'most/least', 'top N', 'distribution of', "
+    "'compare X and Y by <group>'. e.g. 'count schools per district', 'top 10 districts by "
+    "pharmacies', 'which district has the most parks', 'compare schools and hospitals by district'.\n"
     "- UNKNOWN: too ambiguous to route; needs clarification.\n"
     "GUIDELINES:\n"
     "- 'which/what <places> have/has/with <attribute>' (e.g. 'which cafes have handcrafted "
     "beverages') → HYBRID: the user wants to know WHICH places (list/plot) AND the qualifying "
     "detail, and that detail may live in documents rather than map columns.\n"
+    "- PROXIMITY/where-is searches are MAP, never ANALYTICS: 'show schools within 500m of X', "
+    "'pharmacies near me', 'nearest hospital', 'parks around here'.\n"
+    "- A single-entity fact ('how many students does Cairo University have') is KNOWLEDGE, NOT "
+    "ANALYTICS — ANALYTICS aggregates OVER groups (per district, by category, top N, etc.).\n"
     "- Be consistent: near-identical phrasings must get the SAME intent. Ignore minor wording "
     "differences ('which cafes has X' == 'cafes with X').\n"
     "Also extract the main entity/place the query focuses on, if any.\n"
-    'Return ONLY JSON: {"intent": "MAP|KNOWLEDGE|HYBRID|UNKNOWN", "entity_focus": "..."|null, '
+    'Return ONLY JSON: {"intent": "MAP|KNOWLEDGE|HYBRID|ANALYTICS|UNKNOWN", "entity_focus": "..."|null, '
     '"confidence": <0..1>, "reasoning": "...", "clarifying_question": "..."|null}'
 )
 

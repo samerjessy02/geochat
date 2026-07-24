@@ -21,6 +21,7 @@ Chart shape is renderer-agnostic (the frontend builds Plotly traces from it):
 from __future__ import annotations
 
 import json
+import re
 
 from agents.geojson_table import fetch_dataset_tables
 from agents.llm_client import get_llm, LLMError
@@ -335,6 +336,72 @@ def _histogram(rows, field, bins=10):
     return labels, counts
 
 
+_VIZ_LABELS = {
+    "bar": "Bar chart", "hbar": "Horizontal bar", "stacked_bar": "Stacked bar",
+    "pie": "Pie chart", "line": "Line chart", "scatter": "Scatter", "histogram": "Histogram",
+}
+
+
+def _viz_options(base_type: str, num_series: int, num_cats: int) -> list[dict]:
+    """All suitable visualization types for this result's shape, recommended first.
+
+    The dataset is already computed — these are just alternate renderings the UI
+    can switch between without re-querying."""
+    if base_type == "histogram":
+        vals = ["histogram", "line"]
+    elif num_series > 1:                       # comparison / cross-tab
+        vals = ["bar", "stacked_bar", "hbar", "line"]
+    else:                                       # single-series group
+        vals = ["bar", "hbar", "line"] + (["pie"] if 2 <= num_cats <= 12 else [])
+    vals = [base_type] + [v for v in vals if v != base_type]
+    out, seen = [], set()
+    for v in vals:
+        if v not in seen:
+            seen.add(v)
+            out.append({"value": v, "label": _VIZ_LABELS.get(v, v)})
+    return out
+
+
+# Explicit chart type named in the question (checked most-specific first).
+_CHART_REQUEST = [
+    (re.compile(r"\b(pie|donut|doughnut)\s*(chart|graph)?\b", re.I), "pie"),
+    (re.compile(r"\bhorizontal\s+bar\b|\bh-?bar\b", re.I), "hbar"),
+    (re.compile(r"\bstacked(\s+bar)?\b", re.I), "stacked_bar"),
+    (re.compile(r"\bhistogram\b", re.I), "histogram"),
+    (re.compile(r"\bscatter(\s*plot)?\b", re.I), "scatter"),
+    (re.compile(r"\bline\s+(chart|graph|plot)\b|\bas\s+a\s+line\b|\btrend\b", re.I), "line"),
+    (re.compile(r"\b(bar|column)\s+(chart|graph|plot)\b|\bas\s+a\s+bar\b", re.I), "bar"),
+]
+
+
+def _requested_chart_type(question: str) -> str | None:
+    """Return a chart type the user explicitly asked for, else None."""
+    for rx, t in _CHART_REQUEST:
+        if rx.search(question or ""):
+            return t
+    return None
+
+
+def _apply_requested_chart(chart: dict, requested: str) -> None:
+    """Make ``requested`` the displayed-first type when it fits the data shape.
+
+    The dataset is unchanged — this only reorders which visualization is default
+    and guarantees it appears in the switcher."""
+    if not chart or not requested:
+        return
+    num_series = len(chart.get("series") or [])
+    # Pie can only show a single series; skip it for multi-series comparisons.
+    if requested == "pie" and num_series > 1:
+        return
+    chart["type"] = requested
+    opts = chart.get("viz_options") or []
+    if requested not in [o["value"] for o in opts]:
+        opts.insert(0, {"value": requested, "label": _VIZ_LABELS.get(requested, requested)})
+    else:
+        opts.sort(key=lambda o: 0 if o["value"] == requested else 1)   # stable: move to front
+    chart["viz_options"] = opts
+
+
 def _execute(plan: dict, rows: list[dict]) -> dict:
     intent = plan["intent"]
     gb, gb2 = plan["group_by"], plan["second_group_by"]
@@ -349,7 +416,8 @@ def _execute(plan: dict, rows: list[dict]) -> dict:
     if intent == "distribution" and agg_field:
         labels, counts = _histogram(rows, agg_field)
         chart = {"type": "histogram", "title": title, "x_label": agg_field, "y_label": "count",
-                 "x": labels, "series": [{"name": "count", "y": counts}]}
+                 "x": labels, "series": [{"name": "count", "y": counts}],
+                 "viz_options": _viz_options("histogram", 1, len(labels))}
         table = {"columns": [f"{agg_field} range", "count"],
                  "rows": [[l, c] for l, c in zip(labels, counts)]}
         summary = f"Distribution of {agg_field} across {len(rows)} row(s), in {len(labels)} bin(s)."
@@ -359,9 +427,11 @@ def _execute(plan: dict, rows: list[dict]) -> dict:
         row_order, col_order, matrix = _crosstab(rows, gb, gb2, agg, agg_field)
         # grouped bar: one series per gb2 value
         series = [{"name": b, "y": [matrix[a][b] for a in row_order]} for b in col_order]
-        chart = {"type": chart_type if chart_type in ("bar", "line") else "bar",
+        base_type = chart_type if chart_type in ("bar", "line") else "bar"
+        chart = {"type": base_type,
                  "title": title, "x_label": gb, "y_label": ylabel,
-                 "x": row_order, "series": series}
+                 "x": row_order, "series": series,
+                 "viz_options": _viz_options(base_type, len(col_order), len(row_order))}
         cols = [gb] + col_order + ["Total"]
         trows = []
         for a in row_order:
@@ -378,7 +448,8 @@ def _execute(plan: dict, rows: list[dict]) -> dict:
     values = [p[1] for p in pairs]
     ctype = chart_type if chart_type in ("bar", "pie", "line", "scatter") else "bar"
     chart = {"type": ctype, "title": title, "x_label": gb, "y_label": ylabel,
-             "x": labels, "series": [{"name": ylabel, "y": values}]}
+             "x": labels, "series": [{"name": ylabel, "y": values}],
+             "viz_options": _viz_options(ctype, 1, len(labels))}
     table = {"columns": [gb, ylabel], "rows": [[l, v] for l, v in zip(labels, values)]}
     top = f"{labels[0]} ({values[0]:g})" if labels else "—"
     summary = f"{ylabel.title()} across {len(labels)} '{gb}' group(s); highest: {top}."
@@ -422,6 +493,11 @@ def analyze(question: str, dataset_ids: list[str]) -> dict:
             plan["filter_values"] = []
 
     result = _execute(plan, rows)
+    # If the user explicitly named a chart type, show it first (and in the switcher).
+    requested = _requested_chart_type(question)
+    if requested and result.get("chart"):
+        _apply_requested_chart(result["chart"], requested)
+        plan["requested_chart_type"] = requested
     if plan.get("filter_values"):
         result["summary"] = (f"Filtered to {', '.join(plan['filter_values'])}. "
                              + result.get("summary", ""))

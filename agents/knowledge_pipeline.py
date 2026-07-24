@@ -41,6 +41,8 @@ log = get_logger("knowledge_pipeline")
 _GEN_SYSTEM = (
     "You are a factual assistant. Answer the user's question using ONLY the provided context. "
     "Do not use outside knowledge.\n"
+    "Reply in the SAME language as the question (e.g. answer an Arabic question in Arabic), even "
+    "when the context is in another language.\n"
     "The context may start with a 'Conversation so far:' section (the recent dialogue). You may "
     "use it to resolve references and to answer questions about what the user previously asked, "
     "requested, was shown, or discussed.\n"

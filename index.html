@@ -82,6 +82,14 @@ body.tab-analytics #view-analytics { display: flex; }
 .an-card-title { font-size: 17px; font-weight: 600; color: var(--ink); margin: 2px 0 8px; }
 .an-card-summary { font-size: 13.5px; color: var(--ink2, var(--ink)); margin-bottom: 12px; line-height: 1.5; }
 .an-chart { width: 100%; height: 360px; }
+.an-chart-tools { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.an-viz-label { font-size: 12px; color: var(--ink4); font-weight: 600; }
+.an-viz-select { border: 1px solid var(--rule); background: var(--paper); color: var(--ink); border-radius: 8px;
+  padding: 5px 10px; font-family: inherit; font-size: 12.5px; cursor: pointer; }
+.an-viz-select:focus { border-color: var(--accent-mid); outline: none; }
+.an-png-btn { margin-left: auto; border: 1px solid var(--rule); background: var(--paper); color: var(--ink2, var(--ink));
+  border-radius: 8px; padding: 6px 12px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.an-png-btn:hover { border-color: var(--accent); color: var(--accent); }
 .an-table-wrap { margin-top: 14px; overflow-x: auto; }
 .an-table { border-collapse: collapse; width: 100%; font-size: 13px; }
 .an-table th { text-align: left; background: var(--paper2); border-bottom: 2px solid var(--rule);
@@ -196,18 +204,36 @@ body.tab-analytics #view-analytics { display: flex; }
   background: rgba(26,23,20,0.35);
   align-items: center; justify-content: center;
 }
+/* Fixed header + scrolling body: the header (title + back arrow) never scrolls,
+   so it's always reachable even with many issues to work through. */
 #upload-modal {
-  width: 380px; max-width: 90vw; max-height: 80vh; overflow-y: auto;
+  width: 380px; max-width: 90vw; max-height: 80vh; overflow: hidden;
   background: var(--paper); border: 1px solid var(--rule2);
   border-radius: var(--r-lg); box-shadow: 0 12px 40px rgba(0,0,0,0.2);
-  padding: 18px 20px;
-  display: flex; flex-direction: column; gap: 12px;
+  padding: 0;
+  display: flex; flex-direction: column;
   transition: width .18s ease;
 }
+#um-header { flex: none; display: flex; align-items: center; gap: 10px;
+  padding: 16px 22px 12px; margin: 0; background: var(--paper);
+  border-bottom: 1px solid var(--rule); border-radius: var(--r-lg) var(--r-lg) 0 0; }
+#um-header h2 { margin: 0; line-height: 1.3; }
+/* Body scrolls; NO bottom padding so the sticky footer can sit flush at the bottom. */
+#um-body { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 22px 0;
+  display: flex; flex-direction: column; gap: 12px; }
+.um-back-btn { flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border: 1px solid var(--rule2); border-radius: 9px; background: white;
+  color: var(--ink3); cursor: pointer; transition: .15s; }
+.um-back-btn:hover { border-color: var(--accent-mid); color: var(--accent); background: var(--accent-light); }
+/* Action footer stays pinned to the bottom of the scrolling body (always reachable). */
+.uvc-foot, .uvr-foot { position: sticky; bottom: 0; z-index: 4; background: var(--paper);
+  padding-bottom: 16px; }
 /* Wider layout while the GeoJSON validation flow is active. */
 #upload-modal.wide {
-  width: 760px; max-width: 94vw; max-height: 90vh; padding: 24px 28px;
+  width: 760px; max-width: 94vw; max-height: 90vh;
 }
+#upload-modal.wide #um-header { padding: 18px 28px 12px; }
+#upload-modal.wide #um-body { padding: 18px 28px 0; }
 #upload-modal h2 {
   font-family: var(--ff-display); font-size: 19.5px; font-weight: 600; color: var(--ink);
 }
@@ -311,6 +337,9 @@ body.tab-analytics #view-analytics { display: flex; }
 .uvc-switch.on::after { transform: translateX(14px); }
 .uvc-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--rule); }
 .uvc-foot-note { font-size: 14px; color: var(--ink4); }
+.uvc-pk-hint { font-size: 12.5px; color: var(--accent); background: var(--accent-light);
+  border: 1px solid var(--rule); border-radius: 8px; padding: 7px 11px; margin: 8px 0 2px;
+  font-family: ui-monospace, Consolas, monospace; }
 .uvc-foot-actions { display: flex; gap: 10px; }
 /* ── Validation REPORT panel (styled) ────────────────────────────────── */
 .uv-statbar { display: flex; border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; margin-bottom: 4px; }
@@ -324,6 +353,12 @@ body.tab-analytics #view-analytics { display: flex; }
 .uv-stat.resolve .uv-stat-num { color: #B5473A; }
 .uv-stat.resolve .uv-stat-label { color: #B5473A; opacity: .75; }
 .uvr-section-title { display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 700; letter-spacing: .06em; color: var(--ink4); text-transform: uppercase; margin: 18px 0 12px; }
+/* Bulk-resolve bar for repeated same-type issues. */
+.uvr-bulk { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--accent-light); border: 1px solid var(--rule); border-radius: 10px;
+  padding: 10px 14px; margin-bottom: 12px; }
+.uvr-bulk-label { font-size: 13px; font-weight: 600; color: var(--accent); }
+.uvr-bulk-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .uvr-count-pill { background: #FBEDEA; color: #B5473A; font-weight: 700; font-size: 13.5px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
 .uvr-count-pill.zero { background: var(--accent-light); color: var(--accent); }
 .uvr-card { background: var(--paper); border: 1px solid var(--rule); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; border-left: 3px solid #B5473A; }
@@ -336,6 +371,8 @@ body.tab-analytics #view-analytics { display: flex; }
 .uvr-card-actions { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
 .uvr-input { background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 8px 12px; font-family: inherit; font-size: 15.5px; color: var(--ink); outline: none; width: 150px; transition: .15s; }
 .uvr-input.narrow { width: 78px; }
+.uvr-input.invalid { border-color: #b23a3a; box-shadow: 0 0 0 3px rgba(178,58,58,.15); }
+.pbtn:disabled { opacity: .5; cursor: default; }
 .uvr-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
 .uvr-input::placeholder { color: var(--ink4); }
 .pbtn { font-weight: 600; font-size: 15px; padding: 8px 14px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; transition: .15s; white-space: nowrap; font-family: inherit; }
@@ -642,7 +679,7 @@ body.tab-analytics #view-analytics { display: flex; }
 /* ── RAG KNOWLEDGE PANEL ── */
 #rag-panel {
   position: absolute;
-  top: 16px; right: 16px;
+  top: 56px; right: 16px;
   width: 300px;
   z-index: 1000;
   background: white;
@@ -1115,8 +1152,14 @@ body.tab-analytics #view-analytics { display: flex; }
 <!-- ── UPLOAD MODAL ── -->
 <div id="upload-modal-backdrop">
   <div id="upload-modal">
-    <h2 id="um-title">Upload a dataset</h2>
+    <div id="um-header">
+      <button id="um-back-btn" class="um-back-btn" type="button" onclick="backToColumns()" title="Back to columns &amp; descriptions" aria-label="Back to columns" style="display:none">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <h2 id="um-title">Upload a dataset</h2>
+    </div>
 
+    <div id="um-body">
     <!-- STEP 1: file + name -->
     <div id="um-step-file">
       <label class="um-label" for="um-name">Dataset name</label>
@@ -1185,6 +1228,7 @@ body.tab-analytics #view-analytics { display: flex; }
           <button class="uvc-regen" id="uvc-regen" onclick="vcolsAuto()">✦ Generate descriptions</button>
         </div>
         <div id="uvc-list"></div>
+        <div id="uvc-pk-hint" class="uvc-pk-hint" style="display:none"></div>
         <div class="um-status" id="uvc-status"></div>
         <div class="uvc-foot">
           <span class="uvc-foot-note" id="uvc-foot-note"></span>
@@ -1219,6 +1263,7 @@ body.tab-analytics #view-analytics { display: flex; }
         </span>
       </div>
     </div>
+    </div><!-- /um-body -->
   </div>
 </div>
 
@@ -1239,6 +1284,9 @@ body.tab-analytics #view-analytics { display: flex; }
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 <script>
+// Build marker — check the browser console after a HARD refresh to confirm this
+// (updated) file loaded. If you don't see this line, the browser served a cache.
+console.log('%cGeoChat frontend build: analytics-viz-switcher + download-png', 'color:#2F6FA8;font-weight:bold');
 const API = 'http://localhost:8000';
 
 const GENERIC_SUGGESTIONS = [
@@ -1808,6 +1856,7 @@ function openUploadModal() {
   document.getElementById('um-step-describe').style.display = 'none';
   document.getElementById('um-step-vcols').style.display = 'none';
   document.getElementById('um-step-validate').style.display = 'none';
+  document.getElementById('um-back-btn').style.display = 'none';
   document.getElementById('upload-modal').classList.remove('wide');
   document.getElementById('upload-modal-backdrop').style.display = 'flex';
 }
@@ -1938,7 +1987,7 @@ function renderVcolsEditor() {
       <div class="uvc-mid">
         <input class="uvc-desc" data-col="${esc(c.name)}" placeholder="description" value="${esc(st.desc || '')}"/>
         <div class="uvc-keys">
-          <button type="button" class="uvc-pkbtn ${st.pk ? 'on' : ''}" data-col="${esc(c.name)}" title="Mark this column as the primary key" onclick="togglePkBtn(this)">PK</button>
+          <button type="button" class="uvc-pkbtn ${st.pk ? 'on' : ''}" data-col="${esc(c.name)}" title="Mark as primary key — select several columns for a composite key" onclick="togglePkBtn(this)">PK</button>
           <input class="uvc-fkinput ${st.fk ? 'set' : ''}" data-col="${esc(c.name)}" placeholder="foreign key → e.g. categories.category_id" value="${esc(st.fk || '')}" title="Reference another table's column, e.g. categories.category_id" oninput="onFkInput(this)"/>
         </div>
       </div>
@@ -1972,7 +2021,17 @@ function renderVcolsEditor() {
   const note = document.getElementById('uvc-foot-note');
   if (note) note.textContent = `${cols.length} column${cols.length !== 1 ? 's' : ''} · ${acc} accepted · ${emptyCols} with empty values`;
   document.getElementById('uvc-editor').style.display = 'block';
+  updatePkHint();
   if (_colFilter) filterCols(_colFilter);
+}
+
+let _lastValidateKey = null;   // the required/numeric selection last validated
+
+function showValidationStep() {
+  document.getElementById('um-title').textContent = 'Validation report';
+  document.getElementById('um-step-vcols').style.display = 'none';
+  document.getElementById('um-step-validate').style.display = 'block';
+  document.getElementById('um-back-btn').style.display = '';   // arrow next to the title
 }
 
 async function vcolsContinue() {
@@ -1980,16 +2039,39 @@ async function vcolsContinue() {
   const required = Object.keys(_colState).filter(n => _colState[n].required);
   const numeric = ((_vReport && _vReport.columns) || [])
     .filter(c => ['integer', 'number', 'mixed'].includes(c.dtype)).map(c => c.name);
+  const key = JSON.stringify({ r: [...required].sort(), n: [...numeric].sort() });
+
+  // Progress preservation: if the required/numeric selection hasn't changed since
+  // the last check, DON'T re-validate (that would wipe resolved HITL decisions) —
+  // just resume the existing report with all progress intact.
+  if (_vReport && validationId && key === _lastValidateKey) {
+    showValidationStep();
+    renderReport(_vReport);
+    return;
+  }
+
   document.getElementById('uvc-status').textContent = 'Checking rows…';
   const r = await postValidation(`${API}/datasets/validate/attributes`,
     { validation_id: validationId, required_fields: required, numeric_fields: numeric });
   document.getElementById('uvc-status').textContent = '';
   if (!r) return;
   _vReport = r.report;
-  document.getElementById('um-title').textContent = 'Validation report';
-  document.getElementById('um-step-vcols').style.display = 'none';
-  document.getElementById('um-step-validate').style.display = 'block';
+  _lastValidateKey = key;
+  showValidationStep();
   renderReport(r.report);
+}
+
+// Navigate back from the validation report to the Columns & rules panel. The
+// column state (descriptions, PK/FK, not-null) is preserved in _colState, so
+// edits made there are kept; "Save & check rows →" re-runs validation.
+function backToColumns() {
+  document.getElementById('um-step-validate').style.display = 'none';
+  document.getElementById('um-step-vcols').style.display = 'block';
+  document.getElementById('um-back-btn').style.display = 'none';
+  document.getElementById('um-title').textContent = 'Columns & rules';
+  const st = document.getElementById('uv-status'); if (st) st.textContent = '';
+  const _body = document.getElementById('um-body'); if (_body) _body.scrollTop = 0;
+  renderVcolsEditor();
 }
 
 // Row reference for a card: "id X" or "row N" (1-based), with a bold label.
@@ -2013,9 +2095,18 @@ function renderReport(report) {
   const cnt = document.getElementById('uv-hitl-count');
   cnt.textContent = pending.length;
   cnt.classList.toggle('zero', pending.length === 0);
+
+  // Bulk actions: when several rows share the SAME issue type, offer to resolve
+  // them all at once (avoids clicking through e.g. 10 identical missing-location rows).
+  const byKind = {};
+  pending.forEach(h => { (byKind[h.kind] = byKind[h.kind] || []).push(h); });
+  const bulk = Object.entries(byKind)
+    .filter(([k, arr]) => arr.length >= 2)
+    .map(([k, arr]) => bulkBarMarkup(k, arr.length)).join('');
+
   document.getElementById('uv-hitl').innerHTML =
-    (report.hitl || []).map((h, i) => hitlMarkup(h, i)).join('') ||
-    '<div class="uv-hint">Nothing needs a decision. 🎉</div>';
+    bulk + ((report.hitl || []).map((h, i) => hitlMarkup(h, i)).join('') ||
+    '<div class="uv-hint">Nothing needs a decision. 🎉</div>');
 
   document.getElementById('uv-issues').innerHTML = (report.issues || []).map(it => {
     const rl = rowRefHtml(it);
@@ -2067,9 +2158,9 @@ function hitlMarkup(h, i) {
       <button class="pbtn pbtn-solid-accent" onclick="resolveGeom(${h.feature_index},'${id}')">Confirm</button>
       <button class="pbtn pbtn-outline-danger" onclick="resolveHitl(${ref},{action:'drop'})">Drop row</button>`;
   } else if (h.kind === 'missing_attribute') {
-    actions = `<input class="uvr-input" id="${id}" placeholder="value" value="${esc(prevVal)}"/>
-      <button class="pbtn pbtn-solid-accent" onclick="resolveHitl(${ref},{action:'fix',value:document.getElementById('${id}').value})">Confirm</button>
-      <button class="pbtn pbtn-outline-accent" onclick="document.getElementById('${id}').value='Unknown'">Auto-fill</button>
+    actions = `<input class="uvr-input" id="${id}" placeholder="value" value="${esc(prevVal)}" oninput="onMissingInput(this,'${id}btn')"/>
+      <button class="pbtn pbtn-solid-accent" id="${id}btn" ${prevVal.trim() ? '' : 'disabled'} onclick="confirmMissingAttr('${id}',${ref})">Confirm</button>
+      <button class="pbtn pbtn-outline-accent" onclick="document.getElementById('${id}').value='Unknown';onMissingInput(document.getElementById('${id}'),'${id}btn')">Auto-fill</button>
       <button class="pbtn pbtn-outline-danger" onclick="resolveHitl(${ref},{action:'drop'})">Drop row</button>`;
   } else if (h.kind === 'latlong_swap') {
     actions = `<button class="pbtn pbtn-solid-accent" onclick="resolveHitl(${ref},{action:'fix'})">Fix (swap)</button>
@@ -2152,22 +2243,35 @@ function syncColState() {
 
 // Toggle a column's primary-key flag. A table has one primary key, so turning one
 // on clears the others (manual PK/FK entry for datasets uploaded without a schema).
+// Toggle a column's primary-key flag. Multiple columns can be primary keys at
+// once — together they form a COMPOSITE primary key. A PK column is inherently
+// required, so turning PK on also switches on its not-null rule.
 function togglePkBtn(btn) {
   const col = btn.getAttribute('data-col');
   const on = !btn.classList.contains('on');
-  if (on) {
-    document.querySelectorAll('#uvc-list .uvc-pkbtn.on').forEach(b => {
-      b.classList.remove('on');
-      const c = b.getAttribute('data-col');
-      if (_colState[c]) _colState[c].pk = false;
-    });
-  }
   btn.classList.toggle('on', on);
   (_colState[col] = _colState[col] || { desc: '', required: false }).pk = on;
-  // A primary key is inherently required — reflect that on the not-null switch.
   if (on) {
     const sw = document.querySelector(`#uvc-list .uvc-switch[data-col="${CSS.escape(col)}"]`);
     if (sw) { sw.classList.add('on'); _colState[col].required = true; }
+  }
+  updatePkHint();
+}
+
+// Show which column(s) make up the (possibly composite) primary key.
+function updatePkHint() {
+  const el = document.getElementById('uvc-pk-hint');
+  if (!el) return;
+  const keys = Object.keys(_colState).filter(n => _colState[n].pk);
+  if (keys.length >= 2) {
+    el.textContent = `Composite primary key: ${keys.join(' + ')}`;
+    el.style.display = 'block';
+  } else if (keys.length === 1) {
+    el.textContent = `Primary key: ${keys[0]}`;
+    el.style.display = 'block';
+  } else {
+    el.textContent = '';
+    el.style.display = 'none';
   }
 }
 
@@ -2182,6 +2286,69 @@ async function resolveHitl(kind, feature_index, field, resolution) {
   const r = await postValidation(`${API}/datasets/validate/resolve`,
     { validation_id: validationId, kind, feature_index, field, resolution });
   if (r) { _editingHitl.delete(`${kind}|${feature_index}|${field || ''}`); renderReport(r.report); }
+}
+
+// Bulk-action bar shown when several rows share the same issue type.
+function bulkBarMarkup(kind, count) {
+  const label = { missing_attribute: 'missing value', missing_geometry: 'missing location',
+    outlier: 'outlier', latlong_swap: 'lat/long swap', invalid_geometry: 'invalid geometry',
+    duplicate: 'duplicate' }[kind] || kind;
+  let actions = '';
+  if (kind === 'missing_attribute') {
+    actions = `<button class="pbtn pbtn-outline-accent" onclick="bulkResolve('${kind}',{action:'fix',value:'Unknown'})">Auto-fill all (“Unknown”)</button>
+      <button class="pbtn pbtn-outline-danger" onclick="bulkResolve('${kind}',{action:'drop'},true)">Drop all rows</button>`;
+  } else if (kind === 'missing_geometry') {
+    actions = `<button class="pbtn pbtn-outline-accent" onclick="bulkAutofillGeometry()">Auto-fill all (map center)</button>
+      <button class="pbtn pbtn-outline-danger" onclick="bulkResolve('${kind}',{action:'drop'},true)">Drop all rows</button>`;
+  } else if (kind === 'invalid_geometry') {
+    actions = `<button class="pbtn pbtn-outline-danger" onclick="bulkResolve('${kind}',{action:'drop'},true)">Drop all rows</button>`;
+  } else if (kind === 'outlier') {
+    actions = `<button class="pbtn pbtn-outline-accent" onclick="bulkResolve('${kind}',{action:'keep'})">Keep all</button>
+      <button class="pbtn pbtn-outline-accent" onclick="bulkResolve('${kind}',{action:'null'})">Set all NULL</button>`;
+  } else if (kind === 'duplicate') {
+    actions = `<button class="pbtn pbtn-outline-danger" onclick="bulkResolve('${kind}',{action:'drop_duplicates'},true)">Drop all duplicates</button>`;
+  } else {
+    return '';
+  }
+  return `<div class="uvr-bulk"><span class="uvr-bulk-label">${count} ${esc(label)} issues — resolve all at once:</span>
+    <span class="uvr-bulk-actions">${actions}</span></div>`;
+}
+
+async function bulkResolve(kind, resolution, confirmFirst) {
+  if (confirmFirst && !window.confirm('Apply this to every matching row? This can’t be undone individually.')) return;
+  const r = await postValidation(`${API}/datasets/validate/resolve-bulk`,
+    { validation_id: validationId, kind, resolution });
+  if (r) renderReport(r.report);
+}
+
+// Auto-fill every missing location with the current map centre.
+async function bulkAutofillGeometry() {
+  const c = map.getCenter();
+  const geometry = { type: 'Point', coordinates: [+c.lng.toFixed(6), +c.lat.toFixed(6)] };
+  const r = await postValidation(`${API}/datasets/validate/resolve-bulk`,
+    { validation_id: validationId, kind: 'missing_geometry', resolution: { action: 'fix', geometry } });
+  if (r) renderReport(r.report);
+}
+
+// Enable/disable the Confirm button as the missing-value textbox changes.
+function onMissingInput(inp, btnId) {
+  if (!inp) return;
+  inp.classList.remove('invalid');
+  const btn = document.getElementById(btnId);
+  if (btn) btn.disabled = !inp.value.trim();
+}
+
+// Confirm a missing-attribute fix ONLY when a value has been typed.
+function confirmMissingAttr(id, kind, feature_index, field) {
+  const inp = document.getElementById(id);
+  const v = (inp && inp.value || '').trim();
+  if (!v) {
+    if (inp) { inp.classList.add('invalid'); inp.focus(); }
+    const st = document.getElementById('uv-status');
+    if (st) st.textContent = 'Type a value before confirming — or use “Drop row”.';
+    return;
+  }
+  resolveHitl(kind, feature_index, field, { action: 'fix', value: v });
 }
 
 async function commitValidation() {
@@ -2714,6 +2881,21 @@ async function handleQueryResponse(data, q) {
   // ROUTE → draw the route line + endpoints.
   if (data.route) {
     renderRoute(data.route);
+    return;
+  }
+
+  // ANALYTICS → open the Analytics panel and render the aggregation there.
+  if (intent === 'ANALYTICS' || data.analytics) {
+    const a = data.analytics || {};
+    switchTab('analytics');
+    anAppendMsg('user', q);
+    if (a.error) {
+      anAppendMsg('err', '⚠ ' + a.error);
+    } else {
+      anAppendMsg('ai', a.summary || 'Done.');
+      anRenderResult(q, a);
+    }
+    appendMsg('ai', '📊 That looked analytical — I opened the Analytics tab and charted it there.');
     return;
   }
 
@@ -3339,8 +3521,19 @@ async function triggerRag(meta, placeType) {
   }
 }
 
+function positionRagPanel() {
+  const panel = document.getElementById('rag-panel');
+  const polyPanel = document.getElementById('poly-panel');
+  const polyFab = document.getElementById('poly-fab');
+  const anchor = (polyPanel && polyPanel.classList.contains('open')) ? polyPanel : polyFab;
+  if (anchor && panel) {
+    panel.style.top = (anchor.offsetTop + anchor.offsetHeight + 12) + 'px';
+  }
+}
+
 function showRagLoading(name) {
   const panel = document.getElementById('rag-panel');
+  positionRagPanel();
   document.getElementById('rag-place-name').textContent = name;
   document.getElementById('rag-category-badge').textContent = '…';
   document.getElementById('rag-summary').innerHTML = `
@@ -3554,37 +3747,113 @@ function anRenderResult(question, data) {
   card.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// Build Plotly traces from the normalized chart spec the backend returns.
+const AN_COLORWAY = ['#2F6FA8', '#f28e2b', '#59a14f', '#e15759', '#b07aa1', '#76b7b2', '#edc948', '#9c755f'];
+const AN_VIZ_LABELS = { bar: 'Bar chart', hbar: 'Horizontal bar', stacked_bar: 'Stacked bar',
+  pie: 'Pie chart', line: 'Line chart', scatter: 'Scatter', histogram: 'Histogram' };
+
+// Fallback: infer suitable viz types from the data shape if the backend didn't.
+function anVizOptions(chart) {
+  if (Array.isArray(chart.viz_options) && chart.viz_options.length) {
+    return chart.viz_options.map(o => (typeof o === 'string' ? { value: o, label: AN_VIZ_LABELS[o] || o } : o));
+  }
+  const n = (chart.series || []).length;
+  const cats = (chart.x || []).length;
+  let vals;
+  if (chart.type === 'histogram') vals = ['histogram', 'line'];
+  else if (n > 1) vals = ['bar', 'stacked_bar', 'hbar', 'line'];
+  else vals = ['bar', 'hbar', 'line'].concat(cats >= 2 && cats <= 12 ? ['pie'] : []);
+  // default (recommended) type first
+  vals = [chart.type].concat(vals.filter(v => v !== chart.type));
+  return vals.map(v => ({ value: v, label: AN_VIZ_LABELS[v] || v }));
+}
+
+// Build {traces, layout} for a given visualization type from the SAME dataset.
+function anBuildFigure(chart, viz) {
+  const x = chart.x || [];
+  const series = chart.series || [];
+  const base = {
+    margin: { t: 10, r: 12, b: 90, l: 64 },
+    font: { family: 'Poppins, system-ui, sans-serif', size: 12 },
+    paper_bgcolor: 'transparent', plot_bgcolor: 'transparent', colorway: AN_COLORWAY,
+    showlegend: series.length > 1
+  };
+  let traces, layout;
+  if (viz === 'pie') {
+    traces = [{ type: 'pie', labels: x, values: (series[0] && series[0].y) || [], hole: 0.35,
+      textinfo: 'label+percent', automargin: true }];
+    layout = Object.assign({}, base, { showlegend: true, margin: { t: 10, r: 12, b: 20, l: 12 } });
+  } else if (viz === 'line' || viz === 'scatter') {
+    const mode = viz === 'scatter' ? 'markers' : 'lines+markers';
+    traces = series.map(s => ({ type: 'scatter', mode, name: s.name, x, y: s.y }));
+    layout = Object.assign({}, base, {
+      xaxis: { title: chart.x_label || '', automargin: true, tickangle: x.length > 6 ? -35 : 0 },
+      yaxis: { title: chart.y_label || '' } });
+  } else if (viz === 'hbar') {
+    traces = series.map(s => ({ type: 'bar', orientation: 'h', name: s.name, y: x, x: s.y }));
+    layout = Object.assign({}, base, {
+      barmode: series.length > 1 ? 'group' : undefined,
+      yaxis: { title: chart.x_label || '', automargin: true, autorange: 'reversed' },
+      xaxis: { title: chart.y_label || '' }, margin: { t: 10, r: 12, b: 56, l: 140 } });
+  } else { // bar / histogram / stacked_bar
+    traces = series.map(s => ({ type: 'bar', name: s.name, x, y: s.y }));
+    layout = Object.assign({}, base, {
+      barmode: viz === 'stacked_bar' ? 'stack' : (series.length > 1 ? 'group' : undefined),
+      xaxis: { title: chart.x_label || '', automargin: true, tickangle: x.length > 6 ? -35 : 0 },
+      yaxis: { title: chart.y_label || '' } });
+  }
+  return { traces, layout };
+}
+
+// Render the chart with a Visualization switcher + Download PNG. Switching the
+// viz type re-renders from the SAME data — no re-query, no data regeneration.
 function anDrawChart(host, chart) {
+  if (typeof Plotly === 'undefined') {
+    host.innerHTML = '<div class="an-chart">(charts unavailable — Plotly failed to load)</div>'; return;
+  }
+  const options = anVizOptions(chart);
+  let current = options[0].value;
+
+  const tools = document.createElement('div'); tools.className = 'an-chart-tools';
+  const sel = document.createElement('select'); sel.className = 'an-viz-select'; sel.title = 'Visualization';
+  sel.innerHTML = options.map(o => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join('');
+  const vlabel = document.createElement('span'); vlabel.className = 'an-viz-label'; vlabel.textContent = 'Visualization';
+  const pngBtn = document.createElement('button'); pngBtn.className = 'an-png-btn'; pngBtn.type = 'button';
+  pngBtn.textContent = '⭳ Download PNG';
+  tools.appendChild(vlabel); tools.appendChild(sel); tools.appendChild(pngBtn);
+  host.appendChild(tools);
+
   const div = document.createElement('div');
   div.className = 'an-chart';
   div.id = 'an-chart-' + (++_anChartSeq);
   host.appendChild(div);
-  if (typeof Plotly === 'undefined') { div.textContent = '(charts unavailable — Plotly failed to load)'; return; }
-  const x = chart.x || [];
-  const series = chart.series || [];
-  let traces;
-  if (chart.type === 'pie') {
-    traces = [{ type: 'pie', labels: x, values: (series[0] && series[0].y) || [], hole: 0.35,
-      textinfo: 'label+percent', automargin: true }];
-  } else if (chart.type === 'line') {
-    traces = series.map(s => ({ type: 'scatter', mode: 'lines+markers', name: s.name, x, y: s.y }));
-  } else if (chart.type === 'scatter') {
-    traces = series.map(s => ({ type: 'scatter', mode: 'markers', name: s.name, x, y: s.y }));
-  } else { // bar + histogram (pre-binned bars)
-    traces = series.map(s => ({ type: 'bar', name: s.name, x, y: s.y }));
+
+  function draw(viz) {
+    const { traces, layout } = anBuildFigure(chart, viz);
+    Plotly.react(div, traces, layout, { displayModeBar: false, responsive: true });
   }
-  const layout = {
-    title: '', margin: { t: 10, r: 12, b: 90, l: 56 },
-    barmode: series.length > 1 ? 'group' : undefined,
-    xaxis: { title: chart.x_label || '', automargin: true, tickangle: x.length > 6 ? -35 : 0 },
-    yaxis: { title: chart.y_label || '' },
-    showlegend: series.length > 1 || chart.type === 'pie',
-    font: { family: 'Poppins, system-ui, sans-serif', size: 12 },
-    paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
-    colorway: ['#2F6FA8', '#f28e2b', '#59a14f', '#e15759', '#b07aa1', '#76b7b2', '#edc948', '#9c755f']
+  draw(current);
+
+  sel.onchange = () => { current = sel.value; draw(current); };   // re-render only
+
+  pngBtn.onclick = () => {
+    const name = anChartFilename(chart.title);
+    // High-res export of exactly what's shown (title/axes/legend/colors preserved).
+    const rect = div.getBoundingClientRect();
+    Plotly.downloadImage(div, {
+      format: 'png', scale: 3,
+      width: Math.max(900, Math.round(rect.width || 900)),
+      height: Math.max(500, Math.round(rect.height || 400)),
+      filename: name
+    });
   };
-  Plotly.newPlot(div, traces, layout, { displayModeBar: false, responsive: true });
+}
+
+// Meaningful filename: slug of the title, else analytics_chart_YYYYMMDD_HHMMSS.
+function anChartFilename(title) {
+  const slug = String(title || '').toLowerCase().replace(/[^\w]+/g, '_').replace(/^_+|_+$/g, '');
+  if (slug) return slug.slice(0, 80);
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  return `analytics_chart_${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
 }
 
 // Sortable comparison table + CSV export.

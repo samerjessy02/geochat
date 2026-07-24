@@ -52,7 +52,7 @@ from agents import routing
 from agents import geojson_validator as gjv
 from agents import log_store
 from agents.hybrid_retriever import invalidate_bm25_cache
-from agents.intent_router import classify_intent, MAP, KNOWLEDGE, HYBRID, UNKNOWN
+from agents.intent_router import classify_intent, MAP, KNOWLEDGE, HYBRID, ANALYTICS, UNKNOWN
 from agents.knowledge_pipeline import answer_knowledge_query
 from agents.memory import get_memory, reset_memory, condense_query
 from agents import semantic_cache
@@ -218,6 +218,13 @@ class ResolveRequest(BaseModel):
     feature_index: int | None = None
     field: str | None = None
     resolution: dict = {}          # {action, value?, geometry?}
+
+
+class BulkResolveRequest(BaseModel):
+    validation_id: str
+    kind: str                      # resolve every unresolved HITL item of this kind
+    resolution: dict = {}          # the same decision applied to all of them
+    field: str | None = None       # optional: restrict to one attribute/column
 
 
 class CommitRequest(BaseModel):
@@ -402,6 +409,28 @@ def validate_resolve(req: ResolveRequest):
                 raise HTTPException(status_code=400, detail=f"Reprojection from EPSG:{epsg} failed: {e}")
         result.crs_epsg = epsg
     return {"validation_id": req.validation_id, "report": result.report(),
+            "all_resolved": gjv.all_hitl_resolved(result)}
+
+
+@app.post("/datasets/validate/resolve-bulk")
+def validate_resolve_bulk(req: BulkResolveRequest):
+    """Apply one decision to EVERY unresolved HITL item of ``kind`` at once.
+
+    Cuts down repetitive clicking when many rows share the same issue (e.g. 10
+    features missing a location). CRS items are excluded (they need per-item EPSG)."""
+    s = _get_session(req.validation_id)
+    result = s["result"]
+    n = 0
+    for h in result.hitl:
+        if h.resolved or h.kind != req.kind or h.kind == "crs":
+            continue
+        if req.field is not None and h.field != req.field:
+            continue
+        h.resolved = True
+        h.resolution = req.resolution
+        n += 1
+    logger.info("bulk-resolved %d '%s' HITL item(s)", n, req.kind)
+    return {"validation_id": req.validation_id, "resolved": n, "report": result.report(),
             "all_resolved": gjv.all_hitl_resolved(result)}
 
 
@@ -674,6 +703,22 @@ def query(req: QueryRequest):
         logger.info("/query -> UNKNOWN, asking for clarification")
         response["clarification"] = intent.clarifying_question
         memory.add(req.message, intent.clarifying_question or "")
+        return response
+
+    # ANALYTICS → aggregated statistics: run the analytics agent (deterministic
+    # aggregation + recommended chart) and return it so the UI can open the
+    # Analytics panel. No map SQL / RAG for this intent.
+    if intent.intent == ANALYTICS:
+        logger.info("/query -> ANALYTICS")
+        try:
+            response["analytics"] = analytics_agent.analyze(effective_query, req.dataset_ids)
+        except analytics_agent.AnalyticsError as e:
+            response["analytics"] = {"error": str(e)}
+        except Exception as e:  # noqa: BLE001
+            logger.exception("analytics via /query failed")
+            response["analytics"] = {"error": f"Analytics failed: {e}"}
+        an = response["analytics"]
+        memory.add(req.message, (an.get("summary") if isinstance(an, dict) else "") or "")
         return response
 
     def _run_knowledge():
